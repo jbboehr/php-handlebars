@@ -8,20 +8,21 @@
 
 #include "handlebars.h"
 #include "handlebars_context.h"
+#include "handlebars_token.h"
+#include "handlebars_token_list.h"
+#include "handlebars_token_printer.h"
 #include "handlebars.tab.h"
 #include "handlebars.lex.h"
 
 
+static char * handlebars_last_error = NULL;
+
+
 /* {{{ Utils----------------------------------------------------------------- */
 
-#define HANDLEBARS_SAVE_CLEAR_ERROR(hbs) \
-	memset(&handlebars_last_errloc, 0, sizeof(YYLTYPE)); \
+#define HANDLEBARS_SAVE_CLEAR_ERROR(msg) \
     if( handlebars_last_error ) { efree(handlebars_last_error); handlebars_last_error = NULL; } \
-    if( hbs.error ) { handlebars_last_error = estrdup(hbs.error); } \
-    if( hbs.errloc ) { memcpy(&handlebars_last_errloc, hbs.errloc, sizeof(YYLTYPE)); }
-
-static char * handlebars_last_error = NULL;
-static YYLTYPE handlebars_last_errloc;
+    handlebars_last_error = estrdup(msg);
 
 /* }}} ---------------------------------------------------------------------- */
 /* {{{ Functions ------------------------------------------------------------ */
@@ -29,31 +30,67 @@ static YYLTYPE handlebars_last_errloc;
 PHP_FUNCTION(handlebars_error)
 {
 	if( handlebars_last_error ) {
-		int len = strlen(handlebars_last_error) + 32;
-		char * errmsg = emalloc(sizeof(char) * len);
-	    snprintf(errmsg, len, "%s on line %d, column %d", handlebars_last_error, handlebars_last_errloc.last_line, handlebars_last_errloc.last_column);
-		RETURN_STRING(errmsg, 0);
+		RETURN_STRING(handlebars_last_error, 1);
 	}
 }
 
 PHP_FUNCTION(handlebars_lex)
 {
-    
+	// @todo
 }
 
 PHP_FUNCTION(handlebars_lex_print)
 {
+    char * tmpl;
+    long tmpl_len;
+    struct handlebars_context * ctx;
+    struct handlebars_token_list * list;
+    char * output;
     
+    // Arguments
+    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &tmpl, &tmpl_len) == FAILURE ) {
+        RETURN_FALSE;
+    }
+    
+    ctx = handlebars_context_ctor();
+    ctx->tmpl = tmpl;
+    list = handlebars_lex(ctx);
+    output = handlebars_token_list_print(list, 0);
+    
+    RETVAL_STRING(output, 1);
+    
+    handlebars_context_dtor(ctx);
 }
 
 PHP_FUNCTION(handlebars_parse)
 {
-    
+	// @todo
 }
 
 PHP_FUNCTION(handlebars_parse_print)
 {
+    char * tmpl;
+    long tmpl_len;
+    struct handlebars_context * ctx;
+    int retval;
+    char * output;
     
+    // Arguments
+    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &tmpl, &tmpl_len) == FAILURE ) {
+        RETURN_FALSE;
+    }
+    
+    ctx = handlebars_context_ctor();
+    ctx->tmpl = tmpl;
+    retval = handlebars_yy_parse(ctx);
+    
+    if( ctx->error != NULL ) {
+        HANDLEBARS_SAVE_CLEAR_ERROR(handlebars_context_get_errmsg(ctx));
+        RETURN_FALSE;
+    } else {
+    	output = handlebars_ast_print(ctx->program);
+    	RETVAL_STRING(output, 1);
+    }
 }
 
 /* }}} ---------------------------------------------------------------------- */
@@ -70,7 +107,9 @@ static PHP_MINFO_FUNCTION(handlebars)
   php_info_print_table_row(2, "Version", PHP_HANDLEBARS_VERSION);
   php_info_print_table_row(2, "Released", PHP_HANDLEBARS_RELEASE);
   php_info_print_table_row(2, "Authors", PHP_HANDLEBARS_AUTHORS);
+  // @todo make spec version from libhandlebars function
   php_info_print_table_row(2, "Spec Version", PHP_HANDLEBARS_SPEC);
+  php_info_print_table_row(2, "libhandlebars Version", handlebars_version_string());
   php_info_print_table_end();
 }
 
