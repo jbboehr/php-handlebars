@@ -1,4 +1,6 @@
 
+/* vim: tabstop=4:softtabstop=4:shiftwidth=4:expandtab */
+
 #ifndef PHP_HANDLEBARS_H
 #define PHP_HANDLEBARS_H
 
@@ -10,5 +12,17 @@
 
 extern zend_module_entry handlebars_module_entry;
 #define phpext_handlebars_ptr &handlebars_module_entry
+
+ZEND_BEGIN_MODULE_GLOBALS(handlebars)
+	char * handlebars_last_error;
+ZEND_END_MODULE_GLOBALS(handlebars)
+
+ZEND_EXTERN_MODULE_GLOBALS(handlebars);
+
+#ifdef ZTS
+#define HANDLEBARS_G(v) TSRMG(handlebars_globals_id, zend_counter_globals *, v)
+#else
+#define HANDLEBARS_G(v) (handlebars_globals.v)
+#endif
 
 #endif	/* PHP_HANDLEBARS_H */
