@@ -23,17 +23,17 @@ function testFile($test, $specName, $number) {
 }
 
 function testHead($test, $specName, $number) {
-	$output = '';
-	$output .= '--TEST--' . "\n";
-	$output .= $specName . ' #' . $number . ' - ' . $test['it'] . "\n";
-	$output .= '--DESCRIPTION--' . "\n";
-	$output .= $test['description'] . "\n";
-	$output .= '--SKIPIF--' . "\n";
-	$output .= "<?php if( !extension_loaded('handlebars') ) die('skip '); ?>" . "\n";
-	$output .= '--FILE--' . "\n";
-	$output .= '<?php' . "\n";
-	//$output .= '$test = ' . var_export($test, true) . ';' . "\n";
-	return $output;
+    $output = '';
+    $output .= '--TEST--' . "\n";
+    $output .= $specName . ' #' . $number . ' - ' . $test['it'] . "\n";
+    $output .= '--DESCRIPTION--' . "\n";
+    $output .= $test['description'] . "\n";
+    $output .= '--SKIPIF--' . "\n";
+    $output .= "<?php if( !extension_loaded('handlebars') ) die('skip '); ?>" . "\n";
+    $output .= '--FILE--' . "\n";
+    $output .= '<?php' . "\n";
+    //$output .= '$test = ' . var_export($test, true) . ';' . "\n";
+    return $output;
 }
 
 function testBody($test, $specName) {
@@ -62,11 +62,11 @@ function testBodyTokenizer($test) {
     
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
     $output .= 'var_export(handlebars_lex_print($tmpl));' . PHP_EOL;
-	//$output .= 'var_export(handlebars_lex($test["template"]));' . PHP_EOL;
-	$output .= '--EXPECT--' . PHP_EOL;
-	$output .= var_export($printed, true);
-	//$output .= var_export($test['expected'], true);
-	return $output;
+    //$output .= 'var_export(handlebars_lex($test["template"]));' . PHP_EOL;
+    $output .= '--EXPECT--' . PHP_EOL;
+    $output .= var_export($printed, true);
+    //$output .= var_export($test['expected'], true);
+    return $output;
 }
 
 function testBodyParser($test) {
@@ -80,11 +80,11 @@ function testBodyParser($test) {
     
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
     $output .= 'var_export(handlebars_parse_print($tmpl));' . PHP_EOL;
-	//$output .= 'var_export(handlebars_parse($test["template"]));' . PHP_EOL;
-	$output .= '--EXPECT--' . PHP_EOL;
-	$output .= var_export($printed, true);
-	//$output .= var_export($test['expected'], true);
-	return $output;
+    //$output .= 'var_export(handlebars_parse($test["template"]));' . PHP_EOL;
+    $output .= '--EXPECT--' . PHP_EOL;
+    $output .= var_export($printed, true);
+    //$output .= var_export($test['expected'], true);
+    return $output;
 }
 
 
