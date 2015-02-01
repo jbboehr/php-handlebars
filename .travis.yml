@@ -1,0 +1,29 @@
+language: php
+
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq autoconf automake check bison flex gawk gcc git-core lcov libjson0-dev libtalloc-dev libtool m4 make pkg-config uthash-dev
+  - git submodule update --init --recursive
+  - git clone https://github.com/jbboehr/handlebars.c handlebars-c
+  - cd handlebars-c
+  - ./bootstrap
+  - ./configure --prefix=/usr 
+  - sudo make install
+  - sudo ldconfig
+  - cd ..
+
+php:
+  - 5.3
+  - 5.4
+  - 5.5
+  - 5.6
+
+script:
+  - phpize
+  - CPPFLAGS="-I/usr" ./configure --enable-handlebars
+  - make
+  - echo n | make test
+
+branches:
+  only:
+    - master
