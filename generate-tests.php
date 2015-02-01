@@ -17,6 +17,14 @@ function handlebarsc($tmpl, $op) {
     return array(($return_var == 0), join("\n", $output), $command);
 }
 
+function token_print($tokens) {
+    $str = '';
+    foreach( $tokens as $token ) {
+        $str .= sprintf('%s [%s] ', $token['name'], addcslashes($token['text'], "\t\r\n"));
+    }
+    return rtrim($str, ' ');
+}
+
 function testFile($test, $specName, $number) {
     $safeName = strtolower(trim(preg_replace('/[^a-z0-9]+/i', '-', $test['it'] . '-' . $test['description']), '-'));
     $testFile = __DIR__ . '/tests/spec-handlebars-' . $specName . '-' . sprintf("%03d", $number) . '-' . $safeName . '.phpt';
@@ -53,39 +61,37 @@ function testBody($test, $specName) {
 }
 
 function testBodyTokenizer($test) {
-    // Get the printed tokens from handlebarsc
-    list($ok, $printed) = handlebarsc($test['template'], 'lex');
-    if( $ok != empty($test['exception']) ) {
-        $msg = sprintf("handlebarsc error did not match test error: %d != %d, output was %s",
-                $ok, empty($test['exception']), $printed);
-        trigger_error($msg, E_USER_ERROR);
-    }
-    $printed = preg_replace('/[\r\n]+/', " ", $printed);
-    
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
     $output .= 'var_export(handlebars_lex_print($tmpl));' . PHP_EOL;
     //$output .= 'var_export(handlebars_lex($test["template"]));' . PHP_EOL;
     $output .= '--EXPECT--' . PHP_EOL;
-    $output .= var_export($printed, true);
+    $output .= var_export(token_print($test['expected']), true);
     //$output .= var_export($test['expected'], true);
     return $output;
 }
 
 function testBodyParser($test) {
     // Get the printed ast from handlebarsc
+    /*
     list($ok, $printed, $command) = handlebarsc($test['template'], 'parse');
     if( $ok != empty($test['exception']) ) {
         $msg = sprintf("handlebarsc error did not match test error: %d != %d, output was %s",
                 $ok, empty($test['exception']), $printed);
         trigger_error($msg, E_USER_ERROR);
     }
+    */
     
-    $output .= '/* ' . $command . ' */' . PHP_EOL;
+    if( empty($test['exception']) ) {
+        $expected = rtrim($test['expected'], " \t\r\n");
+    } else {
+        $expected = false; //$test['message'];
+    }
+    
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
-    $output .= '$v = handlebars_parse_print($tmpl); $v ? var_export($v) : var_export(handlebars_error());' . PHP_EOL;
+    $output .= '$v = handlebars_parse_print($tmpl); var_export($v); // var_export(handlebars_error());' . PHP_EOL;
     //$output .= 'var_export(handlebars_parse($test["template"]));' . PHP_EOL;
     $output .= '--EXPECT--' . PHP_EOL;
-    $output .= var_export($printed, true);
+    $output .= var_export($expected, true);
     //$output .= var_export($test['expected'], true);
     return $output;
 }
