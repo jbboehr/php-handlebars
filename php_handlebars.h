@@ -1,6 +1,9 @@
 
 /* vim: tabstop=4:softtabstop=4:shiftwidth=4:expandtab */
 
+#include "php.h"
+#include "php_ini.h"
+
 #ifndef PHP_HANDLEBARS_H
 #define PHP_HANDLEBARS_H
 
