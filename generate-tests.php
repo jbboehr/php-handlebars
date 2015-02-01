@@ -83,9 +83,15 @@ function testBodyParser($test) {
     $output = '';
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
     $output .= '$v = handlebars_parse_print($tmpl); var_export($v); // var_export(handlebars_error());' . PHP_EOL;
-    //$output .= 'var_export(handlebars_parse($test["template"]));' . PHP_EOL;
+    $output .= 'echo PHP_EOL;' . PHP_EOL;
+    $output .= 'var_export(gettype(handlebars_parse($tmpl)));' . PHP_EOL;
     $output .= '--EXPECT--' . PHP_EOL;
-    $output .= var_export($expected, true);
+    $output .= var_export($expected, true) . PHP_EOL;
+    if( empty($test['exception']) ) {
+        $output .= var_export('array', true);
+    } else {
+        $output .= var_export('boolean', true);
+    }
     //$output .= var_export($test['expected'], true);
     return $output;
 }
