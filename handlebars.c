@@ -6,11 +6,14 @@
 #endif
 
 #include "php.h"
-#include "php_handlebars.h"
+#include "php_ini.h"
+#include "ext/standard/info.h"
 
 #ifdef ZTS
 #include "TSRM.h"
 #endif
+
+#include "php_handlebars.h"
 
 #include "handlebars.h"
 #include "handlebars_context.h"

@@ -3,6 +3,11 @@
 
 #include "php.h"
 #include "php_ini.h"
+#include "ext/standard/info.h"
+
+#ifdef ZTS
+#include "TSRM.h"
+#endif
 
 #ifndef PHP_HANDLEBARS_H
 #define PHP_HANDLEBARS_H
@@ -20,10 +25,10 @@ ZEND_BEGIN_MODULE_GLOBALS(handlebars)
     char * handlebars_last_error;
 ZEND_END_MODULE_GLOBALS(handlebars)
 
-ZEND_EXTERN_MODULE_GLOBALS(handlebars);
+//ZEND_EXTERN_MODULE_GLOBALS(handlebars);
 
 #ifdef ZTS
-#define HANDLEBARS_G(v) TSRMG(handlebars_globals_id, zend_counter_globals *, v)
+#define HANDLEBARS_G(v) TSRMG(handlebars_globals_id, zend_handlebars_globals *, v)
 #else
 #define HANDLEBARS_G(v) (handlebars_globals.v)
 #endif
