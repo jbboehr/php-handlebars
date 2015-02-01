@@ -142,7 +142,7 @@ static zval * php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node 
             }
             if( node->node.raw_block.close ) {
                 add_assoc_string_ex(current, "close", sizeof("close"),
-                        node->node.raw_block.close, 1 TSRMLS_CC);
+                        node->node.raw_block.close, 1);
             }
             break;
         }
