@@ -53,17 +53,17 @@ static zval * php_handlebars_ast_list_to_zval(struct handlebars_ast_list * list 
 {
     struct handlebars_ast_list_item * item;
     struct handlebars_ast_list_item * tmp;
-	zval * current;
+    zval * current;
     
-	ALLOC_INIT_ZVAL(current);
-	array_init(current);
-	
+    ALLOC_INIT_ZVAL(current);
+    array_init(current);
+    
     if( list == NULL ) {
         return current;
     }
     
     handlebars_ast_list_foreach(list, item, tmp) {
-		add_next_index_zval(current, php_handlebars_ast_node_to_zval(item->data TSRMLS_CC));
+        add_next_index_zval(current, php_handlebars_ast_node_to_zval(item->data TSRMLS_CC));
     }
     
     return current;
@@ -71,99 +71,99 @@ static zval * php_handlebars_ast_list_to_zval(struct handlebars_ast_list * list 
 
 static zval * php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node TSRMLS_DC)
 {
-	zval * current = NULL;
-	char * name = NULL;
-	
-	ALLOC_INIT_ZVAL(current);
-	array_init(current);
-	
-	if( node == NULL ) {
-	    // meh
-	    return current;
-	}
-	
-	name = estrdup(handlebars_ast_node_readable_type(node->type));
-	add_assoc_string_ex(current, "name", sizeof("name"), name, 0);
-	
+    zval * current = NULL;
+    char * name = NULL;
+    
+    ALLOC_INIT_ZVAL(current);
+    array_init(current);
+    
+    if( node == NULL ) {
+        // meh
+        return current;
+    }
+    
+    name = estrdup(handlebars_ast_node_readable_type(node->type));
+    add_assoc_string_ex(current, "name", sizeof("name"), name, 0);
+    
     switch( node->type ) {
         case HANDLEBARS_AST_NODE_PROGRAM: {
             if( node->node.program.statements ) {
-    			add_assoc_zval_ex(current, "statements", sizeof("statements"),
-    					php_handlebars_ast_list_to_zval(node->node.program.statements TSRMLS_CC));
+                add_assoc_zval_ex(current, "statements", sizeof("statements"),
+                        php_handlebars_ast_list_to_zval(node->node.program.statements TSRMLS_CC));
             }
             break;
         }
         case HANDLEBARS_AST_NODE_MUSTACHE: {
             if( node->node.mustache.sexpr ) {
                 add_assoc_zval_ex(current, "sexpr", sizeof("sexpr"),
-					php_handlebars_ast_node_to_zval(node->node.mustache.sexpr TSRMLS_CC));
+                    php_handlebars_ast_node_to_zval(node->node.mustache.sexpr TSRMLS_CC));
             }
-			add_assoc_bool_ex(current, "escaped", sizeof("escaped"),
-					node->node.mustache.escaped);
+            add_assoc_bool_ex(current, "escaped", sizeof("escaped"),
+                    node->node.mustache.escaped);
             break;
         }
         case HANDLEBARS_AST_NODE_SEXPR: {
-			if( node->node.sexpr.hash ) {
-				add_assoc_zval_ex(current, "hash", sizeof("hash"),
-						php_handlebars_ast_node_to_zval(node->node.sexpr.hash TSRMLS_CC));
-			}
-			if( node->node.sexpr.id ) {
-				add_assoc_zval_ex(current, "id", sizeof("id"),
-						php_handlebars_ast_node_to_zval(node->node.sexpr.id TSRMLS_CC));
-			}
-			if( node->node.sexpr.params ) {
-				add_assoc_zval_ex(current, "params", sizeof("params"),
-						php_handlebars_ast_list_to_zval(node->node.sexpr.params TSRMLS_CC));
-			}
+            if( node->node.sexpr.hash ) {
+                add_assoc_zval_ex(current, "hash", sizeof("hash"),
+                        php_handlebars_ast_node_to_zval(node->node.sexpr.hash TSRMLS_CC));
+            }
+            if( node->node.sexpr.id ) {
+                add_assoc_zval_ex(current, "id", sizeof("id"),
+                        php_handlebars_ast_node_to_zval(node->node.sexpr.id TSRMLS_CC));
+            }
+            if( node->node.sexpr.params ) {
+                add_assoc_zval_ex(current, "params", sizeof("params"),
+                        php_handlebars_ast_list_to_zval(node->node.sexpr.params TSRMLS_CC));
+            }
             break;
         }
         case HANDLEBARS_AST_NODE_PARTIAL:
-			if( node->node.partial.partial_name ) {
-				add_assoc_zval_ex(current, "partial_name", sizeof("partial_name"),
-						php_handlebars_ast_node_to_zval(node->node.partial.partial_name TSRMLS_CC));
-			}
-			if( node->node.partial.context ) {
-				add_assoc_zval_ex(current, "context", sizeof("context"),
-						php_handlebars_ast_node_to_zval(node->node.partial.context TSRMLS_CC));
-			}
-			if( node->node.partial.hash ) {
-				add_assoc_zval_ex(current, "hash", sizeof("hash"),
-						php_handlebars_ast_node_to_zval(node->node.partial.hash TSRMLS_CC));
-			}
+            if( node->node.partial.partial_name ) {
+                add_assoc_zval_ex(current, "partial_name", sizeof("partial_name"),
+                        php_handlebars_ast_node_to_zval(node->node.partial.partial_name TSRMLS_CC));
+            }
+            if( node->node.partial.context ) {
+                add_assoc_zval_ex(current, "context", sizeof("context"),
+                        php_handlebars_ast_node_to_zval(node->node.partial.context TSRMLS_CC));
+            }
+            if( node->node.partial.hash ) {
+                add_assoc_zval_ex(current, "hash", sizeof("hash"),
+                        php_handlebars_ast_node_to_zval(node->node.partial.hash TSRMLS_CC));
+            }
             break;
         case HANDLEBARS_AST_NODE_RAW_BLOCK: {
-			if( node->node.raw_block.mustache ) {
-				add_assoc_zval_ex(current, "mustache", sizeof("mustache"),
-						php_handlebars_ast_node_to_zval(node->node.raw_block.mustache TSRMLS_CC));
-			}
-			if( node->node.raw_block.program ) {
-				add_assoc_zval_ex(current, "program", sizeof("program"),
-						php_handlebars_ast_node_to_zval(node->node.raw_block.program TSRMLS_CC));
-			}
-			if( node->node.raw_block.close ) {
-			    add_assoc_string_ex(current, "close", sizeof("close"),
-						node->node.raw_block.close, 1 TSRMLS_CC);
-			}
+            if( node->node.raw_block.mustache ) {
+                add_assoc_zval_ex(current, "mustache", sizeof("mustache"),
+                        php_handlebars_ast_node_to_zval(node->node.raw_block.mustache TSRMLS_CC));
+            }
+            if( node->node.raw_block.program ) {
+                add_assoc_zval_ex(current, "program", sizeof("program"),
+                        php_handlebars_ast_node_to_zval(node->node.raw_block.program TSRMLS_CC));
+            }
+            if( node->node.raw_block.close ) {
+                add_assoc_string_ex(current, "close", sizeof("close"),
+                        node->node.raw_block.close, 1 TSRMLS_CC);
+            }
             break;
         }
         case HANDLEBARS_AST_NODE_BLOCK: {
-			if( node->node.block.mustache ) {
-				add_assoc_zval_ex(current, "mustache", sizeof("mustache"),
-						php_handlebars_ast_node_to_zval(node->node.block.mustache TSRMLS_CC));
-			}
-			if( node->node.block.program ) {
-				add_assoc_zval_ex(current, "program", sizeof("program"),
-						php_handlebars_ast_node_to_zval(node->node.block.program TSRMLS_CC));
-			}
-			if( node->node.block.inverse ) {
-				add_assoc_zval_ex(current, "inverse", sizeof("inverse"),
-						php_handlebars_ast_node_to_zval(node->node.block.inverse TSRMLS_CC));
-			}
-			if( node->node.block.close ) {
-				add_assoc_zval_ex(current, "close", sizeof("close"),
-						php_handlebars_ast_node_to_zval(node->node.block.close TSRMLS_CC));
-			}
-			add_assoc_bool_ex(current, "inverted", sizeof("inverted"), node->node.block.inverted);
+            if( node->node.block.mustache ) {
+                add_assoc_zval_ex(current, "mustache", sizeof("mustache"),
+                        php_handlebars_ast_node_to_zval(node->node.block.mustache TSRMLS_CC));
+            }
+            if( node->node.block.program ) {
+                add_assoc_zval_ex(current, "program", sizeof("program"),
+                        php_handlebars_ast_node_to_zval(node->node.block.program TSRMLS_CC));
+            }
+            if( node->node.block.inverse ) {
+                add_assoc_zval_ex(current, "inverse", sizeof("inverse"),
+                        php_handlebars_ast_node_to_zval(node->node.block.inverse TSRMLS_CC));
+            }
+            if( node->node.block.close ) {
+                add_assoc_zval_ex(current, "close", sizeof("close"),
+                        php_handlebars_ast_node_to_zval(node->node.block.close TSRMLS_CC));
+            }
+            add_assoc_bool_ex(current, "inverted", sizeof("inverted"), node->node.block.inverted);
             break;
         }
         case HANDLEBARS_AST_NODE_CONTENT: {
@@ -176,8 +176,8 @@ static zval * php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node 
         }
         case HANDLEBARS_AST_NODE_HASH: {
             if( node->node.hash.segments ) {
-    			add_assoc_zval_ex(current, "segments", sizeof("segments"),
-    					php_handlebars_ast_list_to_zval(node->node.hash.segments TSRMLS_CC));
+                add_assoc_zval_ex(current, "segments", sizeof("segments"),
+                        php_handlebars_ast_list_to_zval(node->node.hash.segments TSRMLS_CC));
             }
             break;
         }
@@ -188,19 +188,19 @@ static zval * php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node 
                     node->node.hash_segment.key_length, 1);
             }
             if( node->node.hash_segment.value ) {
-				add_assoc_zval_ex(current, "value", sizeof("value"),
-						php_handlebars_ast_node_to_zval(node->node.hash_segment.value TSRMLS_CC));
+                add_assoc_zval_ex(current, "value", sizeof("value"),
+                        php_handlebars_ast_node_to_zval(node->node.hash_segment.value TSRMLS_CC));
             }
             break;
         }
         case HANDLEBARS_AST_NODE_ID: {
-			if( node->node.id.parts ) {
-				add_assoc_zval_ex(current, "parts", sizeof("parts"),
-						php_handlebars_ast_list_to_zval(node->node.id.parts TSRMLS_CC));
-			}
-			add_assoc_long_ex(current, "depth", sizeof("depth"), node->node.id.depth);
-			add_assoc_bool_ex(current, "is_simple", sizeof("inverted"), node->node.id.is_simple);
-			add_assoc_bool_ex(current, "is_scoped", sizeof("inverted"), node->node.id.is_scoped);
+            if( node->node.id.parts ) {
+                add_assoc_zval_ex(current, "parts", sizeof("parts"),
+                        php_handlebars_ast_list_to_zval(node->node.id.parts TSRMLS_CC));
+            }
+            add_assoc_long_ex(current, "depth", sizeof("depth"), node->node.id.depth);
+            add_assoc_bool_ex(current, "is_simple", sizeof("inverted"), node->node.id.is_simple);
+            add_assoc_bool_ex(current, "is_scoped", sizeof("inverted"), node->node.id.is_scoped);
             if( node->node.id.id_name ) {
                 add_assoc_stringl_ex(current, "id_name", sizeof("id_name"),
                     node->node.id.id_name,
@@ -220,15 +220,15 @@ static zval * php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node 
         }
         case HANDLEBARS_AST_NODE_PARTIAL_NAME: {
             if( node->node.partial_name.name ) {
-				add_assoc_zval_ex(current, "name", sizeof("name"),
-						php_handlebars_ast_node_to_zval(node->node.partial_name.name TSRMLS_CC));
+                add_assoc_zval_ex(current, "name", sizeof("name"),
+                        php_handlebars_ast_node_to_zval(node->node.partial_name.name TSRMLS_CC));
             }
             break;
         }
         case HANDLEBARS_AST_NODE_DATA: {
             if( node->node.data.id ) {
-				add_assoc_zval_ex(current, "id", sizeof("id"),
-						php_handlebars_ast_node_to_zval(node->node.data.id TSRMLS_CC));
+                add_assoc_zval_ex(current, "id", sizeof("id"),
+                        php_handlebars_ast_node_to_zval(node->node.data.id TSRMLS_CC));
             }
             break;
         }
@@ -275,8 +275,8 @@ static zval * php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node 
         case HANDLEBARS_AST_NODE_NIL:
             break;
     }
-	
-	return current;
+    
+    return current;
 }
 
 /* }}} ---------------------------------------------------------------------- */
@@ -316,7 +316,7 @@ PHP_FUNCTION(handlebars_lex)
         token = el->data;
         name = estrdup(handlebars_token_readable_type(token->token));
         
-    	child = NULL;
+        child = NULL;
         ALLOC_INIT_ZVAL(child);
         array_init(child);
         add_assoc_string_ex(child, "name", sizeof("name"), name, 0);
@@ -376,8 +376,8 @@ PHP_FUNCTION(handlebars_parse)
         php_handlebars_error(errmsg TSRMLS_CC);
         RETVAL_FALSE;
     } else {
-    	output = php_handlebars_ast_node_to_zval(ctx->program TSRMLS_CC);
-    	RETVAL_ZVAL(output, 0, 0);
+        output = php_handlebars_ast_node_to_zval(ctx->program TSRMLS_CC);
+        RETVAL_ZVAL(output, 0, 0);
     }
     
     handlebars_context_dtor(ctx);
