@@ -8,12 +8,13 @@
 function handlebarsc($tmpl, $op) {
     $return_var = 1;
     $output = array();
-    exec('echo ' . escapeshellarg($tmpl) . ' | handlebarsc ' . escapeshellarg($op) . ' 2>&1', $output, $return_var);
+    $command = 'echo ' . escapeshellarg($tmpl) . ' | handlebarsc ' . escapeshellarg($op) . ' 2>&1';
+    exec($command, $output, $return_var);
     if( $return_var == 127 ) {
         echo "handlebarsc is not available for printer testing!\n";
         exit(1);
     }
-    return array(($return_var == 0), join(" ", $output));
+    return array(($return_var == 0), join("\n", $output), $command);
 }
 
 function testFile($test, $specName, $number) {
@@ -59,6 +60,7 @@ function testBodyTokenizer($test) {
                 $ok, empty($test['exception']), $printed);
         trigger_error($msg, E_USER_ERROR);
     }
+    $printed = preg_replace('/[\r\n]+/', " ", $printed);
     
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
     $output .= 'var_export(handlebars_lex_print($tmpl));' . PHP_EOL;
@@ -71,15 +73,16 @@ function testBodyTokenizer($test) {
 
 function testBodyParser($test) {
     // Get the printed ast from handlebarsc
-    list($ok, $printed) = handlebarsc($test['template'], 'parse');
+    list($ok, $printed, $command) = handlebarsc($test['template'], 'parse');
     if( $ok != empty($test['exception']) ) {
         $msg = sprintf("handlebarsc error did not match test error: %d != %d, output was %s",
                 $ok, empty($test['exception']), $printed);
         trigger_error($msg, E_USER_ERROR);
     }
     
+    $output .= '/* ' . $command . ' */' . PHP_EOL;
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
-    $output .= 'var_export(handlebars_parse_print($tmpl));' . PHP_EOL;
+    $output .= '$v = handlebars_parse_print($tmpl); $v ? var_export($v) : var_export(handlebars_error());' . PHP_EOL;
     //$output .= 'var_export(handlebars_parse($test["template"]));' . PHP_EOL;
     $output .= '--EXPECT--' . PHP_EOL;
     $output .= var_export($printed, true);
