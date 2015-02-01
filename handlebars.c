@@ -16,6 +16,8 @@
 #include "php_handlebars.h"
 
 #include "handlebars.h"
+#include "handlebars_ast.h"
+#include "handlebars_ast_printer.h"
 #include "handlebars_context.h"
 #include "handlebars_token.h"
 #include "handlebars_token_list.h"
@@ -55,7 +57,42 @@ PHP_FUNCTION(handlebars_error)
 
 PHP_FUNCTION(handlebars_lex)
 {
-    // @todo
+    char * tmpl;
+    long tmpl_len;
+    struct handlebars_context * ctx;
+    struct handlebars_token_list * list;
+    struct handlebars_token_list_item * el = NULL;
+    struct handlebars_token_list_item * tmp = NULL;
+    struct handlebars_token * token = NULL;
+    char * name;
+    zval * child;
+    
+    // Arguments
+    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &tmpl, &tmpl_len) == FAILURE ) {
+        RETURN_FALSE;
+    }
+    
+    ctx = handlebars_context_ctor();
+    ctx->tmpl = tmpl;
+    list = handlebars_lex(ctx);
+    
+    array_init(return_value);
+    
+    handlebars_token_list_foreach(list, el, tmp) {
+        token = el->data;
+        name = estrdup(handlebars_token_readable_type(token->token));
+        
+    	child = NULL;
+        ALLOC_INIT_ZVAL(child);
+        array_init(child);
+        add_assoc_string_ex(child, "name", sizeof("name"), name, 0);
+        if( token->text ) {
+            add_assoc_string_ex(child, "text", sizeof("text"), token->text, 1);
+        }
+        add_next_index_zval(return_value, child);
+    }
+    
+    handlebars_context_dtor(ctx);
 }
 
 PHP_FUNCTION(handlebars_lex_print)
@@ -110,7 +147,7 @@ PHP_FUNCTION(handlebars_parse_print)
         php_handlebars_error(errmsg TSRMLS_CC);
         RETVAL_FALSE;
     } else {
-        output = handlebars_ast_print(ctx->program);
+        output = handlebars_ast_print(ctx->program, 0);
         RETVAL_STRING(output, 1);
     }
     

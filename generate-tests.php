@@ -64,10 +64,12 @@ function testBodyTokenizer($test) {
     $output = '';
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
     $output .= 'var_export(handlebars_lex_print($tmpl));' . PHP_EOL;
-    //$output .= 'var_export(handlebars_lex($test["template"]));' . PHP_EOL;
+    $output .= 'echo PHP_EOL;' . PHP_EOL;
+    $output .= 'var_export(handlebars_lex($tmpl));' . PHP_EOL;
     $output .= '--EXPECT--' . PHP_EOL;
     $output .= var_export(token_print($test['expected']), true);
-    //$output .= var_export($test['expected'], true);
+    $output .= PHP_EOL;
+    $output .= var_export($test['expected'], true);
     return $output;
 }
 
