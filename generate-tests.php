@@ -61,6 +61,7 @@ function testBody($test, $specName) {
 }
 
 function testBodyTokenizer($test) {
+    $output = '';
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
     $output .= 'var_export(handlebars_lex_print($tmpl));' . PHP_EOL;
     //$output .= 'var_export(handlebars_lex($test["template"]));' . PHP_EOL;
@@ -71,22 +72,13 @@ function testBodyTokenizer($test) {
 }
 
 function testBodyParser($test) {
-    // Get the printed ast from handlebarsc
-    /*
-    list($ok, $printed, $command) = handlebarsc($test['template'], 'parse');
-    if( $ok != empty($test['exception']) ) {
-        $msg = sprintf("handlebarsc error did not match test error: %d != %d, output was %s",
-                $ok, empty($test['exception']), $printed);
-        trigger_error($msg, E_USER_ERROR);
-    }
-    */
-    
     if( empty($test['exception']) ) {
         $expected = rtrim($test['expected'], " \t\r\n");
     } else {
         $expected = false; //$test['message'];
     }
     
+    $output = '';
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
     $output .= '$v = handlebars_parse_print($tmpl); var_export($v); // var_export(handlebars_error());' . PHP_EOL;
     //$output .= 'var_export(handlebars_parse($test["template"]));' . PHP_EOL;
