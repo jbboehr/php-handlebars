@@ -1,6 +1,10 @@
 
 # php-handlebars
 
+[![Build Status](https://travis-ci.org/jbboehr/php-handlebars.svg?branch=master)](https://travis-ci.org/jbboehr/php-handlebars)
+
+PHP bindings for the handlebars.c lexer and parser
+
 
 ## Requirements
 
