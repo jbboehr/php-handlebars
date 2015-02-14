@@ -98,7 +98,7 @@ static zval * php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node 
                 add_assoc_zval_ex(current, ZEND_STRS("sexpr"),
                     php_handlebars_ast_node_to_zval(node->node.mustache.sexpr TSRMLS_CC));
             }
-            add_assoc_bool_ex(current, ZEND_STRS("escaped"),
+            add_assoc_long_ex(current, ZEND_STRS("escaped"),
                     node->node.mustache.escaped);
             break;
         }
@@ -163,7 +163,7 @@ static zval * php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node 
                 add_assoc_zval_ex(current, ZEND_STRS("close"),
                         php_handlebars_ast_node_to_zval(node->node.block.close TSRMLS_CC));
             }
-            add_assoc_bool_ex(current, ZEND_STRS("inverted"), node->node.block.inverted);
+            add_assoc_long_ex(current, ZEND_STRS("inverted"), node->node.block.inverted);
             break;
         }
         case HANDLEBARS_AST_NODE_CONTENT: {
@@ -199,8 +199,8 @@ static zval * php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node 
                         php_handlebars_ast_list_to_zval(node->node.id.parts TSRMLS_CC));
             }
             add_assoc_long_ex(current, ZEND_STRS("depth"), node->node.id.depth);
-            add_assoc_bool_ex(current, ZEND_STRS("is_simple"), node->node.id.is_simple);
-            add_assoc_bool_ex(current, ZEND_STRS("is_scoped"), node->node.id.is_scoped);
+            add_assoc_long_ex(current, ZEND_STRS("is_simple"), node->node.id.is_simple);
+            add_assoc_long_ex(current, ZEND_STRS("is_scoped"), node->node.id.is_scoped);
             if( node->node.id.id_name ) {
                 add_assoc_stringl_ex(current, ZEND_STRS("id_name"),
                     node->node.id.id_name,
@@ -238,6 +238,7 @@ static zval * php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node 
                     node->node.string.string,
                     node->node.string.length, 1);
             }
+            break;
         }
         case HANDLEBARS_AST_NODE_NUMBER: {
             if( node->node.number.string ) {
@@ -245,6 +246,7 @@ static zval * php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node 
                     node->node.number.string,
                     node->node.number.length, 1);
             }
+            break;
         }
         case HANDLEBARS_AST_NODE_BOOLEAN: {
             if( node->node.boolean.string ) {
@@ -252,6 +254,7 @@ static zval * php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node 
                     node->node.boolean.string,
                     node->node.boolean.length, 1);
             }
+            break;
         }
         case HANDLEBARS_AST_NODE_COMMENT: {
             if( node->node.comment.comment ) {
@@ -259,8 +262,9 @@ static zval * php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node 
                     node->node.comment.comment,
                     node->node.boolean.length, 1);
             }
+            break;
         }
-        case HANDLEBARS_AST_NODE_PATH_SEGMENT:
+        case HANDLEBARS_AST_NODE_PATH_SEGMENT: {
             if( node->node.path_segment.separator ) {
                 add_assoc_stringl_ex(current, ZEND_STRS("separator"),
                     node->node.path_segment.separator,
@@ -272,6 +276,7 @@ static zval * php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node 
                     node->node.path_segment.part_length, 1);
             }
             break;
+        }
         case HANDLEBARS_AST_NODE_NIL:
             break;
     }
