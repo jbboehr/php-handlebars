@@ -20,7 +20,10 @@
 #include "handlebars_ast.h"
 #include "handlebars_ast_list.h"
 #include "handlebars_ast_printer.h"
+#include "handlebars_compiler.h"
 #include "handlebars_context.h"
+#include "handlebars_opcode_printer.h"
+#include "handlebars_opcodes.h"
 #include "handlebars_token.h"
 #include "handlebars_token_list.h"
 #include "handlebars_token_printer.h"
@@ -284,6 +287,115 @@ static zval * php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node 
     return current;
 }
 
+static void php_handlebars_operand_append_zval(struct handlebars_operand * operand, zval * arr TSRMLS_DC)
+{
+    switch( operand->type ) {
+        case handlebars_operand_type_null:
+            add_next_index_null(arr);
+            break;
+        case handlebars_operand_type_boolean:
+            add_next_index_bool(arr, (int) operand->data.boolval);
+            break;
+        case handlebars_operand_type_long:
+            add_next_index_long(arr, operand->data.longval);
+            break;
+        case handlebars_operand_type_string:
+            add_next_index_string(arr, operand->data.stringval, 1);
+            break;
+        case handlebars_operand_type_array: {
+            zval * current;
+            char ** tmp = operand->data.arrayval;
+            
+            ALLOC_INIT_ZVAL(current);
+            array_init(current);
+            
+            for( ; *tmp; ++tmp ) {
+                add_next_index_string(arr, *tmp, 1);
+            }
+            
+            add_next_index_zval(arr, current);
+            break;
+        }
+    }
+}
+
+static zval * php_handlebars_opcode_to_zval(struct handlebars_opcode * opcode TSRMLS_DC)
+{
+    zval * current;
+    zval * args;
+    const char * name = handlebars_opcode_readable_type(opcode->type);
+    short num = handlebars_opcode_num_operands(opcode->type);
+    
+    ALLOC_INIT_ZVAL(current);
+    array_init(current);
+    
+    // note: readable tpye should be a const char so STRS should work
+    add_assoc_stringl_ex(current, "opcode", sizeof("opcode"), name, strlen(name) + 1, 1);
+    
+    ALLOC_INIT_ZVAL(args);
+    array_init(args);
+    
+    add_assoc_zval_ex(current, "args", sizeof("args"), args);
+    
+    if( num >= 1 ) {
+        php_handlebars_operand_append_zval(&opcode->op1, args);
+    }
+    if( num >= 2 ) {
+        php_handlebars_operand_append_zval(&opcode->op2, args);
+    }
+    if( num >= 3 ) {
+        php_handlebars_operand_append_zval(&opcode->op3, args);
+    }
+    
+    return current;
+}
+
+static zval * php_handlebars_opcodes_to_zval(struct handlebars_opcode ** opcodes, size_t count TSRMLS_DC)
+{
+    zval * current;
+    size_t i;
+    struct handlebars_opcode ** pos = opcodes;
+    short num;
+    
+    ALLOC_INIT_ZVAL(current);
+    array_init(current);
+    
+    for( i = 0; i < count; i++, pos++ ) {
+        add_next_index_zval(current, php_handlebars_opcode_to_zval(*pos TSRMLS_CC));
+    }
+    
+    return current;
+}
+
+static zval * php_handlebars_compiler_to_zval(struct handlebars_compiler * compiler TSRMLS_DC)
+{
+    zval * current = NULL;
+    zval * children = NULL;
+    size_t i;
+    struct handlebars_compiler * child;
+    
+    ALLOC_INIT_ZVAL(current);
+    array_init(current);
+    
+    // Opcodes
+    add_assoc_zval_ex(current, "opcodes", sizeof("opcodes"),
+            php_handlebars_opcodes_to_zval(compiler->opcodes, compiler->opcodes_length TSRMLS_CC));
+    
+    // Children
+    ALLOC_INIT_ZVAL(children);
+    array_init(children);
+    
+    for( i = 0; i < compiler->children_length; i++ ) {
+        child = *(compiler->children + i);
+        add_next_index_zval(children, php_handlebars_compiler_to_zval(child TSRMLS_CC));
+    }
+    
+    add_assoc_zval_ex(current, "children", sizeof("children"), children);
+    
+    // Return
+    return current;
+}
+
 /* }}} ---------------------------------------------------------------------- */
 /* {{{ Functions ------------------------------------------------------------ */
 
@@ -419,12 +531,124 @@ PHP_FUNCTION(handlebars_parse_print)
     handlebars_context_dtor(ctx);
 }
 
+PHP_FUNCTION(handlebars_compile)
+{
+    char * tmpl;
+    long tmpl_len;
+    long flags;
+    struct handlebars_context * ctx;
+    struct handlebars_compiler * compiler;
+    struct handlebars_opcode_printer * printer;
+    int retval;
+    zval * output;
+    char * errmsg;
+    
+    // Arguments
+    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|l", &tmpl, &tmpl_len, &flags) == FAILURE ) {
+        RETURN_FALSE;
+    }
+    
+    // Initialize
+    ctx = handlebars_context_ctor();
+    compiler = handlebars_compiler_ctor(ctx);
+    printer = handlebars_opcode_printer_ctor(ctx);
+    handlebars_compiler_set_flags(compiler, flags);
+    
+    // Parse
+    ctx->tmpl = tmpl;
+    retval = handlebars_yy_parse(ctx);
+    
+    if( ctx->error != NULL ) {
+        // errmsg will be freed by the destruction of ctx
+        errmsg = handlebars_context_get_errmsg(ctx);
+        php_handlebars_error(errmsg TSRMLS_CC);
+        RETVAL_FALSE;
+        goto error;
+    }
+    
+    // Compile
+    handlebars_compiler_compile(compiler, ctx->program);
+    if( compiler->errnum ) {
+        // @todo decent error message
+        RETVAL_FALSE;
+        goto error;
+    }
+    
+    output = php_handlebars_compiler_to_zval(compiler TSRMLS_CC);
+    RETVAL_ZVAL(output, 0, 0);
+    
+error:
+    handlebars_context_dtor(ctx);
+}
+
+PHP_FUNCTION(handlebars_compile_print)
+{
+    char * tmpl;
+    long tmpl_len;
+    long flags;
+    struct handlebars_context * ctx;
+    struct handlebars_compiler * compiler;
+    struct handlebars_opcode_printer * printer;
+    int retval;
+    char * output;
+    char * errmsg;
+    
+    // Arguments
+    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|l", &tmpl, &tmpl_len, &flags) == FAILURE ) {
+        RETURN_FALSE;
+    }
+    
+    // Initialize
+    ctx = handlebars_context_ctor();
+    compiler = handlebars_compiler_ctor(ctx);
+    printer = handlebars_opcode_printer_ctor(ctx);
+    handlebars_compiler_set_flags(compiler, flags);
+    
+    // Parse
+    ctx->tmpl = tmpl;
+    retval = handlebars_yy_parse(ctx);
+    
+    if( ctx->error != NULL ) {
+        // errmsg will be freed by the destruction of ctx
+        errmsg = handlebars_context_get_errmsg(ctx);
+        php_handlebars_error(errmsg TSRMLS_CC);
+        RETVAL_FALSE;
+        goto error;
+    }
+    
+    // Compile
+    handlebars_compiler_compile(compiler, ctx->program);
+    if( compiler->errnum ) {
+        // @todo decent error message
+        RETVAL_FALSE;
+        goto error;
+    }
+    
+    // Printer
+    handlebars_opcode_printer_print(printer, compiler);
+    RETVAL_STRING(printer->output, 1);
+    
+error:
+    handlebars_context_dtor(ctx);
+}
+
 /* }}} ---------------------------------------------------------------------- */
 /* {{{ Module Hooks --------------------------------------------------------- */
 
 static PHP_MINIT_FUNCTION(handlebars)
 {
+    int flags = CONST_CS | CONST_PERSISTENT | CONST_CT_SUBST;
+    
     HANDLEBARS_G(handlebars_last_error) = NULL;
+    
+    REGISTER_LONG_CONSTANT("HANDLEBARS_COMPILER_FLAG_NONE", handlebars_compiler_flag_none, flags);
+    REGISTER_LONG_CONSTANT("HANDLEBARS_COMPILER_FLAG_USE_DEPTHS", handlebars_compiler_flag_use_depths, flags);
+    REGISTER_LONG_CONSTANT("HANDLEBARS_COMPILER_FLAG_STRING_PARAMS", handlebars_compiler_flag_string_params, flags);
+    REGISTER_LONG_CONSTANT("HANDLEBARS_COMPILER_FLAG_TRACK_IDS", handlebars_compiler_flag_track_ids, flags);
+    REGISTER_LONG_CONSTANT("HANDLEBARS_COMPILER_FLAG_KNOWN_HELPERS_ONLY", handlebars_compiler_flag_known_helpers_only, flags);
+    REGISTER_LONG_CONSTANT("HANDLEBARS_COMPILER_FLAG_COMPAT", handlebars_compiler_flag_compat, flags);
+    REGISTER_LONG_CONSTANT("HANDLEBARS_COMPILER_FLAG_ALL", handlebars_compiler_flag_all, flags);
+    
     return SUCCESS;
 }
 
@@ -455,6 +679,8 @@ zend_function_entry handlebars_functions[] = {
     PHP_FE(handlebars_lex_print, NULL)
     PHP_FE(handlebars_parse, NULL)
     PHP_FE(handlebars_parse_print, NULL)
+    PHP_FE(handlebars_compile, NULL)
+    PHP_FE(handlebars_compile_print, NULL)
 };
 
 /* }}} ---------------------------------------------------------------------- */
