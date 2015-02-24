@@ -330,7 +330,7 @@ static zval * php_handlebars_opcode_to_zval(struct handlebars_opcode * opcode TS
     array_init(current);
     
     // note: readable tpye should be a const char so STRS should work
-    add_assoc_stringl_ex(current, "opcode", sizeof("opcode"), name, strlen(name) + 1, 1);
+    add_assoc_stringl_ex(current, "opcode", sizeof("opcode"), name, strlen(name), 1);
     
     ALLOC_INIT_ZVAL(args);
     array_init(args);
