@@ -654,7 +654,6 @@ static PHP_MINIT_FUNCTION(handlebars)
 
 static PHP_MSHUTDOWN_FUNCTION(handlebars)
 {
-    php_handlebars_error(NULL TSRMLS_CC);
     return SUCCESS;
 }
 
