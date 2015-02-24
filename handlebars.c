@@ -98,8 +98,8 @@ static zval * php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node 
                 add_assoc_zval_ex(current, ZEND_STRS("sexpr"),
                     php_handlebars_ast_node_to_zval(node->node.mustache.sexpr TSRMLS_CC));
             }
-            add_assoc_long_ex(current, ZEND_STRS("escaped"),
-                    node->node.mustache.escaped);
+            add_assoc_long_ex(current, ZEND_STRS("unescaped"),
+                    node->node.mustache.unescaped);
             break;
         }
         case HANDLEBARS_AST_NODE_SEXPR: {
