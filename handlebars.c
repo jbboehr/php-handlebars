@@ -310,7 +310,7 @@ static void php_handlebars_operand_append_zval(struct handlebars_operand * opera
             array_init(current);
             
             for( ; *tmp; ++tmp ) {
-                add_next_index_string(arr, *tmp, 1);
+                add_next_index_string(current, *tmp, 1);
             }
             
             add_next_index_zval(arr, current);
