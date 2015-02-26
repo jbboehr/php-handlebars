@@ -91,6 +91,20 @@ static zval * php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node 
     typeName = estrdup(handlebars_ast_node_readable_type(node->type));
     add_assoc_string_ex(current, ZEND_STRS("type"), typeName, 0);
     
+    if( node->strip ) {
+        zval * strip;
+        ALLOC_INIT_ZVAL(strip);
+        array_init(strip);
+        add_assoc_bool_ex(strip, ZEND_STRS("left"), 1 && (node->strip & handlebars_ast_strip_flag_left));
+        add_assoc_bool_ex(strip, ZEND_STRS("right"), 1 && (node->strip & handlebars_ast_strip_flag_right));
+        add_assoc_bool_ex(strip, ZEND_STRS("openStandalone"), 1 && (node->strip & handlebars_ast_strip_flag_open_standalone));
+        add_assoc_bool_ex(strip, ZEND_STRS("closeStandalone"), 1 && (node->strip & handlebars_ast_strip_flag_close_standalone));
+        add_assoc_bool_ex(strip, ZEND_STRS("inlineStandalone"), 1 && (node->strip & handlebars_ast_strip_flag_inline_standalone));
+        add_assoc_bool_ex(strip, ZEND_STRS("leftStripped"), 1 && (node->strip & handlebars_ast_strip_flag_left_stripped));
+        add_assoc_bool_ex(strip, ZEND_STRS("rightStriped"), 1 && (node->strip & handlebars_ast_strip_flag_right_stripped));
+        add_assoc_zval_ex(current, ZEND_STRS("strip"), strip);   
+    }
+    
     switch( node->type ) {
         case HANDLEBARS_AST_NODE_PROGRAM: {
             if( node->node.program.statements ) {
@@ -177,6 +191,11 @@ static zval * php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node 
                 add_assoc_stringl_ex(current, ZEND_STRS("string"),
                     node->node.content.string,
                     node->node.content.length, 1);
+            }
+            if( node->node.content.original ) {
+                add_assoc_stringl_ex(current, ZEND_STRS("original"),
+                    node->node.content.original,
+                    strlen(node->node.content.original), 1);
             }
             break;
         }
