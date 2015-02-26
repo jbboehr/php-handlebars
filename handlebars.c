@@ -5,6 +5,8 @@
 #include "config.h"
 #endif
 
+#include <talloc.h>
+
 #include "php.h"
 #include "php_ini.h"
 #include "ext/standard/info.h"
@@ -22,6 +24,7 @@
 #include "handlebars_ast_printer.h"
 #include "handlebars_compiler.h"
 #include "handlebars_context.h"
+#include "handlebars_memory.h"
 #include "handlebars_opcode_printer.h"
 #include "handlebars_opcodes.h"
 #include "handlebars_token.h"
@@ -396,6 +399,53 @@ static zval * php_handlebars_compiler_to_zval(struct handlebars_compiler * compi
     return current;
 }
 
+static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval * arr TSRMLS_DC)
+{
+    HashTable * data_hash = NULL;
+    HashPosition data_pointer = NULL;
+    zval ** data_entry = NULL;
+    long count = 0;
+    char ** ptr;
+    const char ** ptr2;
+    char ** known_helpers;
+    
+    if( !arr || Z_TYPE_P(arr) != IS_ARRAY ) {
+        return NULL;
+    }
+    
+    data_hash = HASH_OF(arr);
+    count = zend_hash_num_elements(data_hash);
+    
+    if( !count ) {
+        return NULL;
+    }
+
+    // Count builtins >.>
+    for( ptr2 = handlebars_builtins; *ptr2; ++ptr2, ++count );
+    
+    // Allocate array
+    ptr = known_helpers = talloc_array(ctx, char *, count + 1);
+        
+    // Copy in known helpers
+    zend_hash_internal_pointer_reset_ex(data_hash, &data_pointer);
+    while( zend_hash_get_current_data_ex(data_hash, (void**) &data_entry, &data_pointer) == SUCCESS ) {
+        if( Z_TYPE_PP(data_entry) == IS_STRING ) {
+            *ptr++ = (char *) handlebars_talloc_strdup(ctx, Z_STRVAL_PP(data_entry));
+        }
+        zend_hash_move_forward_ex(data_hash, &data_pointer);
+    }
+
+    // Copy in builtins
+    for( ptr2 = handlebars_builtins; *ptr2; ++ptr2 ) {
+        *ptr++ = (char *) handlebars_talloc_strdup(ctx, *ptr2);
+    }
+    
+    // Null terminate
+    *ptr++ = NULL;
+
+    return known_helpers;
+}
+
 /* }}} ---------------------------------------------------------------------- */
 /* {{{ Functions ------------------------------------------------------------ */
 
@@ -536,15 +586,17 @@ PHP_FUNCTION(handlebars_compile)
     char * tmpl;
     long tmpl_len;
     long flags;
+    zval * known_helpers = NULL;
     struct handlebars_context * ctx;
     struct handlebars_compiler * compiler;
     struct handlebars_opcode_printer * printer;
     int retval;
     zval * output;
     char * errmsg;
+    char ** known_helpers_arr;
     
     // Arguments
-    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|l", &tmpl, &tmpl_len, &flags) == FAILURE ) {
+    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|lz", &tmpl, &tmpl_len, &flags, &known_helpers) == FAILURE ) {
         RETURN_FALSE;
     }
     
@@ -553,6 +605,12 @@ PHP_FUNCTION(handlebars_compile)
     compiler = handlebars_compiler_ctor(ctx);
     printer = handlebars_opcode_printer_ctor(ctx);
     handlebars_compiler_set_flags(compiler, flags);
+    
+    // Get known helpers
+    known_helpers_arr = php_handlebars_compiler_known_helpers_from_zval(compiler, known_helpers TSRMLS_CC);
+    if( known_helpers_arr ) {
+        compiler->known_helpers = known_helpers_arr;
+    }
     
     // Parse
     ctx->tmpl = tmpl;
@@ -586,15 +644,17 @@ PHP_FUNCTION(handlebars_compile_print)
     char * tmpl;
     long tmpl_len;
     long flags;
+    zval * known_helpers = NULL;
     struct handlebars_context * ctx;
     struct handlebars_compiler * compiler;
     struct handlebars_opcode_printer * printer;
     int retval;
     char * output;
     char * errmsg;
+    char ** known_helpers_arr;
     
     // Arguments
-    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|l", &tmpl, &tmpl_len, &flags) == FAILURE ) {
+    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|lz", &tmpl, &tmpl_len, &flags, &known_helpers) == FAILURE ) {
         RETURN_FALSE;
     }
     
@@ -603,6 +663,12 @@ PHP_FUNCTION(handlebars_compile_print)
     compiler = handlebars_compiler_ctor(ctx);
     printer = handlebars_opcode_printer_ctor(ctx);
     handlebars_compiler_set_flags(compiler, flags);
+    
+    // Get known helpers
+    known_helpers_arr = php_handlebars_compiler_known_helpers_from_zval(ctx, known_helpers TSRMLS_CC);
+    if( known_helpers_arr ) {
+        compiler->known_helpers = known_helpers_arr;
+    }
     
     // Parse
     ctx->tmpl = tmpl;
