@@ -7,7 +7,7 @@ before_install:
   - git clone https://github.com/jbboehr/handlebars.c handlebars-c
   - cd handlebars-c
   - ./bootstrap
-  - ./configure --prefix=/usr 
+  - ./configure
   - sudo make install
   - sudo ldconfig
   - cd ..

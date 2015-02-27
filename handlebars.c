@@ -720,11 +720,14 @@ error:
 /* }}} ---------------------------------------------------------------------- */
 /* {{{ Module Hooks --------------------------------------------------------- */
 
+static PHP_GINIT_FUNCTION(handlebars)
+{
+    handlebars_globals->handlebars_last_error = NULL;
+}
+
 static PHP_MINIT_FUNCTION(handlebars)
 {
     int flags = CONST_CS | CONST_PERSISTENT | CONST_CT_SUBST;
-    
-    HANDLEBARS_G(handlebars_last_error) = NULL;
     
     REGISTER_LONG_CONSTANT("HANDLEBARS_COMPILER_FLAG_NONE", handlebars_compiler_flag_none, flags);
     REGISTER_LONG_CONSTANT("HANDLEBARS_COMPILER_FLAG_USE_DEPTHS", handlebars_compiler_flag_use_depths, flags);
@@ -757,7 +760,7 @@ static PHP_MINFO_FUNCTION(handlebars)
 /* }}} ---------------------------------------------------------------------- */
 /* {{{ Function Entry ------------------------------------------------------- */
 
-zend_function_entry handlebars_functions[] = {
+static const zend_function_entry handlebars_functions[] = {
     PHP_FE(handlebars_error, NULL)
     PHP_FE(handlebars_lex, NULL)
     PHP_FE(handlebars_lex_print, NULL)
@@ -765,6 +768,7 @@ zend_function_entry handlebars_functions[] = {
     PHP_FE(handlebars_parse_print, NULL)
     PHP_FE(handlebars_compile, NULL)
     PHP_FE(handlebars_compile_print, NULL)
+	PHP_FE_END
 };
 
 /* }}} ---------------------------------------------------------------------- */
@@ -780,7 +784,11 @@ zend_module_entry handlebars_module_entry = {
     NULL,                               /* RSHUTDOWN */
     PHP_MINFO(handlebars),              /* MINFO */
     PHP_HANDLEBARS_VERSION,             /* Version */
-    STANDARD_MODULE_PROPERTIES
+    PHP_MODULE_GLOBALS(handlebars),
+    PHP_GINIT(handlebars),
+    NULL,
+    NULL,
+    STANDARD_MODULE_PROPERTIES_EX
 };
 
 #ifdef COMPILE_DL_HANDLEBARS 
