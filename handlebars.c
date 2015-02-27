@@ -360,13 +360,13 @@ static zval * php_handlebars_opcode_to_zval(struct handlebars_opcode * opcode TS
     add_assoc_zval_ex(current, "args", sizeof("args"), args);
     
     if( num >= 1 ) {
-        php_handlebars_operand_append_zval(&opcode->op1, args);
+        php_handlebars_operand_append_zval(&opcode->op1, args TSRMLS_CC);
     }
     if( num >= 2 ) {
-        php_handlebars_operand_append_zval(&opcode->op2, args);
+        php_handlebars_operand_append_zval(&opcode->op2, args TSRMLS_CC);
     }
     if( num >= 3 ) {
-        php_handlebars_operand_append_zval(&opcode->op3, args);
+        php_handlebars_operand_append_zval(&opcode->op3, args TSRMLS_CC);
     }
     
     return current;
