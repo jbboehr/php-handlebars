@@ -3,7 +3,8 @@
 
 [![Build Status](https://travis-ci.org/jbboehr/php-handlebars.svg?branch=master)](https://travis-ci.org/jbboehr/php-handlebars)
 
-PHP bindings for the handlebars.c lexer, parser, and compiler.
+PHP bindings for the handlebars.c lexer, parser, and compiler. Use with [handlebars.c](https://github.com/jbboehr/handlebars.c) and [handlebars.php](https://github.com/jbboehr/handlebars.php).
+
 
 
 ## Requirements
