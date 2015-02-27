@@ -21,6 +21,10 @@
 extern zend_module_entry handlebars_module_entry;
 #define phpext_handlebars_ptr &handlebars_module_entry
 
+#ifdef ZTS
+#include "TSRM.h"
+#endif
+
 ZEND_BEGIN_MODULE_GLOBALS(handlebars)
     char * handlebars_last_error;
 ZEND_END_MODULE_GLOBALS(handlebars)
