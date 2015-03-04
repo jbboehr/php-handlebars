@@ -4,6 +4,7 @@
 .deps
 .dirstamp
 .libs
+.settings
 autom4te.cache
 gmon*
 *.a
