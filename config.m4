@@ -12,3 +12,4 @@ if test "$PHP_HANDLEBARS" != "no"; then
 	PHP_NEW_EXTENSION(handlebars, handlebars.c, $ext_shared, , $PHP_HANDLEBARS_FLAGS)
 	PHP_SUBST(HANDLEBARS_SHARED_LIBADD)
 fi
+
