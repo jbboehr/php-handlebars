@@ -6,16 +6,21 @@
 PHP bindings for the handlebars.c lexer, parser, and compiler. Use with [handlebars.c](https://github.com/jbboehr/handlebars.c) and [handlebars.php](https://github.com/jbboehr/handlebars.php).
 
 
-
-## Requirements
-
-[handlebars.c](https://github.com/jbboehr/handlebars.c)
-
-
 ## Installation
 
 
-### Ubuntu:
+### PPA
+
+```bash
+sudo apt-add-repository ppa:jbboehr/handlebars
+sudo apt-get update
+sudo apt-get install handlebarsc libhandlebars-dev
+```
+
+
+### Source
+
+Install [handlebars.c](https://github.com/jbboehr/handlebars.c)
 
 ```bash
 sudo apt-get install php5-dev
