@@ -149,8 +149,9 @@ function hbs_generate_export_test_body(array $test) {
     $output .= '$compileFlags = ' . var_export($compileFlags, true) . ';' . PHP_EOL;
     $output .= '$knownHelpers = ' . var_export($knownHelpers, true) . ';' . PHP_EOL;
     $output .= 'var_export(handlebars_compile($tmpl, $compileFlags, $knownHelpers));' . PHP_EOL;
+    $output .= 'var_export(gettype(handlebars_compile_print($tmpl, $compileFlags, $knownHelpers)));' . PHP_EOL;
     $output .= '--EXPECT--' . PHP_EOL;
-    $output .= var_export($expectedOpcodes, true) . PHP_EOL;
+    $output .= var_export($expectedOpcodes, true) . var_export('string', true) . PHP_EOL;
     return $output;
 }
 
