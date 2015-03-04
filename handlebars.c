@@ -78,7 +78,7 @@ static zval * php_handlebars_ast_list_to_zval(struct handlebars_ast_list * list 
 static zval * php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node TSRMLS_DC)
 {
     zval * current = NULL;
-    const char * typeName = NULL;
+    char * typeName = NULL;
     
     ALLOC_INIT_ZVAL(current);
     array_init(current);
@@ -345,14 +345,14 @@ static zval * php_handlebars_opcode_to_zval(struct handlebars_opcode * opcode TS
 {
     zval * current;
     zval * args;
-    const char * name = handlebars_opcode_readable_type(opcode->type);
+    char * name = estrdup(handlebars_opcode_readable_type(opcode->type));
     short num = handlebars_opcode_num_operands(opcode->type);
     
     ALLOC_INIT_ZVAL(current);
     array_init(current);
     
     // note: readable tpye should be a const char so STRS should work
-    add_assoc_stringl_ex(current, "opcode", sizeof("opcode"), name, strlen(name), 1);
+    add_assoc_stringl_ex(current, "opcode", sizeof("opcode"), name, strlen(name), 0);
     
     ALLOC_INIT_ZVAL(args);
     array_init(args);
@@ -604,7 +604,7 @@ PHP_FUNCTION(handlebars_compile)
 {
     char * tmpl;
     long tmpl_len;
-    long flags;
+    long flags = 0;
     zval * known_helpers = NULL;
     struct handlebars_context * ctx;
     struct handlebars_compiler * compiler;
@@ -628,7 +628,7 @@ PHP_FUNCTION(handlebars_compile)
     // Get known helpers
     known_helpers_arr = php_handlebars_compiler_known_helpers_from_zval(compiler, known_helpers TSRMLS_CC);
     if( known_helpers_arr ) {
-        compiler->known_helpers = known_helpers_arr;
+        compiler->known_helpers = (const char **) known_helpers_arr;
     }
     
     // Parse
@@ -662,7 +662,7 @@ PHP_FUNCTION(handlebars_compile_print)
 {
     char * tmpl;
     long tmpl_len;
-    long flags;
+    long flags = 0;
     zval * known_helpers = NULL;
     struct handlebars_context * ctx;
     struct handlebars_compiler * compiler;
@@ -686,7 +686,7 @@ PHP_FUNCTION(handlebars_compile_print)
     // Get known helpers
     known_helpers_arr = php_handlebars_compiler_known_helpers_from_zval(ctx, known_helpers TSRMLS_CC);
     if( known_helpers_arr ) {
-        compiler->known_helpers = known_helpers_arr;
+        compiler->known_helpers = (const char **) known_helpers_arr;
     }
     
     // Parse
@@ -758,17 +758,51 @@ static PHP_MINFO_FUNCTION(handlebars)
 }
 
 /* }}} ---------------------------------------------------------------------- */
+/* {{{ Argument Info -------------------------------------------------------- */
+
+ZEND_BEGIN_ARG_INFO_EX(handlebars_error_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(handlebars_lex_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_INFO(0, tmpl)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(handlebars_lex_print_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_INFO(0, tmpl)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(handlebars_parse_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_INFO(0, tmpl)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(handlebars_parse_print_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_INFO(0, tmpl)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(handlebars_compile_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_INFO(0, tmpl)
+    ZEND_ARG_INFO(0, flags)
+    ZEND_ARG_ARRAY_INFO(0, knownHelpers, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(handlebars_compile_print_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_INFO(0, tmpl)
+    ZEND_ARG_INFO(0, flags)
+    ZEND_ARG_ARRAY_INFO(0, knownHelpers, 1)
+ZEND_END_ARG_INFO()
+
+/* }}} ---------------------------------------------------------------------- */
 /* {{{ Function Entry ------------------------------------------------------- */
 
 static const zend_function_entry handlebars_functions[] = {
-    PHP_FE(handlebars_error, NULL)
-    PHP_FE(handlebars_lex, NULL)
-    PHP_FE(handlebars_lex_print, NULL)
-    PHP_FE(handlebars_parse, NULL)
-    PHP_FE(handlebars_parse_print, NULL)
-    PHP_FE(handlebars_compile, NULL)
-    PHP_FE(handlebars_compile_print, NULL)
-	PHP_FE_END
+    PHP_FE(handlebars_error, handlebars_error_args)
+    PHP_FE(handlebars_lex, handlebars_lex_args)
+    PHP_FE(handlebars_lex_print, handlebars_lex_print_args)
+    PHP_FE(handlebars_parse, handlebars_parse_args)
+    PHP_FE(handlebars_parse_print, handlebars_parse_print_args)
+    PHP_FE(handlebars_compile, handlebars_compile_args)
+    PHP_FE(handlebars_compile_print, handlebars_compile_print_args)
+    PHP_FE_END
 };
 
 /* }}} ---------------------------------------------------------------------- */
