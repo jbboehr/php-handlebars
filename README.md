@@ -22,6 +22,8 @@ sudo apt-get install handlebarsc libhandlebars-dev
 
 Install [handlebars.c](https://github.com/jbboehr/handlebars.c)
 
+#### Ubuntu
+
 ```bash
 sudo apt-get install php5-dev
 git clone https://github.com/jbboehr/php-handlebars.git --recursive
@@ -31,7 +33,13 @@ phpize
 make
 make test
 sudo make install
+
+# precise
 echo extension=handlebars.so | sudo tee /etc/php5/conf.d/handlebars.ini
+
+# trusty
+echo extension=handlebars.so | sudo tee /etc/php5/mods-available/handlebars.ini
+sudo php5enmod handlebars
 ```
 
 
