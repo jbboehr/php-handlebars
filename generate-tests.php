@@ -29,11 +29,14 @@ function patch_opcodes(array &$opcodes) {
             if( $k === 'options' ) {
                 unset($main[$k]);
             } else if( $k === 'isSimple' || $k === 'guid' || $k === 'usePartial' || 
-                       $k === 'trackIds' || $k === 'stringParams' || $k === 'depths' ) {
+                       $k === 'trackIds' || $k === 'stringParams' ) {
                 // @todo add?
                 unset($main[$k]);
             } else if( $k === 'children' ) {
                 $childrenFn($main[$k]);
+            } else if( $k === 'depths' ) {
+                $main[$k] = $main[$k]['list'];
+                //unset($main[$k]['list']);
             }
         }
         return $main;
