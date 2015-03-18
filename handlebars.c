@@ -393,8 +393,11 @@ static zval * php_handlebars_compiler_to_zval(struct handlebars_compiler * compi
 {
     zval * current = NULL;
     zval * children = NULL;
+    zval * zdepths = NULL;
     size_t i;
     struct handlebars_compiler * child;
+    long depths;
+    int depthi;
     
     ALLOC_INIT_ZVAL(current);
     array_init(current);
@@ -413,6 +416,22 @@ static zval * php_handlebars_compiler_to_zval(struct handlebars_compiler * compi
     }
     
     add_assoc_zval_ex(current, "children", sizeof("children"), children);
+    
+    // Depths
+    ALLOC_INIT_ZVAL(zdepths);
+    array_init(zdepths);
+    
+    depths = compiler->depths;
+    depthi = 1;
+    while( depths > 0 ) {
+        if( depths & 1 ) {
+            add_next_index_long(zdepths, depthi);
+        }
+        depthi++;
+        depths = depths >> 1;
+    }
+    
+    add_assoc_zval_ex(current, "depths", sizeof("depths"), zdepths);
     
     // Return
     return current;
