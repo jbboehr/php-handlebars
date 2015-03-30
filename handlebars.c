@@ -736,6 +736,12 @@ error:
     handlebars_context_dtor(ctx);
 }
 
+
+PHP_FUNCTION(handlebars_version)
+{
+    RETURN_STRING(handlebars_version_string(), 1);
+}
+
 /* }}} ---------------------------------------------------------------------- */
 /* {{{ Module Hooks --------------------------------------------------------- */
 
@@ -810,6 +816,9 @@ ZEND_BEGIN_ARG_INFO_EX(handlebars_compile_print_args, ZEND_SEND_BY_VAL, ZEND_RET
     ZEND_ARG_ARRAY_INFO(0, knownHelpers, 1)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(handlebars_version_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
+ZEND_END_ARG_INFO()
+
 /* }}} ---------------------------------------------------------------------- */
 /* {{{ Function Entry ------------------------------------------------------- */
 
@@ -821,6 +830,7 @@ static const zend_function_entry handlebars_functions[] = {
     PHP_FE(handlebars_parse_print, handlebars_parse_print_args)
     PHP_FE(handlebars_compile, handlebars_compile_args)
     PHP_FE(handlebars_compile_print, handlebars_compile_print_args)
+    PHP_FE(handlebars_version, handlebars_version_args)
     PHP_FE_END
 };
 
