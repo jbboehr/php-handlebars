@@ -29,4 +29,3 @@ script:
 branches:
   only:
     - master
-    - php7

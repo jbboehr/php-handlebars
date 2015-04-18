@@ -654,6 +654,13 @@ PHP_FUNCTION(handlebars_compile)
         RETURN_FALSE;
     }
     
+#if PHP_MAJOR_VERSION >= 7
+    // Dereference zval
+    if (Z_TYPE_P(known_helpers) == IS_REFERENCE) {
+        ZVAL_DEREF(known_helpers);
+    }
+#endif
+    
     // Initialize
     ctx = handlebars_context_ctor();
     compiler = handlebars_compiler_ctor(ctx);
@@ -710,6 +717,13 @@ PHP_FUNCTION(handlebars_compile_print)
     if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|lz", &tmpl, &tmpl_len, &flags, &known_helpers) == FAILURE ) {
         RETURN_FALSE;
     }
+    
+#if PHP_MAJOR_VERSION >= 7
+    // Dereference zval
+    if (Z_TYPE_P(known_helpers) == IS_REFERENCE) {
+        ZVAL_DEREF(known_helpers);
+    }
+#endif
     
     // Initialize
     ctx = handlebars_context_ctor();
