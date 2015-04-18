@@ -580,7 +580,6 @@ PHP_FUNCTION(handlebars_parse)
     strsize_t tmpl_len;
     struct handlebars_context * ctx;
     int retval;
-    zval * output;
     char * errmsg;
     
     // Arguments
@@ -645,7 +644,6 @@ PHP_FUNCTION(handlebars_compile)
     struct handlebars_compiler * compiler;
     struct handlebars_opcode_printer * printer;
     int retval;
-    zval * output;
     char * errmsg;
     char ** known_helpers_arr;
     
@@ -796,11 +794,7 @@ static PHP_MINIT_FUNCTION(handlebars)
 
 static PHP_RSHUTDOWN_FUNCTION(handlebars)
 {
-    if( HANDLEBARS_G(handlebars_last_error) ) {
-        efree(HANDLEBARS_G(handlebars_last_error));
-        HANDLEBARS_G(handlebars_last_error) = NULL;
-    }
-    
+    php_handlebars_error(NULL TSRMLS_CC);
     return SUCCESS;
 }
 
