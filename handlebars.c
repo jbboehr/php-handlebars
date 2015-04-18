@@ -48,6 +48,8 @@ static void php_handlebars_ast_list_to_zval(struct handlebars_ast_list * list, z
 #define _add_assoc_stringl_ex(...) add_assoc_stringl_ex(__VA_ARGS__, 1)
 #define _RETURN_STRING(a) RETURN_STRING(a, 1)
 #define _RETVAL_STRING(a) RETVAL_STRING(a, 1)
+#define _DECLARE_ZVAL(name) zval * name
+#define _ALLOC_INIT_ZVAL(name) ALLOC_INIT_ZVAL(name)
 typedef int strsize_t;
 #else
 #define _add_assoc_string(z, k, s) add_assoc_string_ex(z, k, strlen(k)+1, s)
@@ -55,8 +57,12 @@ typedef int strsize_t;
 #define _add_assoc_stringl_ex add_assoc_stringl_ex
 #define _RETURN_STRING(a) RETURN_STRING(a)
 #define _RETVAL_STRING(a) RETVAL_STRING(a)
+#define _DECLARE_ZVAL(name) zval name ## _v; zval * name = &name ## _v
+#define _ALLOC_INIT_ZVAL(name) ZVAL_NULL(name)
 typedef size_t strsize_t;
 #endif
+
+#define _DECLARE_ALLOC_INIT_ZVAL(name) _DECLARE_ZVAL(name); _ALLOC_INIT_ZVAL(name)
 
 /* }}} ---------------------------------------------------------------------- */
 /* {{{ Utils ---------------------------------------------------------------- */
@@ -73,10 +79,10 @@ typedef size_t strsize_t;
 static inline void add_assoc_handlebars_ast_node(zval * current, const char * key, size_t length, 
         struct handlebars_ast_node * node TSRMLS_DC)
 {
-    zval * tmp;
-    
+    _DECLARE_ZVAL(tmp);
+
     if( node ) {
-        ALLOC_INIT_ZVAL(tmp);
+        _ALLOC_INIT_ZVAL(tmp);
         php_handlebars_ast_node_to_zval(node, tmp TSRMLS_CC);
         add_assoc_zval_ex(current, key, length, tmp);
     }
@@ -85,10 +91,10 @@ static inline void add_assoc_handlebars_ast_node(zval * current, const char * ke
 static inline void add_assoc_handlebars_ast_list(zval * current, const char * key, size_t length, 
         struct handlebars_ast_list * list TSRMLS_DC)
 {
-    zval * tmp;
+    _DECLARE_ZVAL(tmp);
     
     if( list ) {
-        ALLOC_INIT_ZVAL(tmp);
+        _ALLOC_INIT_ZVAL(tmp);
         php_handlebars_ast_list_to_zval(list, tmp TSRMLS_CC);
         add_assoc_zval_ex(current, key, length, tmp);
     }
@@ -96,10 +102,10 @@ static inline void add_assoc_handlebars_ast_list(zval * current, const char * ke
 
 static inline void add_next_index_handlebars_ast_node(zval * current, struct handlebars_ast_node * node TSRMLS_DC)
 {
-    zval * tmp;
+    _DECLARE_ZVAL(tmp);
 
     if( node ) {
-        ALLOC_INIT_ZVAL(tmp);
+        _ALLOC_INIT_ZVAL(tmp);
         php_handlebars_ast_node_to_zval(node, tmp TSRMLS_CC);
         add_next_index_zval(current, tmp);
     }
@@ -125,7 +131,7 @@ static inline void php_handlebars_ast_list_to_zval(struct handlebars_ast_list * 
 {
     struct handlebars_ast_list_item * item;
     struct handlebars_ast_list_item * ltmp;
-    zval * tmp;
+    _DECLARE_ZVAL(tmp);
     
     if( list != NULL ) {
         array_init(current);
@@ -169,8 +175,7 @@ static inline void php_handlebars_strip_to_zval(unsigned strip, zval * current)
 
 static void php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node, zval * current TSRMLS_DC)
 {
-    zval * tmp = NULL;
-    
+    _DECLARE_ZVAL(tmp);
     array_init(current);
     
     if( node == NULL ) {
@@ -180,7 +185,7 @@ static void php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node, z
     _add_assoc_string_ex(current, ZEND_STRS("type"), (char *) handlebars_ast_node_readable_type(node->type));
     
     if( node->strip ) {
-        ALLOC_INIT_ZVAL(tmp);
+        _ALLOC_INIT_ZVAL(tmp);
         php_handlebars_strip_to_zval(node->strip, tmp);
         add_assoc_zval_ex(current, ZEND_STRS("strip"), tmp);   
     }
@@ -344,10 +349,10 @@ static void php_handlebars_operand_append_zval(struct handlebars_operand * opera
             add_next_index_string(arr, operand->data.stringval, 1);
             break;
         case handlebars_operand_type_array: {
-            zval * current;
+            _DECLARE_ZVAL(current);
             char ** tmp = operand->data.arrayval;
             
-            ALLOC_INIT_ZVAL(current);
+            _ALLOC_INIT_ZVAL(current);
             array_init(current);
             
             for( ; *tmp; ++tmp ) {
@@ -362,18 +367,15 @@ static void php_handlebars_operand_append_zval(struct handlebars_operand * opera
 
 static void php_handlebars_opcode_to_zval(struct handlebars_opcode * opcode, zval * current TSRMLS_DC)
 {
-    zval * args;
+    _DECLARE_ZVAL(args);
     short num = handlebars_opcode_num_operands(opcode->type);
     
     array_init(current);
-    
+
     _add_assoc_string_ex(current, ZEND_STRS("opcode"), handlebars_opcode_readable_type(opcode->type));
     
-    ALLOC_INIT_ZVAL(args);
+    _ALLOC_INIT_ZVAL(args);
     array_init(args);
-    
-    add_assoc_zval_ex(current, "args", sizeof("args"), args);
-    
     if( num >= 1 ) {
         php_handlebars_operand_append_zval(&opcode->op1, args TSRMLS_CC);
     }
@@ -383,6 +385,7 @@ static void php_handlebars_opcode_to_zval(struct handlebars_opcode * opcode, zva
     if( num >= 3 ) {
         php_handlebars_operand_append_zval(&opcode->op3, args TSRMLS_CC);
     }
+    add_assoc_zval_ex(current, "args", sizeof("args"), args);
 }
 
 static inline void php_handlebars_opcodes_to_zval(struct handlebars_opcode ** opcodes, size_t count, zval * current TSRMLS_DC)
@@ -390,12 +393,12 @@ static inline void php_handlebars_opcodes_to_zval(struct handlebars_opcode ** op
     size_t i;
     struct handlebars_opcode ** pos = opcodes;
     short num;
-    zval * tmp;
+    _DECLARE_ZVAL(tmp);
     
     array_init(current);
     
     for( i = 0; i < count; i++, pos++ ) {
-        ALLOC_INIT_ZVAL(tmp);
+        _ALLOC_INIT_ZVAL(tmp);
         php_handlebars_opcode_to_zval(*pos, tmp TSRMLS_CC);
         add_next_index_zval(current, tmp);
     }
@@ -405,13 +408,13 @@ static inline void php_handlebars_compilers_to_zval(struct handlebars_compiler *
 {
     size_t i;
     struct handlebars_compiler * child;
-    zval * tmp;
+    _DECLARE_ZVAL(tmp);
 
     array_init(current);
 
     for( i = 0; i < count; i++ ) {
         child = *(compilers + i);
-        ALLOC_INIT_ZVAL(tmp);
+        _ALLOC_INIT_ZVAL(tmp);
         php_handlebars_compiler_to_zval(child, tmp TSRMLS_CC);
         add_next_index_zval(current, tmp);
     }
@@ -419,22 +422,22 @@ static inline void php_handlebars_compilers_to_zval(struct handlebars_compiler *
 
 static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compiler, zval * current TSRMLS_DC)
 {
-    zval * tmp;
+    _DECLARE_ZVAL(tmp);
     
     array_init(current);
     
     // Opcodes
-    ALLOC_INIT_ZVAL(tmp);
+    _ALLOC_INIT_ZVAL(tmp);
     php_handlebars_opcodes_to_zval(compiler->opcodes, compiler->opcodes_length, tmp TSRMLS_CC);
     add_assoc_zval_ex(current, "opcodes", sizeof("opcodes"), tmp);
     
     // Children
-    ALLOC_INIT_ZVAL(tmp);
+    _ALLOC_INIT_ZVAL(tmp);
     php_handlebars_compilers_to_zval(compiler->children, compiler->children_length, tmp TSRMLS_CC);
     add_assoc_zval_ex(current, "children", sizeof("children"), tmp);
     
     // Depths
-    ALLOC_INIT_ZVAL(tmp);
+    _ALLOC_INIT_ZVAL(tmp);
     php_handlebars_depths_to_zval(compiler->depths, tmp);
     add_assoc_zval_ex(current, "depths", sizeof("depths"), tmp);
 }
@@ -505,7 +508,7 @@ PHP_FUNCTION(handlebars_lex)
     struct handlebars_token_list_item * el = NULL;
     struct handlebars_token_list_item * tmp = NULL;
     struct handlebars_token * token = NULL;
-    zval * child;
+    _DECLARE_ZVAL(child);
     
     // Arguments
     if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &tmpl, &tmpl_len) == FAILURE ) {
@@ -521,7 +524,7 @@ PHP_FUNCTION(handlebars_lex)
     handlebars_token_list_foreach(list, el, tmp) {
         token = el->data;
         
-        ALLOC_INIT_ZVAL(child);
+        _ALLOC_INIT_ZVAL(child);
         array_init(child);
         _add_assoc_string_ex(child, ZEND_STRS("name"), (char *) handlebars_token_readable_type(token->token));
         if( token->text ) {
