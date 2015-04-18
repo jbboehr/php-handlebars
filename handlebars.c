@@ -582,7 +582,7 @@ PHP_FUNCTION(handlebars_parse)
         RETVAL_FALSE;
     } else {
         output = php_handlebars_ast_node_to_zval(ctx->program TSRMLS_CC);
-        RETVAL_ZVAL(output, 0, 0);
+        RETVAL_ZVAL(output, 0, 1);
     }
     
     handlebars_context_dtor(ctx);
@@ -671,7 +671,7 @@ PHP_FUNCTION(handlebars_compile)
     }
     
     output = php_handlebars_compiler_to_zval(compiler TSRMLS_CC);
-    RETVAL_ZVAL(output, 0, 0);
+    RETVAL_ZVAL(output, 0, 1);
     
 error:
     handlebars_context_dtor(ctx);
@@ -770,6 +770,12 @@ static PHP_MSHUTDOWN_FUNCTION(handlebars)
     return SUCCESS;
 }
 
+static PHP_RSHUTDOWN_FUNCTION(handlebars)
+{
+    php_handlebars_error(NULL TSRMLS_CC);
+    return SUCCESS;
+}
+
 static PHP_MINFO_FUNCTION(handlebars)
 {
     php_info_print_table_start();
@@ -844,7 +850,7 @@ zend_module_entry handlebars_module_entry = {
     PHP_MINIT(handlebars),              /* MINIT */
     PHP_MSHUTDOWN(handlebars),          /* MSHUTDOWN */
     NULL,                               /* RINIT */
-    NULL,                               /* RSHUTDOWN */
+    PHP_RSHUTDOWN(handlebars),          /* RSHUTDOWN */
     PHP_MINFO(handlebars),              /* MINFO */
     PHP_HANDLEBARS_VERSION,             /* Version */
     PHP_MODULE_GLOBALS(handlebars),
