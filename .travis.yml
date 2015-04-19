@@ -1,10 +1,10 @@
 language: php
 
 before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq autoconf automake check bison flex gawk gcc git-core lcov libjson0-dev libtalloc-dev libtool m4 make pkg-config uthash-dev
-  - git submodule update --init --recursive
-  - git clone https://github.com/jbboehr/handlebars.c handlebars-c
+  - travis_retry sudo apt-get update -qq
+  - travis_retry sudo apt-get install -qq autoconf automake check bison flex gawk gcc git-core lcov libjson0-dev libtalloc-dev libtool m4 make pkg-config uthash-dev
+#  - travis_retry git submodule update --init --recursive
+  - travis_retry git clone https://github.com/jbboehr/handlebars.c handlebars-c
   - cd handlebars-c
   - ./bootstrap
   - ./configure
@@ -17,7 +17,11 @@ php:
   - 5.4
   - 5.5
   - 5.6
-  - 7
+  - 7.0
+
+branches:
+  only:
+    - master
 
 script:
   - phpize
@@ -26,6 +30,3 @@ script:
   - php generate-tests.php
   - echo n | make test
 
-branches:
-  only:
-    - master
