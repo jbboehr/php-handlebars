@@ -106,6 +106,7 @@ function hbs_generate_test_head(array $test) {
     $output .= "<?php if( $skip ) die('skip $reason'); ?>" . "\n";
     $output .= '--FILE--' . "\n";
     $output .= '<?php' . "\n";
+    $output .= 'use Handlebars\Native;' . "\n";
     //$output .= '$test = ' . var_export($test, true) . ';' . "\n";
     return $output;
 }
@@ -151,8 +152,8 @@ function hbs_generate_export_test_body(array $test) {
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
     $output .= '$compileFlags = ' . var_export($compileFlags, true) . ';' . PHP_EOL;
     $output .= '$knownHelpers = ' . var_export($knownHelpers, true) . ';' . PHP_EOL;
-    $output .= 'var_export(handlebars_compile($tmpl, $compileFlags, $knownHelpers));' . PHP_EOL;
-    $output .= 'var_export(gettype(handlebars_compile_print($tmpl, $compileFlags, $knownHelpers)));' . PHP_EOL;
+    $output .= 'var_export(Native::compile($tmpl, $compileFlags, $knownHelpers));' . PHP_EOL;
+    $output .= 'var_export(gettype(Native::compilePrint($tmpl, $compileFlags, $knownHelpers)));' . PHP_EOL;
     $output .= '--EXPECT--' . PHP_EOL;
     $output .= var_export($expectedOpcodes, true) . var_export('string', true) . PHP_EOL;
     return $output;
@@ -161,9 +162,9 @@ function hbs_generate_export_test_body(array $test) {
 function hbs_generate_spec_test_body_tokenizer(array $test) {
     $output = '';
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
-    $output .= 'var_export(handlebars_lex_print($tmpl));' . PHP_EOL;
+    $output .= 'var_export(Native::lexPrint($tmpl));' . PHP_EOL;
     $output .= 'echo PHP_EOL;' . PHP_EOL;
-    $output .= 'var_export(handlebars_lex($tmpl));' . PHP_EOL;
+    $output .= 'var_export(Native::lex($tmpl));' . PHP_EOL;
     $output .= '--EXPECT--' . PHP_EOL;
     $output .= var_export(token_print($test['expected']), true);
     $output .= PHP_EOL;
@@ -180,17 +181,25 @@ function hbs_generate_spec_test_body_parser(array $test) {
     
     $output = '';
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
-    $output .= '$v = handlebars_parse_print($tmpl); var_export($v); // var_export(handlebars_error());' . PHP_EOL;
+    $output .= '
+try {
+    var_export(Native::parsePrint($tmpl));
+    var_export(gettype(Native::parse($tmpl)));
+} catch( Handlebars\ParseException $e ) {
+    echo "exception";
+    //echo $e->getMessage();
+}
+' . PHP_EOL;
     $output .= 'echo PHP_EOL;' . PHP_EOL;
-    $output .= 'var_export(gettype(handlebars_parse($tmpl)));' . PHP_EOL;
+    $output .= '' . PHP_EOL;
     $output .= '--EXPECT--' . PHP_EOL;
-    $output .= var_export($expected, true) . PHP_EOL;
     if( empty($test['exception']) ) {
+        $output .= var_export($expected, true);
         $output .= var_export('array', true);
     } else {
-        $output .= var_export('boolean', true);
+        $output .= 'exception'; 
+        //$output .= $test['message'];
     }
-    //$output .= var_export($test['expected'], true);
     return $output;
 }
 
