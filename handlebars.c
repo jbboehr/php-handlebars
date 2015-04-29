@@ -782,6 +782,62 @@ PHP_METHOD(Handlebars, version)
 }
 
 /* }}} handlebars_version */
+/* {{{ proto mixed handlebars_name_lookup(mixed objOrArray, string field) */
+
+static void php_handlebars_name_lookup(INTERNAL_FUNCTION_PARAMETERS)
+{
+    zval * obj_or_array;
+    char * field;
+    strsize_t field_len;
+	zval * entry;
+    zval fname;
+    zval retval;
+    zval fparams[1];
+    HashTable * data_hash;
+
+    // Arguments
+    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zs", &obj_or_array, &field, &field_len) == FAILURE ) {
+        return;
+    }
+
+    switch( Z_TYPE_P(obj_or_array) ) {
+        case IS_ARRAY:
+            entry = zend_hash_str_find(Z_ARRVAL_P(obj_or_array), field, field_len);
+	        if (Z_TYPE_P(entry) == IS_INDIRECT) {
+		        entry = Z_INDIRECT_P(entry);
+	        }
+	        RETURN_ZVAL_FAST(entry);
+            break;
+        case IS_OBJECT:
+	        ZVAL_STRINGL(&fname, "offsetget", sizeof("offsetget")-1);
+            if( zend_hash_str_exists(&Z_OBJCE_P(obj_or_array)->function_table, Z_STRVAL(fname), Z_STRLEN(fname)) ) {
+                ZVAL_STRINGL(&fparams[0], field, field_len);
+                call_user_function(&Z_OBJCE_P(obj_or_array)->function_table, obj_or_array, &fname, return_value, 1, fparams);
+            } else {
+                if( Z_OBJ_HT_P(obj_or_array)->get_properties != NULL ) {
+                    data_hash = Z_OBJ_HT_P(obj_or_array)->get_properties(obj_or_array TSRMLS_CC);
+                    entry = zend_hash_str_find(data_hash, field, field_len);
+                    if (Z_TYPE_P(entry) == IS_INDIRECT) {
+                        entry = Z_INDIRECT_P(entry);
+                    }
+                    RETURN_ZVAL_FAST(entry);
+                }
+            }
+            break;
+    }
+}
+
+PHP_FUNCTION(handlebars_name_lookup)
+{
+    php_handlebars_name_lookup(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+}
+
+PHP_METHOD(Handlebars, nameLookup)
+{
+    php_handlebars_name_lookup(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+}
+
+/* }}} handlebars_version */
 
 /* }}} ---------------------------------------------------------------------- */
 /* {{{ Argument Info -------------------------------------------------------- */
@@ -820,6 +876,11 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(handlebars_version_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(handlebars_name_lookup_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
+    ZEND_ARG_INFO(0, objOrArray)
+    ZEND_ARG_INFO(0, field)
+ZEND_END_ARG_INFO()
+
 /* }}} ---------------------------------------------------------------------- */
 /* {{{ Function Entry ------------------------------------------------------- */
 
@@ -847,6 +908,7 @@ static zend_function_entry Handlebars_methods[] = {
     PHP_ME(Handlebars, compile, handlebars_compile_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(Handlebars, compilePrint, handlebars_compile_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(Handlebars, version, handlebars_version_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(Handlebars, nameLookup, handlebars_name_lookup_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
   { NULL, NULL, NULL }
 };
 
