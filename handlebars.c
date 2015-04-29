@@ -11,6 +11,7 @@
 #include "php_ini.h"
 #include "ext/standard/info.h"
 #include "zend_exceptions.h"
+#include "zend_hash.h"
 #include "zend_types.h"
 
 #ifdef ZTS
@@ -789,10 +790,6 @@ static void php_handlebars_name_lookup(INTERNAL_FUNCTION_PARAMETERS)
     zval * obj_or_array;
     char * field;
     strsize_t field_len;
-	zval * entry;
-    zval fname;
-    zval retval;
-    zval fparams[1];
     HashTable * data_hash;
 
     // Arguments
@@ -800,16 +797,51 @@ static void php_handlebars_name_lookup(INTERNAL_FUNCTION_PARAMETERS)
         return;
     }
 
+#if PHP_MAJOR_VERSION < 7
+    zval ** entry = NULL;
+    zval * fname;
+    zval * fparams[1];
+    switch( Z_TYPE_P(obj_or_array) ) {
+        case IS_ARRAY:
+            if (zend_hash_find(Z_ARRVAL_P(obj_or_array), field, field_len + 1, (void**)&entry) != FAILURE) {
+                *return_value = **entry;
+                zval_copy_ctor(return_value);
+            }
+            break;
+        case IS_OBJECT:
+            if( zend_hash_exists(&Z_OBJCE_P(obj_or_array)->function_table, "offsetget", sizeof("offsetget")) ) {
+                // @todo can this be done without an alloc
+                ALLOC_INIT_ZVAL(fname);
+                ALLOC_INIT_ZVAL(fparams[0]);
+                ZVAL_STRINGL(fname, "offsetget", sizeof("offsetget")-1, 0);
+                ZVAL_STRINGL(fparams[0], field, field_len, 0);
+                call_user_function(&Z_OBJCE_P(obj_or_array)->function_table, &obj_or_array, fname, return_value, 1, fparams TSRMLS_CC);
+                efree(fname);
+                efree(fparams[0]);
+            } else if( Z_OBJ_HT_P(obj_or_array)->get_properties != NULL ) {
+                data_hash = Z_OBJ_HT_P(obj_or_array)->get_properties(obj_or_array TSRMLS_CC);
+                if (zend_hash_find(data_hash, field, field_len + 1, (void**)&entry) != FAILURE) {
+                    *return_value = **entry;
+                    zval_copy_ctor(return_value);
+                }
+            }
+            break;
+    }
+#else
+    zval * entry;
+    zval fname;
+    zval retval;
+    zval fparams[1];
     switch( Z_TYPE_P(obj_or_array) ) {
         case IS_ARRAY:
             entry = zend_hash_str_find(Z_ARRVAL_P(obj_or_array), field, field_len);
-	        if (Z_TYPE_P(entry) == IS_INDIRECT) {
-		        entry = Z_INDIRECT_P(entry);
-	        }
-	        RETURN_ZVAL_FAST(entry);
+            if (Z_TYPE_P(entry) == IS_INDIRECT) {
+                entry = Z_INDIRECT_P(entry);
+            }
+            RETURN_ZVAL_FAST(entry);
             break;
         case IS_OBJECT:
-	        ZVAL_STRINGL(&fname, "offsetget", sizeof("offsetget")-1);
+            ZVAL_STRINGL(&fname, "offsetget", sizeof("offsetget")-1);
             if( zend_hash_str_exists(&Z_OBJCE_P(obj_or_array)->function_table, Z_STRVAL(fname), Z_STRLEN(fname)) ) {
                 ZVAL_STRINGL(&fparams[0], field, field_len);
                 call_user_function(&Z_OBJCE_P(obj_or_array)->function_table, obj_or_array, &fname, return_value, 1, fparams);
@@ -825,6 +857,7 @@ static void php_handlebars_name_lookup(INTERNAL_FUNCTION_PARAMETERS)
             }
             break;
     }
+#endif
 }
 
 PHP_FUNCTION(handlebars_name_lookup)
