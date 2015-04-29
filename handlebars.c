@@ -10,6 +10,7 @@
 #include "php.h"
 #include "php_ini.h"
 #include "ext/standard/info.h"
+#include "zend_exceptions.h"
 #include "zend_types.h"
 
 #ifdef ZTS
@@ -40,6 +41,13 @@ static void php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node, z
 static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compiler, zval * current TSRMLS_DC);
 static void php_handlebars_ast_list_to_zval(struct handlebars_ast_list * list, zval * current TSRMLS_DC);
 
+static zend_class_entry * Handlebars_ce_ptr;
+static zend_class_entry * HandlebarsException_ce_ptr;
+static zend_class_entry * HandlebarsLexException_ce_ptr;
+static zend_class_entry * HandlebarsParseException_ce_ptr;
+static zend_class_entry * HandlebarsCompileException_ce_ptr;
+static zend_class_entry * HandlebarsRuntimeException_ce_ptr;
+
 /* {{{ PHP7 Compat ---------------------------------------------------------- */
 
 #if PHP_MAJOR_VERSION < 7
@@ -52,6 +60,7 @@ static void php_handlebars_ast_list_to_zval(struct handlebars_ast_list * list, z
 #define _DECLARE_ZVAL(name) zval * name
 #define _ALLOC_INIT_ZVAL(name) ALLOC_INIT_ZVAL(name)
 #define _HBS_STRS ZEND_STRS
+#define _zend_register_internal_class_ex(class, parent) zend_register_internal_class_ex(class, parent, NULL TSRMLS_CC)
 typedef int strsize_t;
 #else
 #define _add_next_index_string add_next_index_string
@@ -63,10 +72,17 @@ typedef int strsize_t;
 #define _DECLARE_ZVAL(name) zval name ## _v; zval * name = &name ## _v
 #define _ALLOC_INIT_ZVAL(name) ZVAL_NULL(name)
 #define _HBS_STRS ZEND_STRL
+#define _zend_register_internal_class_ex zend_register_internal_class_ex
 typedef size_t strsize_t;
 #endif
 
 #define _DECLARE_ALLOC_INIT_ZVAL(name) _DECLARE_ZVAL(name); _ALLOC_INIT_ZVAL(name)
+
+enum php_handlebars_flags {
+    PHP_HANDLEBARS_FLAG_NONE = 0,
+    PHP_HANDLEBARS_FLAG_PRINT = 1,
+    PHP_HANDLEBARS_FLAG_EXCEPTIONS = 2
+};
 
 /* }}} ---------------------------------------------------------------------- */
 /* {{{ Utils ---------------------------------------------------------------- */
@@ -115,7 +131,7 @@ static inline void add_next_index_handlebars_ast_node(zval * current, struct han
     }
 }
 
-static void php_handlebars_error(char * msg TSRMLS_DC)
+static void php_handlebars_set_error(char * msg TSRMLS_DC)
 {
     if( HANDLEBARS_G(handlebars_last_error) ) {
         efree(HANDLEBARS_G(handlebars_last_error));
@@ -507,14 +523,29 @@ static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval 
 /* }}} ---------------------------------------------------------------------- */
 /* {{{ Functions ------------------------------------------------------------ */
 
-PHP_FUNCTION(handlebars_error)
+/* {{{ proto string handlebars_error(void) */
+
+static void php_handlebars_error(INTERNAL_FUNCTION_PARAMETERS)
 {
     if( HANDLEBARS_G(handlebars_last_error) ) {
         _RETURN_STRING(HANDLEBARS_G(handlebars_last_error));
     }
 }
 
-PHP_FUNCTION(handlebars_lex)
+PHP_FUNCTION(handlebars_error)
+{
+    php_handlebars_error(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+}
+
+PHP_METHOD(Handlebars, getLastError)
+{
+    php_handlebars_error(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+}
+
+/* }}} handlebars_error */
+/* {{{ proto mixed handlebars_lex(string tmpl) */
+
+static void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, int flags)
 {
     char * tmpl;
     strsize_t tmpl_len;
@@ -523,122 +554,131 @@ PHP_FUNCTION(handlebars_lex)
     struct handlebars_token_list_item * el = NULL;
     struct handlebars_token_list_item * tmp = NULL;
     struct handlebars_token * token = NULL;
+    char * output;
     _DECLARE_ZVAL(child);
     
     // Arguments
     if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &tmpl, &tmpl_len) == FAILURE ) {
-        RETURN_FALSE;
+        return;
     }
     
     ctx = handlebars_context_ctor();
     ctx->tmpl = tmpl;
     list = handlebars_lex(ctx);
     
-    array_init(return_value);
-    
-    handlebars_token_list_foreach(list, el, tmp) {
-        token = el->data;
+    if( flags & PHP_HANDLEBARS_FLAG_PRINT ) {
+        output = handlebars_token_list_print(list, 0);
+        _RETVAL_STRING(output);
+    } else {
+        array_init(return_value);
         
-        _ALLOC_INIT_ZVAL(child);
-        array_init(child);
-        _add_assoc_string_ex(child, _HBS_STRS("name"), (char *) handlebars_token_readable_type(token->token));
-        if( token->text ) {
-            _add_assoc_string_ex(child, _HBS_STRS("text"), token->text);
+        handlebars_token_list_foreach(list, el, tmp) {
+            token = el->data;
+            
+            _ALLOC_INIT_ZVAL(child);
+            array_init(child);
+            _add_assoc_string_ex(child, _HBS_STRS("name"), (char *) handlebars_token_readable_type(token->token));
+            if( token->text ) {
+                _add_assoc_string_ex(child, _HBS_STRS("text"), token->text);
+            }
+            add_next_index_zval(return_value, child);
         }
-        add_next_index_zval(return_value, child);
     }
-    
+
     handlebars_context_dtor(ctx);
+}
+
+PHP_FUNCTION(handlebars_lex)
+{
+    php_handlebars_lex(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_NONE);
+}
+
+PHP_METHOD(Handlebars, lex)
+{
+    php_handlebars_lex(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_EXCEPTIONS);
 }
 
 PHP_FUNCTION(handlebars_lex_print)
 {
+    php_handlebars_lex(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_PRINT);
+}
+
+PHP_METHOD(Handlebars, lexPrint)
+{
+    php_handlebars_lex(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_PRINT | PHP_HANDLEBARS_FLAG_EXCEPTIONS);
+}
+
+/* }}} handlebars_lex */
+/* {{{ proto mixed handlebars_parse(string tmpl) */
+
+static void php_handlebars_parse(INTERNAL_FUNCTION_PARAMETERS, int flags)
+{
     char * tmpl;
     strsize_t tmpl_len;
     struct handlebars_context * ctx;
-    struct handlebars_token_list * list;
+    int retval;
     char * output;
-    
-    // Arguments
+    char * errmsg;
+
     if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &tmpl, &tmpl_len) == FAILURE ) {
-        RETURN_FALSE;
+        return;
     }
-    
+
     ctx = handlebars_context_ctor();
     ctx->tmpl = tmpl;
-    list = handlebars_lex(ctx);
-    output = handlebars_token_list_print(list, 0);
+    retval = handlebars_yy_parse(ctx);
+
+    if( ctx->error != NULL ) {
+        // errmsg will be freed by the destruction of ctx
+        errmsg = handlebars_context_get_errmsg(ctx);
+        php_handlebars_set_error(errmsg TSRMLS_CC);
+        if( flags & PHP_HANDLEBARS_FLAG_EXCEPTIONS ) {
+            zend_throw_exception(HandlebarsParseException_ce_ptr, errmsg, 0 TSRMLS_CC);
+        } else {
+            RETVAL_FALSE;
+        }
+        goto done;
+    } 
     
-    _RETVAL_STRING(output);
+    if( flags & PHP_HANDLEBARS_FLAG_PRINT ) {
+        output = handlebars_ast_print(ctx->program, 0);
+        _RETVAL_STRING(output);
+    } else {
+        php_handlebars_ast_node_to_zval(ctx->program, return_value TSRMLS_CC);
+    }
     
+done:
     handlebars_context_dtor(ctx);
 }
 
 PHP_FUNCTION(handlebars_parse)
 {
-    char * tmpl;
-    strsize_t tmpl_len;
-    struct handlebars_context * ctx;
-    int retval;
-    char * errmsg;
-    
-    // Arguments
-    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &tmpl, &tmpl_len) == FAILURE ) {
-        RETURN_FALSE;
-    }
-    
-    ctx = handlebars_context_ctor();
-    ctx->tmpl = tmpl;
-    retval = handlebars_yy_parse(ctx);
-    
-    if( ctx->error != NULL ) {
-        // errmsg will be freed by the destruction of ctx
-        errmsg = handlebars_context_get_errmsg(ctx);
-        php_handlebars_error(errmsg TSRMLS_CC);
-        RETVAL_FALSE;
-    } else {
-        php_handlebars_ast_node_to_zval(ctx->program, return_value TSRMLS_CC);
-    }
-    
-    handlebars_context_dtor(ctx);
+    php_handlebars_parse(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_NONE);
+}
+
+PHP_METHOD(Handlebars, parse)
+{
+    php_handlebars_parse(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_EXCEPTIONS);
 }
 
 PHP_FUNCTION(handlebars_parse_print)
 {
-    char * tmpl;
-    strsize_t tmpl_len;
-    struct handlebars_context * ctx;
-    int retval;
-    char * output;
-    char * errmsg;
-    
-    // Arguments
-    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &tmpl, &tmpl_len) == FAILURE ) {
-        RETURN_FALSE;
-    }
-    
-    ctx = handlebars_context_ctor();
-    ctx->tmpl = tmpl;
-    retval = handlebars_yy_parse(ctx);
-    
-    if( ctx->error != NULL ) {
-        // errmsg will be freed by the destruction of ctx
-        errmsg = handlebars_context_get_errmsg(ctx);
-        php_handlebars_error(errmsg TSRMLS_CC);
-        RETVAL_FALSE;
-    } else {
-        output = handlebars_ast_print(ctx->program, 0);
-        _RETVAL_STRING(output);
-    }
-    
-    handlebars_context_dtor(ctx);
+    php_handlebars_parse(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_PRINT);
 }
 
-PHP_FUNCTION(handlebars_compile)
+PHP_METHOD(Handlebars, parsePrint)
+{
+    php_handlebars_parse(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_PRINT | PHP_HANDLEBARS_FLAG_EXCEPTIONS);
+}
+
+/* }}} handlebars_parse */
+/* {{{ proto mixed handlebars_compile(string tmpl[, long flags[, array knownHelpers]]) */
+
+static void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, int flags)
 {
     char * tmpl;
     strsize_t tmpl_len;
-    long flags = 0;
+    long compile_flags = 0;
     zval * known_helpers = NULL;
     struct handlebars_context * ctx;
     struct handlebars_compiler * compiler;
@@ -648,8 +688,8 @@ PHP_FUNCTION(handlebars_compile)
     char ** known_helpers_arr;
     
     // Arguments
-    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|lz", &tmpl, &tmpl_len, &flags, &known_helpers) == FAILURE ) {
-        RETURN_FALSE;
+    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|lz", &tmpl, &tmpl_len, &compile_flags, &known_helpers) == FAILURE ) {
+        return;
     }
     
 #if PHP_MAJOR_VERSION >= 7
@@ -663,7 +703,7 @@ PHP_FUNCTION(handlebars_compile)
     ctx = handlebars_context_ctor();
     compiler = handlebars_compiler_ctor(ctx);
     printer = handlebars_opcode_printer_ctor(ctx);
-    handlebars_compiler_set_flags(compiler, flags);
+    handlebars_compiler_set_flags(compiler, compile_flags);
     
     // Get known helpers
     known_helpers_arr = php_handlebars_compiler_known_helpers_from_zval(compiler, known_helpers TSRMLS_CC);
@@ -678,137 +718,70 @@ PHP_FUNCTION(handlebars_compile)
     if( ctx->error != NULL ) {
         // errmsg will be freed by the destruction of ctx
         errmsg = handlebars_context_get_errmsg(ctx);
-        php_handlebars_error(errmsg TSRMLS_CC);
-        RETVAL_FALSE;
-        goto error;
+        php_handlebars_set_error(errmsg TSRMLS_CC);
+        if( flags & PHP_HANDLEBARS_FLAG_EXCEPTIONS ) {
+            zend_throw_exception(HandlebarsCompileException_ce_ptr, errmsg, 0 TSRMLS_CC);
+        } else {
+            RETVAL_FALSE;
+        }
+        goto done;
     }
     
     // Compile
     handlebars_compiler_compile(compiler, ctx->program);
     if( compiler->errnum ) {
-        // @todo decent error message
-        RETVAL_FALSE;
-        goto error;
+        php_handlebars_set_error("An error occurred during compilation" TSRMLS_CC);
+        if( flags & PHP_HANDLEBARS_FLAG_EXCEPTIONS ) {
+            zend_throw_exception(HandlebarsCompileException_ce_ptr, "An error occurred during compilation", 0 TSRMLS_CC);
+        } else {
+            RETVAL_FALSE;
+        }
+        goto done;
+    } else if( flags & PHP_HANDLEBARS_FLAG_PRINT ) {
+        handlebars_opcode_printer_print(printer, compiler);
+        _RETVAL_STRING(printer->output);
+    } else {
+        php_handlebars_compiler_to_zval(compiler, return_value TSRMLS_CC);
     }
     
-    php_handlebars_compiler_to_zval(compiler, return_value TSRMLS_CC);
-    
-error:
+done:
     handlebars_context_dtor(ctx);
+}
+
+PHP_FUNCTION(handlebars_compile)
+{
+    php_handlebars_compile(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_NONE);
+}
+
+PHP_METHOD(Handlebars, compile)
+{
+    php_handlebars_compile(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_EXCEPTIONS);
 }
 
 PHP_FUNCTION(handlebars_compile_print)
 {
-    char * tmpl;
-    strsize_t tmpl_len;
-    long flags = 0;
-    zval * known_helpers = NULL;
-    struct handlebars_context * ctx;
-    struct handlebars_compiler * compiler;
-    struct handlebars_opcode_printer * printer;
-    int retval;
-    char * output;
-    char * errmsg;
-    char ** known_helpers_arr;
-    
-    // Arguments
-    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|lz", &tmpl, &tmpl_len, &flags, &known_helpers) == FAILURE ) {
-        RETURN_FALSE;
-    }
-    
-#if PHP_MAJOR_VERSION >= 7
-    // Dereference zval
-    if (Z_TYPE_P(known_helpers) == IS_REFERENCE) {
-        ZVAL_DEREF(known_helpers);
-    }
-#endif
-    
-    // Initialize
-    ctx = handlebars_context_ctor();
-    compiler = handlebars_compiler_ctor(ctx);
-    printer = handlebars_opcode_printer_ctor(ctx);
-    handlebars_compiler_set_flags(compiler, flags);
-    
-    // Get known helpers
-    known_helpers_arr = php_handlebars_compiler_known_helpers_from_zval(ctx, known_helpers TSRMLS_CC);
-    if( known_helpers_arr ) {
-        compiler->known_helpers = (const char **) known_helpers_arr;
-    }
-    
-    // Parse
-    ctx->tmpl = tmpl;
-    retval = handlebars_yy_parse(ctx);
-    
-    if( ctx->error != NULL ) {
-        // errmsg will be freed by the destruction of ctx
-        errmsg = handlebars_context_get_errmsg(ctx);
-        php_handlebars_error(errmsg TSRMLS_CC);
-        RETVAL_FALSE;
-        goto error;
-    }
-    
-    // Compile
-    handlebars_compiler_compile(compiler, ctx->program);
-    if( compiler->errnum ) {
-        // @todo decent error message
-        RETVAL_FALSE;
-        goto error;
-    }
-    
-    // Printer
-    handlebars_opcode_printer_print(printer, compiler);
-    _RETVAL_STRING(printer->output);
-    
-error:
-    handlebars_context_dtor(ctx);
+    php_handlebars_compile(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_PRINT);
 }
 
+PHP_METHOD(Handlebars, compilePrint)
+{
+    php_handlebars_compile(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_PRINT | PHP_HANDLEBARS_FLAG_EXCEPTIONS);
+}
+
+/* }}} handlebars_compile */
+/* {{{ proto mixed handlebars_version(void) */
 
 PHP_FUNCTION(handlebars_version)
 {
     _RETURN_STRING(handlebars_version_string());
 }
 
-/* }}} ---------------------------------------------------------------------- */
-/* {{{ Module Hooks --------------------------------------------------------- */
-
-static PHP_GINIT_FUNCTION(handlebars)
+PHP_METHOD(Handlebars, version)
 {
-    handlebars_globals->handlebars_last_error = NULL;
+    _RETURN_STRING(handlebars_version_string());
 }
 
-static PHP_MINIT_FUNCTION(handlebars)
-{
-    int flags = CONST_CS | CONST_PERSISTENT | CONST_CT_SUBST;
-    
-    REGISTER_LONG_CONSTANT("HANDLEBARS_COMPILER_FLAG_NONE", handlebars_compiler_flag_none, flags);
-    REGISTER_LONG_CONSTANT("HANDLEBARS_COMPILER_FLAG_USE_DEPTHS", handlebars_compiler_flag_use_depths, flags);
-    REGISTER_LONG_CONSTANT("HANDLEBARS_COMPILER_FLAG_STRING_PARAMS", handlebars_compiler_flag_string_params, flags);
-    REGISTER_LONG_CONSTANT("HANDLEBARS_COMPILER_FLAG_TRACK_IDS", handlebars_compiler_flag_track_ids, flags);
-    REGISTER_LONG_CONSTANT("HANDLEBARS_COMPILER_FLAG_KNOWN_HELPERS_ONLY", handlebars_compiler_flag_known_helpers_only, flags);
-    REGISTER_LONG_CONSTANT("HANDLEBARS_COMPILER_FLAG_COMPAT", handlebars_compiler_flag_compat, flags);
-    REGISTER_LONG_CONSTANT("HANDLEBARS_COMPILER_FLAG_ALL", handlebars_compiler_flag_all, flags);
-    
-    return SUCCESS;
-}
-
-static PHP_RSHUTDOWN_FUNCTION(handlebars)
-{
-    php_handlebars_error(NULL TSRMLS_CC);
-    return SUCCESS;
-}
-
-static PHP_MINFO_FUNCTION(handlebars)
-{
-    php_info_print_table_start();
-    php_info_print_table_row(2, "Version", PHP_HANDLEBARS_VERSION);
-    php_info_print_table_row(2, "Released", PHP_HANDLEBARS_RELEASE);
-    php_info_print_table_row(2, "Authors", PHP_HANDLEBARS_AUTHORS);
-    // @todo make spec version from libhandlebars function
-    php_info_print_table_row(2, "Spec Version", PHP_HANDLEBARS_SPEC);
-    php_info_print_table_row(2, "libhandlebars Version", handlebars_version_string());
-    php_info_print_table_end();
-}
+/* }}} handlebars_version */
 
 /* }}} ---------------------------------------------------------------------- */
 /* {{{ Argument Info -------------------------------------------------------- */
@@ -861,6 +834,88 @@ static const zend_function_entry handlebars_functions[] = {
     PHP_FE(handlebars_version, handlebars_version_args)
     PHP_FE_END
 };
+
+/* }}} ---------------------------------------------------------------------- */
+/* {{{ Method Entry --------------------------------------------------------- */
+
+static zend_function_entry Handlebars_methods[] = {
+    PHP_ME(Handlebars, getLastError, handlebars_error_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(Handlebars, lex, handlebars_lex_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(Handlebars, lexPrint, handlebars_lex_print_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(Handlebars, parse, handlebars_lex_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(Handlebars, parsePrint, handlebars_lex_print_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(Handlebars, compile, handlebars_compile_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(Handlebars, compilePrint, handlebars_compile_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(Handlebars, version, handlebars_version_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+  { NULL, NULL, NULL }
+};
+
+/* }}} ---------------------------------------------------------------------- */
+/* {{{ Module Hooks --------------------------------------------------------- */
+
+static PHP_GINIT_FUNCTION(handlebars)
+{
+    handlebars_globals->handlebars_last_error = NULL;
+}
+
+static PHP_MINIT_FUNCTION(handlebars)
+{
+    zend_class_entry ce;
+    zend_class_entry * exception_ce = zend_exception_get_default(TSRMLS_C);
+    int flags = CONST_CS | CONST_PERSISTENT;
+    
+    REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_NONE", handlebars_compiler_flag_none, flags);
+    REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_USE_DEPTHS", handlebars_compiler_flag_use_depths, flags);
+    REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_STRING_PARAMS", handlebars_compiler_flag_string_params, flags);
+    REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_TRACK_IDS", handlebars_compiler_flag_track_ids, flags);
+    REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_KNOWN_HELPERS_ONLY", handlebars_compiler_flag_known_helpers_only, flags);
+    REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_COMPAT", handlebars_compiler_flag_compat, flags);
+    REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_ALL", handlebars_compiler_flag_all, flags);
+
+    // Handlebars\Native
+    INIT_CLASS_ENTRY(ce, "Handlebars\\Native", Handlebars_methods);
+    Handlebars_ce_ptr = zend_register_internal_class(&ce TSRMLS_CC);
+    
+    // Handlebars\Exception
+    INIT_CLASS_ENTRY(ce, "Handlebars\\Exception", NULL);
+    HandlebarsException_ce_ptr = _zend_register_internal_class_ex(&ce, exception_ce);
+
+    // Handlebars\LexException
+    INIT_CLASS_ENTRY(ce, "Handlebars\\LexException", NULL);
+    HandlebarsLexException_ce_ptr = _zend_register_internal_class_ex(&ce, HandlebarsException_ce_ptr);
+
+    // Handlebars\ParseException
+    INIT_CLASS_ENTRY(ce, "Handlebars\\ParseException", NULL);
+    HandlebarsParseException_ce_ptr = _zend_register_internal_class_ex(&ce, HandlebarsException_ce_ptr);
+
+    // Handlebars\CompileException
+    INIT_CLASS_ENTRY(ce, "Handlebars\\CompileException", NULL);
+    HandlebarsCompileException_ce_ptr = _zend_register_internal_class_ex(&ce, HandlebarsException_ce_ptr);
+
+    // Handlebars\RuntimeException
+    INIT_CLASS_ENTRY(ce, "Handlebars\\RuntimeException", NULL);
+    HandlebarsRuntimeException_ce_ptr = _zend_register_internal_class_ex(&ce, HandlebarsException_ce_ptr);
+
+    return SUCCESS;
+}
+
+static PHP_RSHUTDOWN_FUNCTION(handlebars)
+{
+    php_handlebars_set_error(NULL TSRMLS_CC);
+    return SUCCESS;
+}
+
+static PHP_MINFO_FUNCTION(handlebars)
+{
+    php_info_print_table_start();
+    php_info_print_table_row(2, "Version", PHP_HANDLEBARS_VERSION);
+    php_info_print_table_row(2, "Released", PHP_HANDLEBARS_RELEASE);
+    php_info_print_table_row(2, "Authors", PHP_HANDLEBARS_AUTHORS);
+    // @todo make spec version from libhandlebars function
+    php_info_print_table_row(2, "Spec Version", PHP_HANDLEBARS_SPEC);
+    php_info_print_table_row(2, "libhandlebars Version", handlebars_version_string());
+    php_info_print_table_end();
+}
 
 /* }}} ---------------------------------------------------------------------- */
 /* {{{ Module Entry --------------------------------------------------------- */
