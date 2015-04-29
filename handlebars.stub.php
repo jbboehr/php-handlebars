@@ -10,6 +10,11 @@ const COMPILER_FLAG_KNOWN_HELPERS_ONLY = (1 << 4);
 const COMPILER_FLAG_COMPAT = (1 << 0);
 const COMPILER_FLAG_ALL = (1 << 4) - 1;
 
+class Exception extends \Exception {}
+class LexException extends Exception {}
+class ParseException extends Exception {}
+class CompileException extends Exception {}
+
 class Native
 {
     /**
@@ -40,6 +45,7 @@ class Native
      *
      * @param string $tmpl
      * @return array
+     * @throws \Handlebars\ParseException
      */
     public static function parse($tmpl) {}
 
@@ -48,6 +54,7 @@ class Native
      * 
      * @param string $tmpl
      * @return string
+     * @throws \Handlebars\ParseException
      */
     public static function parsePrint($tmpl) {}
 
@@ -58,6 +65,7 @@ class Native
      * @param integer $flags
      * @param array $knownHelpers
      * @return array
+     * @throws \Handlebars\CompileException
      */
     public static function compile($tmpl, $flags = 0, array $knownHelpers = null) {}
 
@@ -68,7 +76,7 @@ class Native
      * @param integer $flags
      * @param array $knownHelpers
      * @return string
+     * @throws \Handlebars\CompileException
      */
     public static function compilePrint($tmpl, $flags = 0, array $knownHelpers = null) {}
 }
-
