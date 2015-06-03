@@ -990,7 +990,8 @@ PHP_METHOD(Handlebars, escapeExpression)
 {
     zval * val;
     size_t new_len;
-	char * replaced;
+    char * replaced;
+    zval tmp;
 
     // Arguments
     if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &val) == FAILURE ) {
@@ -1003,10 +1004,11 @@ PHP_METHOD(Handlebars, escapeExpression)
         RETURN_ZVAL(content, 1, 0);
     }
     
-    php_handlebars_expression(val, return_value);
+    INIT_ZVAL(tmp);	
+    php_handlebars_expression(val, &tmp);
 
-	replaced = php_escape_html_entities_ex(Z_STRVAL_P(return_value), Z_STRLEN_P(return_value), &new_len, 0, (int) ENT_QUOTES, "UTF-8", 0 TSRMLS_CC);
-	RETVAL_STR(replaced);
+    replaced = php_escape_html_entities_ex(Z_STRVAL(tmp), Z_STRLEN(tmp), &new_len, 0, (int) ENT_QUOTES, "UTF-8", 0 TSRMLS_CC);
+    RETVAL_STRING(replaced, 0);
 }
 
 /* }}} handlebars_escape_expression */
