@@ -724,7 +724,7 @@ static void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, int flags)
         errmsg = handlebars_context_get_errmsg(ctx);
         php_handlebars_set_error(errmsg TSRMLS_CC);
         if( flags & PHP_HANDLEBARS_FLAG_EXCEPTIONS ) {
-            zend_throw_exception(HandlebarsCompileException_ce_ptr, errmsg, 0 TSRMLS_CC);
+            zend_throw_exception(HandlebarsParseException_ce_ptr, errmsg, 0 TSRMLS_CC);
         } else {
             RETVAL_FALSE;
         }
