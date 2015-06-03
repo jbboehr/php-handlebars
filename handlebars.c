@@ -845,7 +845,8 @@ PHP_METHOD(Handlebars, nameLookup)
             } else if( Z_OBJ_HT_P(obj_or_array)->read_property != NULL ) {
                 ALLOC_INIT_ZVAL(fparams[0]);
                 ZVAL_STRINGL(fparams[0], field, field_len, 0);
-                *return_value = *Z_OBJ_HT_P(obj_or_array)->read_property(obj_or_array, fparams[0], 0, NULL);
+                *return_value = *Z_OBJ_HT_P(obj_or_array)->read_property(obj_or_array, fparams[0], 0, NULL TSRMLS_CC);
+                efree(fparams[0]);
                 zval_copy_ctor(return_value);
             } else if( Z_OBJ_HT_P(obj_or_array)->get_properties != NULL ) {
                 data_hash = Z_OBJ_HT_P(obj_or_array)->get_properties(obj_or_array TSRMLS_CC);
@@ -971,7 +972,7 @@ static zend_always_inline zend_bool php_handlebars_expression(zval * val, zval *
             if( php_handlebars_is_int_array(val TSRMLS_CC) ) {
                 ALLOC_INIT_ZVAL(delim);
                 ZVAL_STRING(delim, ",", 0);
-                php_implode(delim, val, return_value);
+                php_implode(delim, val, return_value TSRMLS_CC);
                 efree(delim);
             } else {
                 zend_throw_exception(HandlebarsRuntimeException_ce_ptr, "Trying to stringify assoc array", 0 TSRMLS_CC);
@@ -1114,6 +1115,7 @@ PHP_METHOD(Handlebars, escapeExpressionCompat)
     php_handlebars_expression(val, &tmp TSRMLS_CC);
 
     replaced = php_escape_html_entities_ex(Z_STRVAL(tmp), Z_STRLEN(tmp), &new_len, 0, ENT_COMPAT, "UTF-8", 1 TSRMLS_CC);
+    zval_dtor(&tmp);
     replaced = php_handlebars_escape_expression_replace_helper(replaced TSRMLS_CC);
     RETVAL_STRING(replaced, 0);
 }
