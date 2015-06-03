@@ -7,7 +7,7 @@ Handlebars\SafeString::__construct()
 use Handlebars\SafeString;
 $safeString = new SafeString('blah');
 var_dump(get_class($safeString));
-$r = new ReflectionProperty($safeString, 'content');
+$r = new ReflectionProperty($safeString, 'value');
 $r->setAccessible(true);
 var_dump($r->getValue($safeString));
 --EXPECT--

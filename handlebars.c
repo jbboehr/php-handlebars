@@ -786,19 +786,28 @@ PHP_METHOD(Handlebars, version)
 }
 
 /* }}} handlebars_version */
-/* {{{ proto mixed handlebars_name_lookup(mixed objOrArray, string field) */
+/* {{{ proto mixed Handlebars::nameLookup(mixed objOrArray, string field) */
 
 static void php_handlebars_name_lookup(INTERNAL_FUNCTION_PARAMETERS)
 {
     zval * obj_or_array;
+    zval * zfield;
     char * field;
+    long index = 0;
     strsize_t field_len;
     HashTable * data_hash;
 
     // Arguments
-    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zs", &obj_or_array, &field, &field_len) == FAILURE ) {
+    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &obj_or_array, &zfield) == FAILURE ) {
         return;
     }
+    
+    if( Z_TYPE_P(zfield) == IS_LONG ) {
+         index = Z_LVAL_P(zfield);
+    }
+    convert_to_string(zfield);
+    field = Z_STRVAL_P(zfield);
+    field_len = Z_STRLEN_P(zfield);
 
 #if PHP_MAJOR_VERSION < 7
     zval ** entry = NULL;
@@ -806,6 +815,13 @@ static void php_handlebars_name_lookup(INTERNAL_FUNCTION_PARAMETERS)
     zval * fparams[1];
     switch( Z_TYPE_P(obj_or_array) ) {
         case IS_ARRAY:
+            if( index ) {
+                if (zend_hash_index_find(Z_ARRVAL_P(obj_or_array), index, (void**)&entry) != FAILURE) {
+                    *return_value = **entry;
+                    zval_copy_ctor(return_value);
+                    return;
+                }
+            }
             if (zend_hash_find(Z_ARRVAL_P(obj_or_array), field, field_len + 1, (void**)&entry) != FAILURE) {
                 *return_value = **entry;
                 zval_copy_ctor(return_value);
@@ -821,6 +837,11 @@ static void php_handlebars_name_lookup(INTERNAL_FUNCTION_PARAMETERS)
                 call_user_function(&Z_OBJCE_P(obj_or_array)->function_table, &obj_or_array, fname, return_value, 1, fparams TSRMLS_CC);
                 efree(fname);
                 efree(fparams[0]);
+            } else if( Z_OBJ_HT_P(obj_or_array)->read_property != NULL ) {
+                ALLOC_INIT_ZVAL(fparams[0]);
+                ZVAL_STRINGL(fparams[0], field, field_len, 0);
+                *return_value = *Z_OBJ_HT_P(obj_or_array)->read_property(obj_or_array, fparams[0], 0, NULL);
+                zval_copy_ctor(return_value);
             } else if( Z_OBJ_HT_P(obj_or_array)->get_properties != NULL ) {
                 data_hash = Z_OBJ_HT_P(obj_or_array)->get_properties(obj_or_array TSRMLS_CC);
                 if (zend_hash_find(data_hash, field, field_len + 1, (void**)&entry) != FAILURE) {
@@ -873,7 +894,7 @@ PHP_METHOD(Handlebars, nameLookup)
     php_handlebars_name_lookup(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
-/* }}} handlebars_version */
+/* }}} Handlebars::nameLookup */
 /* {{{ proto mixed Handlebars::isIntArray(mixed value) */
 
 static zend_bool php_handlebars_is_int_array(zval * arr TSRMLS_DC)
@@ -942,7 +963,7 @@ PHP_METHOD(Handlebars, isIntArray)
 }
 
 /* }}} Handlebars::isIntArray */
-/* {{{ proto mixed handlebars_expression(mixed value) */
+/* {{{ proto mixed Handlebars::expression(mixed value) */
 
 static zend_bool php_handlebars_expression(zval * val, zval * return_value)
 {
@@ -983,8 +1004,8 @@ PHP_METHOD(Handlebars, expression)
     php_handlebars_expression(val, return_value);
 }
 
-/* }}} handlebars_expression */
-/* {{{ proto mixed handlebars_escape_expression(mixed value) */
+/* }}} Handlebars::expression */
+/* {{{ proto mixed Handlebars::escapeExpression(mixed value) */
 
 PHP_METHOD(Handlebars, escapeExpression)
 {
@@ -1000,58 +1021,149 @@ PHP_METHOD(Handlebars, escapeExpression)
     
     // @todo this should probably support inheritance
     if( Z_TYPE_P(val) == IS_OBJECT && zend_get_class_entry(val) == HandlebarsSafeString_ce_ptr ) {
-        zval * content = zend_read_property(Z_OBJCE_P(val), val, "content", sizeof("content")-1, 1 TSRMLS_CC);
-        RETURN_ZVAL(content, 1, 0);
+        zval * value = zend_read_property(Z_OBJCE_P(val), val, "value", sizeof("value")-1, 1 TSRMLS_CC);
+        RETURN_ZVAL(value, 1, 0);
+    }
+    
+    convert_to_string(val);
+    replaced = php_escape_html_entities_ex(Z_STRVAL_P(val), Z_STRLEN_P(val), &new_len, 0, (int) ENT_QUOTES, "UTF-8", 1 TSRMLS_CC);
+    RETVAL_STRING(replaced, 0);
+}
+
+/* }}} Handlebars::escapeExpression */
+/* {{{ proto mixed Handlebars::escapeExpressionCompat(mixed value) */
+
+static inline char * php_handlebars_escape_expression_replace_helper(char * input TSRMLS_DC)
+{
+    char * output;
+    char * source;
+    char * target;
+    char c;
+    long occurrences = 0;
+    long newlen;
+    long oldlen = strlen(input);
+    
+    if( !oldlen ) {
+        return input;
+    }
+    
+    // Count the ocurrences of ` and '
+    for( source = input; c = *source; source++ ) {
+        switch( c ) {
+            case '`':
+            case '\'':
+                occurrences++;
+                break;
+        }
+    }
+    
+    if( !occurrences ) {
+        return input;
+    }
+    
+    // Each occurence increases length by 5
+    newlen = oldlen + (occurrences * 5) + 1;
+    
+    // Allocate new string
+    output = target = (char *) emalloc(sizeof(char) * newlen);
+    
+    // Replace copy
+    for( source = input; c = *source; source++ ) {
+        switch( c ) {
+            case '`':
+                *target++ = '&';
+                *target++ = '#';
+                *target++ = 'x';
+                *target++ = '6';
+                *target++ = '0';
+                *target++ = ';';
+                break;
+            case '\'':
+                *target++ = '&';
+                *target++ = '#';
+                *target++ = 'x';
+                *target++ = '2';
+                *target++ = '7';
+                *target++ = ';';
+                break;
+            default:
+                *target++ = c;
+                break;
+        }
+    }
+    *target++ = '\0';
+    
+    efree(input);
+    return output;
+}
+
+PHP_METHOD(Handlebars, escapeExpressionCompat)
+{
+    zval * val;
+    size_t new_len;
+    char * replaced;
+    zval tmp;
+
+    // Arguments
+    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &val) == FAILURE ) {
+        return;
+    }
+    
+    // @todo this should probably support inheritance
+    if( Z_TYPE_P(val) == IS_OBJECT && zend_get_class_entry(val) == HandlebarsSafeString_ce_ptr ) {
+        zval * value = zend_read_property(Z_OBJCE_P(val), val, "value", sizeof("value")-1, 1 TSRMLS_CC);
+        RETURN_ZVAL(value, 1, 0);
     }
     
     INIT_ZVAL(tmp);	
     php_handlebars_expression(val, &tmp);
 
-    replaced = php_escape_html_entities_ex(Z_STRVAL(tmp), Z_STRLEN(tmp), &new_len, 0, (int) ENT_QUOTES, "UTF-8", 0 TSRMLS_CC);
+    replaced = php_escape_html_entities_ex(Z_STRVAL(tmp), Z_STRLEN(tmp), &new_len, 0, ENT_COMPAT, "UTF-8", 1 TSRMLS_CC);
+    replaced = php_handlebars_escape_expression_replace_helper(replaced TSRMLS_CC);
     RETVAL_STRING(replaced, 0);
 }
 
-/* }}} handlebars_escape_expression */
-/* {{{ proto HandlebarsSafeString::__construct(string content) */
+/* }}} Handlebars::escapeExpressionCompat */
+/* {{{ proto HandlebarsSafeString::__construct(string value) */
 
 PHP_METHOD(HandlebarsSafeString, __construct)
 {
     zval * _this_zval;
-    char * content;
-    strsize_t content_len;
+    char * value;
+    strsize_t value_len;
 
     if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Os", 
-            &_this_zval, HandlebarsSafeString_ce_ptr, &content, &content_len) == FAILURE) {
+            &_this_zval, HandlebarsSafeString_ce_ptr, &value, &value_len) == FAILURE) {
         return;
     }
 
-	zend_update_property_stringl(Z_OBJCE_P(_this_zval), _this_zval, "content", sizeof("content")-1, content, content_len TSRMLS_CC);
+	zend_update_property_stringl(Z_OBJCE_P(_this_zval), _this_zval, "value", sizeof("value")-1, value, value_len TSRMLS_CC);
 }
 
 /* }}} HandlebarsSafeString::__construct */
-/* {{{ proto HandlebarsSafeString::__toString(string content) */
+/* {{{ proto string HandlebarsSafeString::__toString() */
 
-static inline void php_handlebars_safestring_get_content(INTERNAL_FUNCTION_PARAMETERS) {
+static inline void php_handlebars_safestring_get_value(INTERNAL_FUNCTION_PARAMETERS) {
     zval * _this_zval;
-    zval * content;
+    zval * value;
 
     if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "O", 
             &_this_zval, HandlebarsSafeString_ce_ptr) == FAILURE) {
         return;
     }
 
-    content = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, "content", sizeof("content")-1, 1 TSRMLS_CC);
-    RETURN_ZVAL(content, 1, 0);
+    value = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, "value", sizeof("value")-1, 1 TSRMLS_CC);
+    RETURN_ZVAL(value, 1, 0);
 }
 
-PHP_METHOD(HandlebarsSafeString, getContent)
+PHP_METHOD(HandlebarsSafeString, getValue)
 {
-    php_handlebars_safestring_get_content(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+    php_handlebars_safestring_get_value(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
 PHP_METHOD(HandlebarsSafeString, __toString)
 {
-    php_handlebars_safestring_get_content(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+    php_handlebars_safestring_get_value(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
 /* }}} HandlebarsSafeString::__toString */
@@ -1097,10 +1209,10 @@ ZEND_BEGIN_ARG_INFO_EX(handlebars_name_lookup_args, ZEND_SEND_BY_VAL, ZEND_RETUR
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(handlebars_safestring_construct_args, ZEND_SEND_BY_VAL, 0, 1)
-    ZEND_ARG_INFO(0, content)
+    ZEND_ARG_INFO(0, value)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(handlebars_safestring_get_content_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
+ZEND_BEGIN_ARG_INFO_EX(handlebars_safestring_get_value_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(handlebars_safestring_to_string_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
@@ -1111,7 +1223,7 @@ ZEND_BEGIN_ARG_INFO_EX(handlebars_is_int_array_args, ZEND_SEND_BY_VAL, 0, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(handlebars_expression_args, ZEND_SEND_BY_VAL, 0, 1)
-    ZEND_ARG_INFO(0, content)
+    ZEND_ARG_INFO(0, value)
 ZEND_END_ARG_INFO()
 
 /* }}} ---------------------------------------------------------------------- */
@@ -1146,12 +1258,13 @@ static zend_function_entry Handlebars_methods[] = {
     PHP_ME(Handlebars, isIntArray, handlebars_is_int_array_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(Handlebars, expression, handlebars_expression_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(Handlebars, escapeExpression, handlebars_expression_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(Handlebars, escapeExpressionCompat, handlebars_expression_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
   { NULL, NULL, NULL }
 };
 
 static zend_function_entry HandlebarsSafeString_methods[] = {
     PHP_ME(HandlebarsSafeString, __construct, handlebars_safestring_construct_args, ZEND_ACC_PUBLIC)
-    PHP_ME(HandlebarsSafeString, getContent, handlebars_safestring_get_content_args, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsSafeString, getValue, handlebars_safestring_get_value_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsSafeString, __toString, handlebars_safestring_to_string_args, ZEND_ACC_PUBLIC)
     { NULL, NULL, NULL }
 };
@@ -1205,7 +1318,7 @@ static PHP_MINIT_FUNCTION(handlebars)
     // Handlebars\SafeString
     INIT_CLASS_ENTRY(ce, "Handlebars\\SafeString", HandlebarsSafeString_methods);
     HandlebarsSafeString_ce_ptr = zend_register_internal_class(&ce TSRMLS_CC);
-	zend_declare_property_null(HandlebarsSafeString_ce_ptr, "content", sizeof("content")-1, ZEND_ACC_PROTECTED TSRMLS_CC);
+	zend_declare_property_null(HandlebarsSafeString_ce_ptr, "value", sizeof("value")-1, ZEND_ACC_PROTECTED TSRMLS_CC);
 
     return SUCCESS;
 }

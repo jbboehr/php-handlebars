@@ -6,7 +6,7 @@ Handlebars\SafeString::getContent()
 <?php
 use Handlebars\SafeString;
 $safeString = new SafeString('blah');
-var_dump((string) $safeString->getContent());
+var_dump((string) $safeString->getValue());
 --EXPECT--
 string(4) "blah"
 
