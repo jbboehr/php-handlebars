@@ -4,7 +4,7 @@ before_install:
   - travis_retry sudo apt-get update -qq
   - travis_retry sudo apt-get install -qq autoconf automake check bison flex gawk gcc git-core lcov libjson0-dev libtalloc-dev libtool m4 make pkg-config uthash-dev
 #  - travis_retry git submodule update --init --recursive
-  - travis_retry git clone https://github.com/jbboehr/handlebars.c handlebars-c
+  - travis_retry git clone https://github.com/jbboehr/handlebars.c handlebars-c --recursive
   - cd handlebars-c
   - ./bootstrap
   - ./configure
