@@ -965,7 +965,7 @@ PHP_METHOD(Handlebars, isIntArray)
 /* }}} Handlebars::isIntArray */
 /* {{{ proto mixed Handlebars::expression(mixed value) */
 
-static zend_bool php_handlebars_expression(zval * val, zval * return_value)
+static zend_bool php_handlebars_expression(zval * val, zval * return_value TSRMLS_DC)
 {
     zval * delim;
     switch( Z_TYPE_P(val) ) {
@@ -1001,7 +1001,7 @@ PHP_METHOD(Handlebars, expression)
         return;
     }
     
-    php_handlebars_expression(val, return_value);
+    php_handlebars_expression(val, return_value TSRMLS_CC);
 }
 
 /* }}} Handlebars::expression */
@@ -1116,7 +1116,7 @@ PHP_METHOD(Handlebars, escapeExpressionCompat)
     }
     
     INIT_ZVAL(tmp);	
-    php_handlebars_expression(val, &tmp);
+    php_handlebars_expression(val, &tmp TSRMLS_CC);
 
     replaced = php_escape_html_entities_ex(Z_STRVAL(tmp), Z_STRLEN(tmp), &new_len, 0, ENT_COMPAT, "UTF-8", 1 TSRMLS_CC);
     replaced = php_handlebars_escape_expression_replace_helper(replaced TSRMLS_CC);
