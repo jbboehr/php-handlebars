@@ -1070,7 +1070,7 @@ static zend_always_inline void php_handlebars_escape_expression(zval * val, zval
     zval tmp;
 
     // @todo this should probably support inheritance
-    if( Z_TYPE_P(val) == IS_OBJECT && Z_OBJCE_P(val) == HandlebarsSafeString_ce_ptr ) {
+    if( Z_TYPE_P(val) == IS_OBJECT && instanceof_function(Z_OBJCE_P(val), HandlebarsSafeString_ce_ptr TSRMLS_CC) ) {
         zval * value = zend_read_property(Z_OBJCE_P(val), val, "value", sizeof("value")-1, 1 TSRMLS_CC);
         RETURN_ZVAL(value, 1, 0);
     }
@@ -1086,8 +1086,7 @@ static zend_always_inline void php_handlebars_escape_expression(zval * val, zval
     zval tmp;
     zval rv;
 
-    // @todo this should probably support inheritance
-    if( Z_TYPE_P(val) == IS_OBJECT && Z_OBJCE_P(val) == HandlebarsSafeString_ce_ptr ) {
+    if( Z_TYPE_P(val) == IS_OBJECT && instanceof_function(Z_OBJCE_P(val), HandlebarsSafeString_ce_ptr TSRMLS_CC) ) {
         zval * value = zend_read_property(Z_OBJCE_P(val), val, "value", sizeof("value")-1, 1, &rv TSRMLS_CC);
         RETURN_ZVAL(value, 1, 0);
     }
@@ -1184,8 +1183,7 @@ static zend_always_inline void php_handlebars_escape_expression_compat(zval * va
     char * replaced2;
     zval tmp;
 
-    // @todo this should probably support inheritance
-    if( Z_TYPE_P(val) == IS_OBJECT && Z_OBJCE_P(val) == HandlebarsSafeString_ce_ptr ) {
+    if( Z_TYPE_P(val) == IS_OBJECT && instanceof_function(Z_OBJCE_P(val), HandlebarsSafeString_ce_ptr TSRMLS_CC) ) {
         zval * value = zend_read_property(Z_OBJCE_P(val), val, "value", sizeof("value")-1, 1 TSRMLS_CC);
         RETURN_ZVAL(value, 1, 0);
     }
@@ -1212,7 +1210,7 @@ static zend_always_inline void php_handlebars_escape_expression_compat(zval * va
     zval rv;
 
     // @todo this should probably support inheritance
-    if( Z_TYPE_P(val) == IS_OBJECT && Z_OBJCE_P(val) == HandlebarsSafeString_ce_ptr ) {
+    if( Z_TYPE_P(val) == IS_OBJECT && instanceof_function(Z_OBJCE_P(val), HandlebarsSafeString_ce_ptr TSRMLS_CC) ) {
         zval * value = zend_read_property(Z_OBJCE_P(val), val, "value", sizeof("value")-1, 1, &rv TSRMLS_CC);
         RETURN_ZVAL(value, 1, 0);
     }
