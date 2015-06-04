@@ -800,108 +800,86 @@ static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * f
     long index = -1;
     HashTable * data_hash;
     zval ** entry = NULL;
-    zval * fname;
-    zval * fparams[1];
+    zval fname;
+    zval prop;
+    zval * prop_ptr = &prop;
 
+    // Support integer keys
     if( Z_TYPE_P(field) == IS_LONG ) {
-         index = Z_LVAL_P(field);
-    }
-
-    convert_to_string(field);
-    if( index == -1 && is_numeric_string(Z_STRVAL_P(field), Z_STRLEN_P(field), NULL, NULL, 0) ) {
-        sscanf(Z_STRVAL_P(field), "%ld", &index);
+        index = Z_LVAL_P(field);
+        convert_to_string(field);
+    } else {
+        convert_to_string(field);
+        if( is_numeric_string(Z_STRVAL_P(field), Z_STRLEN_P(field), NULL, NULL, 0) ) {
+            sscanf(Z_STRVAL_P(field), "%ld", &index);
+        }
     }
 
     if( Z_TYPE_P(value) == IS_ARRAY ) {
-        if( index > -1 ) {
-            if (zend_hash_index_find(Z_ARRVAL_P(value), index, (void**)&entry) != FAILURE) {
-                *return_value = **entry;
-                zval_copy_ctor(return_value);
-                return;
-            }
-        }
-        if (zend_hash_find(Z_ARRVAL_P(value), Z_STRVAL_P(field), Z_STRLEN_P(field) + 1, (void**)&entry) != FAILURE) {
+        if( index > -1 && zend_hash_index_find(Z_ARRVAL_P(value), index, (void**)&entry) != FAILURE ) {
+            *return_value = **entry;
+            zval_copy_ctor(return_value);
+        } else if( zend_hash_find(Z_ARRVAL_P(value), Z_STRVAL_P(field), Z_STRLEN_P(field) + 1, (void**)&entry) != FAILURE ) {
             *return_value = **entry;
             zval_copy_ctor(return_value);
         }
-        return;
-    }
-
-    if( Z_TYPE_P(value) != IS_OBJECT ) {
-        return;
-    }
-
-    if( zend_hash_exists(&Z_OBJCE_P(value)->function_table, "offsetget", sizeof("offsetget")) ) {
-        // @todo can this be done without an alloc
-        ALLOC_INIT_ZVAL(fname);
-        ALLOC_INIT_ZVAL(fparams[0]);
-        ZVAL_STRINGL(fname, "offsetget", sizeof("offsetget")-1, 0);
-        ZVAL_STRINGL(fparams[0], Z_STRVAL_P(field), Z_STRLEN_P(field), 0);
-        call_user_function(&Z_OBJCE_P(value)->function_table, &value, fname, return_value, 1, fparams TSRMLS_CC);
-        efree(fname);
-        efree(fparams[0]);
-    } else if( Z_OBJ_HT_P(value)->read_property != NULL ) {
-        ALLOC_INIT_ZVAL(fparams[0]);
-        ZVAL_STRINGL(fparams[0], Z_STRVAL_P(field), Z_STRLEN_P(field), 0);
-        *return_value = *Z_OBJ_HT_P(value)->read_property(value, fparams[0], 0, NULL TSRMLS_CC);
-        efree(fparams[0]);
-        zval_copy_ctor(return_value);
-    } else if( Z_OBJ_HT_P(value)->get_properties != NULL ) {
-        data_hash = Z_OBJ_HT_P(value)->get_properties(value TSRMLS_CC);
-        if (zend_hash_find(data_hash, Z_STRVAL_P(field), Z_STRLEN_P(field) + 1, (void**)&entry) != FAILURE) {
-            *return_value = **entry;
+    } else if( Z_TYPE_P(value) == IS_OBJECT ) {
+        ZVAL_STRINGL(&prop, Z_STRVAL_P(field), Z_STRLEN_P(field), 0);
+        if( zend_hash_exists(&Z_OBJCE_P(value)->function_table, "offsetget", sizeof("offsetget")) ) {
+            ZVAL_STRINGL(&fname, "offsetget", sizeof("offsetget")-1, 0);
+            call_user_function(&Z_OBJCE_P(value)->function_table, &value, &fname, return_value, 1, &prop_ptr TSRMLS_CC);
+        } else if( Z_OBJ_HT_P(value)->read_property != NULL ) {
+            *return_value = *Z_OBJ_HT_P(value)->read_property(value, &prop, 0, NULL TSRMLS_CC);
             zval_copy_ctor(return_value);
         }
     }
 }
 #else
-static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * field, zval * return_value TSRMLS_DC) {
-
-    zval * entry;
-    zval fname;
+static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * field, zval * return_value TSRMLS_DC)
+{
+    long long_index;
+    zend_long index = -1;
+    zval * entry = NULL;
     zval retval;
-    zval fparams[1];
+    zval fname;
+    zval prop;
     HashTable * data_hash;
 
-    convert_to_string(field);
-    
-    if( Z_TYPE_P(value) == IS_ARRAY ) {
-        entry = zend_hash_str_find(Z_ARRVAL_P(value), Z_STRVAL_P(field), Z_STRLEN_P(field));
-        if( !entry ) {
-            return;
-        }
-        if (Z_TYPE_P(entry) == IS_INDIRECT) {
-            entry = Z_INDIRECT_P(entry);
-        }
-        RETURN_ZVAL_FAST(entry);
-    }
-
-    if( Z_TYPE_P(value) != IS_OBJECT ) {
-        return;
-    }
-
-    ZVAL_STRINGL(&fname, "offsetget", sizeof("offsetget")-1);
-    if( zend_hash_str_exists(&Z_OBJCE_P(value)->function_table, Z_STRVAL(fname), Z_STRLEN(fname)) ) {
-        ZVAL_STRINGL(&fparams[0], Z_STRVAL_P(field), Z_STRLEN_P(field));
-        call_user_function(&Z_OBJCE_P(value)->function_table, value, &fname, return_value, 1, fparams);
-        zval_dtor(&fparams[0]);
-    } else if( Z_OBJ_HT_P(value)->read_property != NULL ) {
-        ZVAL_STRINGL(&fparams[0], Z_STRVAL_P(field), Z_STRLEN_P(field));
-        entry = Z_OBJ_HT_P(value)->read_property(value, &fparams[0], 0, NULL, NULL TSRMLS_CC);
-        if (Z_TYPE_P(entry) == IS_INDIRECT) {
-            entry = Z_INDIRECT_P(entry);
-        }
-        zval_dtor(&fparams[0]);
-        RETURN_ZVAL_FAST(entry);
+    // Support integer keys
+    if( Z_TYPE_P(field) == IS_LONG ) {
+        index = Z_LVAL_P(field);
+        convert_to_string(field);
     } else {
-        if( Z_OBJ_HT_P(value)->get_properties != NULL ) {
-            data_hash = Z_OBJ_HT_P(value)->get_properties(value TSRMLS_CC);
-            entry = zend_hash_str_find(data_hash, Z_STRVAL_P(field), Z_STRLEN_P(field));
-            if (Z_TYPE_P(entry) == IS_INDIRECT) {
-                entry = Z_INDIRECT_P(entry);
-            }
-            RETURN_ZVAL_FAST(entry);
+        convert_to_string(field);
+        if( is_numeric_string(Z_STRVAL_P(field), Z_STRLEN_P(field), NULL, NULL, 0) ) {
+            sscanf(Z_STRVAL_P(field), "%ld", &long_index);
+            index = (zend_long) long_index;
         }
+    }
+
+    if( Z_TYPE_P(value) == IS_ARRAY ) {
+        if( index > -1 && (entry = zend_hash_index_find(Z_ARRVAL_P(value), index)) ) {
+            // nothing
+        } else {
+            entry = zend_hash_str_find(Z_ARRVAL_P(value), Z_STRVAL_P(field), Z_STRLEN_P(field));
+        }
+    } else if( Z_TYPE_P(value) == IS_OBJECT ) {
+        ZVAL_STRINGL(&fname, "offsetget", sizeof("offsetget")-1);
+        ZVAL_STRINGL(&prop, Z_STRVAL_P(field), Z_STRLEN_P(field));
+        if( zend_hash_str_exists(&Z_OBJCE_P(value)->function_table, Z_STRVAL(fname), Z_STRLEN(fname)) ) {
+            call_user_function(&Z_OBJCE_P(value)->function_table, value, &fname, return_value, 1, &prop);
+        } else if( Z_OBJ_HT_P(value)->read_property != NULL ) {
+            entry = Z_OBJ_HT_P(value)->read_property(value, &prop, 0, NULL, NULL TSRMLS_CC);
+        }
+        zval_dtor(&fname);
+        zval_dtor(&prop);
+    }
+
+    if( entry ) {
+        if (Z_TYPE_P(entry) == IS_INDIRECT) {
+            entry = Z_INDIRECT_P(entry);
+        }
+        RETURN_ZVAL_FAST(entry);
     }
 }
 #endif
@@ -926,7 +904,6 @@ PHP_METHOD(Handlebars, nameLookup)
 static zend_always_inline zend_bool php_handlebars_is_int_array(zval * arr TSRMLS_DC)
 {
     HashTable * data_hash = NULL;
-    long count = 0;
     HashPosition data_pointer = NULL;
     zval ** data_entry = NULL;
     char * key;
@@ -938,11 +915,10 @@ static zend_always_inline zend_bool php_handlebars_is_int_array(zval * arr TSRML
         return 0;
     }
     
-    data_hash = HASH_OF(arr);
-    count = zend_hash_num_elements(data_hash);
-    
+    data_hash = Z_ARRVAL_P(arr);
+
     // An empty array is an int array
-    if( !count ) {
+    if( !zend_hash_num_elements(data_hash) ) {
         return 1;
     }
 
@@ -964,23 +940,21 @@ static zend_always_inline zend_bool php_handlebars_is_int_array(zval * arr TSRML
 static zend_always_inline zend_bool php_handlebars_is_int_array(zval * arr TSRMLS_DC)
 {
     HashTable * data_hash = NULL;
-    long count = 0;
+	zend_string * key;
+	zend_ulong index;
+	zend_ulong idx = 0;
 
     if( Z_TYPE_P(arr) != IS_ARRAY ) {
         return 0;
     }
-    
-    data_hash = HASH_OF(arr);
-    count = zend_hash_num_elements(data_hash);
+
+    data_hash = Z_ARRVAL_P(arr);
     
     // An empty array is an int array
-    if( !count ) {
+    if( !zend_hash_num_elements(data_hash) ) {
         return 1;
     }
 
-	zend_string * key;
-	zend_ulong index;
-	zend_ulong idx = 0;
 	ZEND_HASH_FOREACH_KEY(data_hash, index, key) {
         if( key ) {
             return 0;
@@ -1018,7 +992,7 @@ PHP_METHOD(Handlebars, isIntArray)
 #if PHP_MAJOR_VERSION < 7
 static zend_always_inline zend_bool php_handlebars_expression(zval * val, zval * return_value TSRMLS_DC)
 {
-    zval * delim;
+    zval delim;
 
     switch( Z_TYPE_P(val) ) {
         case IS_BOOL:
@@ -1026,10 +1000,8 @@ static zend_always_inline zend_bool php_handlebars_expression(zval * val, zval *
             break;
         case IS_ARRAY:
             if( php_handlebars_is_int_array(val TSRMLS_CC) ) {
-                ALLOC_INIT_ZVAL(delim);
-                ZVAL_STRING(delim, ",", 0);
-                php_implode(delim, val, return_value TSRMLS_CC);
-                efree(delim);
+                ZVAL_STRING(&delim, ",", 0);
+                php_implode(&delim, val, return_value TSRMLS_CC);
             } else {
                 zend_throw_exception(HandlebarsRuntimeException_ce_ptr, "Trying to stringify assoc array", 0 TSRMLS_CC);
                 return 0;
