@@ -79,4 +79,16 @@ class Native
      * @throws \Handlebars\CompileException
      */
     public static function compilePrint($tmpl, $flags = 0, array $knownHelpers = null) {}
+
+    public static function isIntArray($arr) {}
+    public static function expression($val) {}
+    public static function escapeExpression($val) {}
 }
+
+class SafeString
+{
+    public function __construct($content) {}
+    public function getContent() {}
+    public function __toString() {}
+}
+
