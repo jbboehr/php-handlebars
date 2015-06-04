@@ -833,7 +833,11 @@ static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * f
             call_user_function(&Z_OBJCE_P(value)->function_table, &value, fname, return_value, 1, params TSRMLS_CC);
             efree(fname);
         } else if( Z_OBJ_HT_P(value)->read_property != NULL ) {
+#if PHP_API_VERSION > 20090626
             *return_value = *Z_OBJ_HT_P(value)->read_property(value, prop, 0, NULL TSRMLS_CC);
+#else
+            *return_value = *Z_OBJ_HT_P(value)->read_property(value, prop, 0 TSRMLS_CC);
+#endif
             zval_copy_ctor(return_value);
         }
         efree(prop);
@@ -1070,7 +1074,7 @@ PHP_METHOD(Handlebars, expression)
 #if PHP_MAJOR_VERSION < 7
 static zend_always_inline void php_handlebars_escape_expression(zval * val, zval * return_value TSRMLS_DC)
 {
-    size_t new_len;
+    strsize_t new_len;
     char * replaced;
     zval tmp;
 
@@ -1183,7 +1187,7 @@ static zend_always_inline char * php_handlebars_escape_expression_replace_helper
 #if PHP_MAJOR_VERSION < 7
 static zend_always_inline void php_handlebars_escape_expression_compat(zval * val, zval * return_value TSRMLS_DC)
 {
-    size_t new_len;
+    strsize_t new_len;
     char * replaced;
     char * replaced2;
     zval tmp;
