@@ -1,5 +1,5 @@
 --TEST--
-Handlebars::expression()
+Handlebars\Native::expression()
 --SKIPIF--
 <?php if( !extension_loaded('handlebars') ) die('skip '); ?>
 --FILE--

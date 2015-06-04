@@ -1,5 +1,5 @@
 --TEST--
-Handlebars::isIntArray()
+Handlebars\Native::isIntArray()
 --SKIPIF--
 <?php if( !extension_loaded('handlebars') ) die('skip '); ?>
 --FILE--

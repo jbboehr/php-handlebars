@@ -14,9 +14,20 @@ class Exception extends \Exception {}
 class LexException extends Exception {}
 class ParseException extends Exception {}
 class CompileException extends Exception {}
+class RuntimeException extends Exception {}
 
 class Native
 {
+    /**
+     * extension version
+     */
+    const VERSION = "x.y.z";
+
+    /**
+     * libhandlebars version
+     */
+    const LIBVERSION = "x.y.z";
+    
     /**
      * Get the last error that occurred.
      * 
@@ -80,15 +91,64 @@ class Native
      */
     public static function compilePrint($tmpl, $flags = 0, array $knownHelpers = null) {}
 
+    /**
+     * Is the array a numeric array?
+     *
+     * @param array $array
+     * @return boolean
+     */
     public static function isIntArray($arr) {}
-    public static function expression($val) {}
-    public static function escapeExpression($val) {}
+
+    /**
+     * Prepare an expression for the output buffer. Handles certain
+     * javascript behaviours.
+     *
+     * @param mixed $value
+     * @retrun string
+     * @throws \Handlebars\RuntimeException
+     */
+    public static function expression($value) {}
+
+    /**
+     * Escape an expression for the output buffer. Does not handle certain
+     * javascript behaviours.
+     *
+     * @param mixed $value
+     * @retrun string
+     * @throws \Handlebars\RuntimeException
+     */
+    public static function escapeExpression($value) {}
+
+    /**
+     * Escape an expression for the output buffer. Handles certain
+     * javascript behaviours.
+     *
+     * @param mixed $value
+     * @retrun string
+     * @throws \Handlebars\RuntimeException
+     */
+    public static function escapeExpressionCompat($value) {}
 }
 
 class SafeString
 {
-    public function __construct($content) {}
-    public function getContent() {}
+    /**
+     * @var string
+     */
+    protected $value;
+
+    /**
+     * Constructor
+     *
+     * @param string $value
+     */
+    public function __construct($value) {}
+
+    /**
+     * Magic toString method
+     *
+     * @return string
+     */
     public function __toString() {}
 }
 

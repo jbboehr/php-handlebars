@@ -1,5 +1,5 @@
 --TEST--
-Handlebars::lookup()
+Handlebars\Native::nameLookup()
 --SKIPIF--
 <?php if( !extension_loaded('handlebars') ) die('skip '); ?>
 --FILE--

@@ -1,5 +1,5 @@
 --TEST--
-Handlebars::escapeExpression()
+Handlebars\Native::escapeExpression()
 --SKIPIF--
 <?php if( !extension_loaded('handlebars') ) die('skip '); ?>
 --FILE--

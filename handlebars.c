@@ -44,7 +44,7 @@ static void php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node, z
 static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compiler, zval * current TSRMLS_DC);
 static void php_handlebars_ast_list_to_zval(struct handlebars_ast_list * list, zval * current TSRMLS_DC);
 
-static zend_class_entry * Handlebars_ce_ptr;
+static zend_class_entry * HandlebarsNative_ce_ptr;
 static zend_class_entry * HandlebarsSafeString_ce_ptr;
 static zend_class_entry * HandlebarsException_ce_ptr;
 static zend_class_entry * HandlebarsLexException_ce_ptr;
@@ -85,12 +85,6 @@ typedef size_t strsize_t;
 #endif
 
 #define _DECLARE_ALLOC_INIT_ZVAL(name) _DECLARE_ZVAL(name); _ALLOC_INIT_ZVAL(name)
-
-enum php_handlebars_flags {
-    PHP_HANDLEBARS_FLAG_NONE = 0,
-    PHP_HANDLEBARS_FLAG_PRINT = 1,
-    PHP_HANDLEBARS_FLAG_EXCEPTIONS = 2
-};
 
 /* }}} ---------------------------------------------------------------------- */
 /* {{{ Utils ---------------------------------------------------------------- */
@@ -533,29 +527,19 @@ static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval 
 /* }}} ---------------------------------------------------------------------- */
 /* {{{ Functions ------------------------------------------------------------ */
 
-/* {{{ proto string handlebars_error(void) */
+/* {{{ proto string Handlebars\Native::getLastError(void) */
 
-static void php_handlebars_error(INTERNAL_FUNCTION_PARAMETERS)
+PHP_METHOD(HandlebarsNative, getLastError)
 {
     if( HANDLEBARS_G(handlebars_last_error) ) {
         _RETURN_STRING(HANDLEBARS_G(handlebars_last_error));
     }
 }
 
-PHP_FUNCTION(handlebars_error)
-{
-    php_handlebars_error(INTERNAL_FUNCTION_PARAM_PASSTHRU);
-}
+/* }}} Handlebars\Native::getLastError */
+/* {{{ proto mixed Handlebars\Native::lex(string tmpl) */
 
-PHP_METHOD(Handlebars, getLastError)
-{
-    php_handlebars_error(INTERNAL_FUNCTION_PARAM_PASSTHRU);
-}
-
-/* }}} handlebars_error */
-/* {{{ proto mixed handlebars_lex(string tmpl) */
-
-static void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, int flags)
+static zend_always_inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
 {
     char * tmpl;
     strsize_t tmpl_len;
@@ -576,7 +560,7 @@ static void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, int flags)
     ctx->tmpl = tmpl;
     list = handlebars_lex(ctx);
     
-    if( flags & PHP_HANDLEBARS_FLAG_PRINT ) {
+    if( print ) {
         output = handlebars_token_list_print(list, 0);
         _RETVAL_STRING(output);
     } else {
@@ -598,30 +582,20 @@ static void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, int flags)
     handlebars_context_dtor(ctx);
 }
 
-PHP_FUNCTION(handlebars_lex)
+PHP_METHOD(HandlebarsNative, lex)
 {
-    php_handlebars_lex(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_NONE);
+    php_handlebars_lex(INTERNAL_FUNCTION_PARAM_PASSTHRU, 0);
 }
 
-PHP_METHOD(Handlebars, lex)
+PHP_METHOD(HandlebarsNative, lexPrint)
 {
-    php_handlebars_lex(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_EXCEPTIONS);
+    php_handlebars_lex(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1);
 }
 
-PHP_FUNCTION(handlebars_lex_print)
-{
-    php_handlebars_lex(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_PRINT);
-}
+/* }}} Handlebars\Native::lex */
+/* {{{ proto mixed Handlebars\Native::parse(string tmpl) */
 
-PHP_METHOD(Handlebars, lexPrint)
-{
-    php_handlebars_lex(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_PRINT | PHP_HANDLEBARS_FLAG_EXCEPTIONS);
-}
-
-/* }}} handlebars_lex */
-/* {{{ proto mixed handlebars_parse(string tmpl) */
-
-static void php_handlebars_parse(INTERNAL_FUNCTION_PARAMETERS, int flags)
+static zend_always_inline void php_handlebars_parse(INTERNAL_FUNCTION_PARAMETERS, short print)
 {
     char * tmpl;
     strsize_t tmpl_len;
@@ -642,15 +616,11 @@ static void php_handlebars_parse(INTERNAL_FUNCTION_PARAMETERS, int flags)
         // errmsg will be freed by the destruction of ctx
         errmsg = handlebars_context_get_errmsg(ctx);
         php_handlebars_set_error(errmsg TSRMLS_CC);
-        if( flags & PHP_HANDLEBARS_FLAG_EXCEPTIONS ) {
-            zend_throw_exception(HandlebarsParseException_ce_ptr, errmsg, 0 TSRMLS_CC);
-        } else {
-            RETVAL_FALSE;
-        }
+        zend_throw_exception(HandlebarsParseException_ce_ptr, errmsg, 0 TSRMLS_CC);
         goto done;
     } 
     
-    if( flags & PHP_HANDLEBARS_FLAG_PRINT ) {
+    if( print ) {
         output = handlebars_ast_print(ctx->program, 0);
         _RETVAL_STRING(output);
     } else {
@@ -661,30 +631,20 @@ done:
     handlebars_context_dtor(ctx);
 }
 
-PHP_FUNCTION(handlebars_parse)
+PHP_METHOD(HandlebarsNative, parse)
 {
-    php_handlebars_parse(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_NONE);
+    php_handlebars_parse(INTERNAL_FUNCTION_PARAM_PASSTHRU, 0);
 }
 
-PHP_METHOD(Handlebars, parse)
+PHP_METHOD(HandlebarsNative, parsePrint)
 {
-    php_handlebars_parse(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_EXCEPTIONS);
+    php_handlebars_parse(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1);
 }
 
-PHP_FUNCTION(handlebars_parse_print)
-{
-    php_handlebars_parse(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_PRINT);
-}
+/* }}} Handlebars\Native::parse */
+/* {{{ proto mixed Handlebars\Native::compile(string tmpl[, long flags[, array knownHelpers]]) */
 
-PHP_METHOD(Handlebars, parsePrint)
-{
-    php_handlebars_parse(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_PRINT | PHP_HANDLEBARS_FLAG_EXCEPTIONS);
-}
-
-/* }}} handlebars_parse */
-/* {{{ proto mixed handlebars_compile(string tmpl[, long flags[, array knownHelpers]]) */
-
-static void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, int flags)
+static zend_always_inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short print)
 {
     char * tmpl;
     strsize_t tmpl_len;
@@ -729,25 +689,20 @@ static void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, int flags)
         // errmsg will be freed by the destruction of ctx
         errmsg = handlebars_context_get_errmsg(ctx);
         php_handlebars_set_error(errmsg TSRMLS_CC);
-        if( flags & PHP_HANDLEBARS_FLAG_EXCEPTIONS ) {
-            zend_throw_exception(HandlebarsParseException_ce_ptr, errmsg, 0 TSRMLS_CC);
-        } else {
-            RETVAL_FALSE;
-        }
+        zend_throw_exception(HandlebarsParseException_ce_ptr, errmsg, 0 TSRMLS_CC);
         goto done;
     }
     
     // Compile
     handlebars_compiler_compile(compiler, ctx->program);
     if( compiler->errnum ) {
+        // @todo provide a better error message
         php_handlebars_set_error("An error occurred during compilation" TSRMLS_CC);
-        if( flags & PHP_HANDLEBARS_FLAG_EXCEPTIONS ) {
-            zend_throw_exception(HandlebarsCompileException_ce_ptr, "An error occurred during compilation", 0 TSRMLS_CC);
-        } else {
-            RETVAL_FALSE;
-        }
+        zend_throw_exception(HandlebarsCompileException_ce_ptr, "An error occurred during compilation", 0 TSRMLS_CC);
         goto done;
-    } else if( flags & PHP_HANDLEBARS_FLAG_PRINT ) {
+    }
+
+    if( print ) {
         handlebars_opcode_printer_print(printer, compiler);
         _RETVAL_STRING(printer->output);
     } else {
@@ -758,41 +713,18 @@ done:
     handlebars_context_dtor(ctx);
 }
 
-PHP_FUNCTION(handlebars_compile)
+PHP_METHOD(HandlebarsNative, compile)
 {
-    php_handlebars_compile(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_NONE);
+    php_handlebars_compile(INTERNAL_FUNCTION_PARAM_PASSTHRU, 0);
 }
 
-PHP_METHOD(Handlebars, compile)
+PHP_METHOD(HandlebarsNative, compilePrint)
 {
-    php_handlebars_compile(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_EXCEPTIONS);
+    php_handlebars_compile(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1);
 }
 
-PHP_FUNCTION(handlebars_compile_print)
-{
-    php_handlebars_compile(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_PRINT);
-}
-
-PHP_METHOD(Handlebars, compilePrint)
-{
-    php_handlebars_compile(INTERNAL_FUNCTION_PARAM_PASSTHRU, PHP_HANDLEBARS_FLAG_PRINT | PHP_HANDLEBARS_FLAG_EXCEPTIONS);
-}
-
-/* }}} handlebars_compile */
-/* {{{ proto mixed handlebars_version(void) */
-
-PHP_FUNCTION(handlebars_version)
-{
-    _RETURN_STRING(handlebars_version_string());
-}
-
-PHP_METHOD(Handlebars, version)
-{
-    _RETURN_STRING(handlebars_version_string());
-}
-
-/* }}} handlebars_version */
-/* {{{ proto mixed Handlebars::nameLookup(mixed value, string field) */
+/* }}} Handlebars\Native::compile */
+/* {{{ proto mixed Handlebars\Native::nameLookup(mixed value, string field) */
 
 #if PHP_MAJOR_VERSION < 7
 static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * field, zval * return_value TSRMLS_DC)
@@ -893,7 +825,7 @@ static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * f
 }
 #endif
 
-PHP_METHOD(Handlebars, nameLookup)
+PHP_METHOD(HandlebarsNative, nameLookup)
 {
     zval * value;
     zval * field;
@@ -906,8 +838,8 @@ PHP_METHOD(Handlebars, nameLookup)
     php_handlebars_name_lookup(value, field, return_value TSRMLS_CC);
 }
 
-/* }}} Handlebars::nameLookup */
-/* {{{ proto mixed Handlebars::isIntArray(mixed value) */
+/* }}} Handlebars\Native::nameLookup */
+/* {{{ proto boolean Handlebars\Native::isIntArray(mixed value) */
 
 #if PHP_MAJOR_VERSION < 7
 static zend_always_inline zend_bool php_handlebars_is_int_array(zval * arr TSRMLS_DC)
@@ -979,7 +911,7 @@ static zend_always_inline zend_bool php_handlebars_is_int_array(zval * arr TSRML
 }
 #endif
 
-PHP_METHOD(Handlebars, isIntArray)
+PHP_METHOD(HandlebarsNative, isIntArray)
 {
     zval * arr;
 
@@ -995,8 +927,8 @@ PHP_METHOD(Handlebars, isIntArray)
     }
 }
 
-/* }}} Handlebars::isIntArray */
-/* {{{ proto mixed Handlebars::expression(mixed value) */
+/* }}} Handlebars\Native::isIntArray */
+/* {{{ proto string Handlebars\Native::expression(mixed value) */
 
 #if PHP_MAJOR_VERSION < 7
 static zend_always_inline zend_bool php_handlebars_expression(zval * val, zval * return_value TSRMLS_DC)
@@ -1056,7 +988,7 @@ static zend_always_inline zend_bool php_handlebars_expression(zval * val, zval *
 }
 #endif
 
-PHP_METHOD(Handlebars, expression)
+PHP_METHOD(HandlebarsNative, expression)
 {
     zval * val;
 
@@ -1068,13 +1000,13 @@ PHP_METHOD(Handlebars, expression)
     php_handlebars_expression(val, return_value TSRMLS_CC);
 }
 
-/* }}} Handlebars::expression */
-/* {{{ proto mixed Handlebars::escapeExpression(mixed value) */
+/* }}} Handlebars\Native::expression */
+/* {{{ proto string Handlebars\Native::escapeExpression(mixed value) */
 
 #if PHP_MAJOR_VERSION < 7
 static zend_always_inline void php_handlebars_escape_expression(zval * val, zval * return_value TSRMLS_DC)
 {
-    strsize_t new_len;
+    size_t new_len;
     char * replaced;
     zval tmp;
 
@@ -1106,7 +1038,7 @@ static zend_always_inline void php_handlebars_escape_expression(zval * val, zval
 }
 #endif
 
-PHP_METHOD(Handlebars, escapeExpression)
+PHP_METHOD(HandlebarsNative, escapeExpression)
 {
     zval * val;
 
@@ -1118,8 +1050,8 @@ PHP_METHOD(Handlebars, escapeExpression)
     php_handlebars_escape_expression(val, return_value TSRMLS_CC);
 }
 
-/* }}} Handlebars::escapeExpression */
-/* {{{ proto mixed Handlebars::escapeExpressionCompat(mixed value) */
+/* }}} Handlebars\Native::escapeExpression */
+/* {{{ proto string Handlebars\Native::escapeExpressionCompat(mixed value) */
 
 static zend_always_inline char * php_handlebars_escape_expression_replace_helper(char * input TSRMLS_DC)
 {
@@ -1187,7 +1119,7 @@ static zend_always_inline char * php_handlebars_escape_expression_replace_helper
 #if PHP_MAJOR_VERSION < 7
 static zend_always_inline void php_handlebars_escape_expression_compat(zval * val, zval * return_value TSRMLS_DC)
 {
-    strsize_t new_len;
+    size_t new_len;
     char * replaced;
     char * replaced2;
     zval tmp;
@@ -1240,7 +1172,7 @@ static zend_always_inline void php_handlebars_escape_expression_compat(zval * va
 }
 #endif
 
-PHP_METHOD(Handlebars, escapeExpressionCompat)
+PHP_METHOD(HandlebarsNative, escapeExpressionCompat)
 {
     zval * val;
 
@@ -1252,8 +1184,8 @@ PHP_METHOD(Handlebars, escapeExpressionCompat)
     php_handlebars_escape_expression_compat(val, return_value TSRMLS_CC);
 }
 
-/* }}} Handlebars::escapeExpressionCompat */
-/* {{{ proto HandlebarsSafeString::__construct(string value) */
+/* }}} Handlebars\Native::escapeExpressionCompat */
+/* {{{ proto Handlebars\SafeString::__construct(string value) */
 
 PHP_METHOD(HandlebarsSafeString, __construct)
 {
@@ -1269,10 +1201,11 @@ PHP_METHOD(HandlebarsSafeString, __construct)
 	zend_update_property_stringl(Z_OBJCE_P(_this_zval), _this_zval, "value", sizeof("value")-1, value, value_len TSRMLS_CC);
 }
 
-/* }}} HandlebarsSafeString::__construct */
-/* {{{ proto string HandlebarsSafeString::__toString() */
+/* }}} Handlebars\SafeString::__construct */
+/* {{{ proto string Handlebars\SafeString::__toString() */
 
-static zend_always_inline void php_handlebars_safestring_get_value(INTERNAL_FUNCTION_PARAMETERS) {
+PHP_METHOD(HandlebarsSafeString, __toString)
+{
     zval * _this_zval;
     zval * value;
     zval rv;
@@ -1290,115 +1223,68 @@ static zend_always_inline void php_handlebars_safestring_get_value(INTERNAL_FUNC
     RETURN_ZVAL(value, 1, 0);
 }
 
-PHP_METHOD(HandlebarsSafeString, getValue)
-{
-    php_handlebars_safestring_get_value(INTERNAL_FUNCTION_PARAM_PASSTHRU);
-}
-
-PHP_METHOD(HandlebarsSafeString, __toString)
-{
-    php_handlebars_safestring_get_value(INTERNAL_FUNCTION_PARAM_PASSTHRU);
-}
-
 /* }}} HandlebarsSafeString::__toString */
 /* {{{ Argument Info -------------------------------------------------------- */
 
-ZEND_BEGIN_ARG_INFO_EX(handlebars_error_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsNative_getLastError_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(handlebars_lex_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsNative_lex_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
     ZEND_ARG_INFO(0, tmpl)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(handlebars_lex_print_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsNative_parse_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
     ZEND_ARG_INFO(0, tmpl)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(handlebars_parse_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
-    ZEND_ARG_INFO(0, tmpl)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(handlebars_parse_print_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
-    ZEND_ARG_INFO(0, tmpl)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(handlebars_compile_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsNative_compile_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
     ZEND_ARG_INFO(0, tmpl)
     ZEND_ARG_INFO(0, flags)
     ZEND_ARG_ARRAY_INFO(0, knownHelpers, 1)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(handlebars_compile_print_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
-    ZEND_ARG_INFO(0, tmpl)
-    ZEND_ARG_INFO(0, flags)
-    ZEND_ARG_ARRAY_INFO(0, knownHelpers, 1)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(handlebars_version_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(handlebars_name_lookup_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsNative_nameLookup_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
     ZEND_ARG_INFO(0, objOrArray)
     ZEND_ARG_INFO(0, field)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(handlebars_safestring_construct_args, ZEND_SEND_BY_VAL, 0, 1)
-    ZEND_ARG_INFO(0, value)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(handlebars_safestring_get_value_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(handlebars_safestring_to_string_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(handlebars_is_int_array_args, ZEND_SEND_BY_VAL, 0, 1)
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsNative_isIntArray_args, ZEND_SEND_BY_VAL, 0, 1)
     ZEND_ARG_INFO(0, arr)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(handlebars_expression_args, ZEND_SEND_BY_VAL, 0, 1)
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsNative_expression_args, ZEND_SEND_BY_VAL, 0, 1)
     ZEND_ARG_INFO(0, value)
 ZEND_END_ARG_INFO()
 
-/* }}} ---------------------------------------------------------------------- */
-/* {{{ Function Entry ------------------------------------------------------- */
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsSafeString_construct_args, ZEND_SEND_BY_VAL, 0, 1)
+    ZEND_ARG_INFO(0, value)
+ZEND_END_ARG_INFO()
 
-static const zend_function_entry handlebars_functions[] = {
-    PHP_FE(handlebars_error, handlebars_error_args)
-    PHP_FE(handlebars_lex, handlebars_lex_args)
-    PHP_FE(handlebars_lex_print, handlebars_lex_print_args)
-    PHP_FE(handlebars_parse, handlebars_parse_args)
-    PHP_FE(handlebars_parse_print, handlebars_parse_print_args)
-    PHP_FE(handlebars_compile, handlebars_compile_args)
-    PHP_FE(handlebars_compile_print, handlebars_compile_print_args)
-    PHP_FE(handlebars_version, handlebars_version_args)
-    PHP_FE_END
-};
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsSafeString_toString_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
+ZEND_END_ARG_INFO()
 
 /* }}} ---------------------------------------------------------------------- */
 /* {{{ Method Entry --------------------------------------------------------- */
 
-static zend_function_entry Handlebars_methods[] = {
-    PHP_ME(Handlebars, getLastError, handlebars_error_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(Handlebars, lex, handlebars_lex_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(Handlebars, lexPrint, handlebars_lex_print_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(Handlebars, parse, handlebars_lex_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(Handlebars, parsePrint, handlebars_lex_print_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(Handlebars, compile, handlebars_compile_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(Handlebars, compilePrint, handlebars_compile_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(Handlebars, version, handlebars_version_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(Handlebars, nameLookup, handlebars_name_lookup_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(Handlebars, isIntArray, handlebars_is_int_array_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(Handlebars, expression, handlebars_expression_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(Handlebars, escapeExpression, handlebars_expression_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(Handlebars, escapeExpressionCompat, handlebars_expression_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+static zend_function_entry HandlebarsNative_methods[] = {
+    PHP_ME(HandlebarsNative, getLastError, HandlebarsNative_getLastError_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsNative, lex, HandlebarsNative_lex_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsNative, lexPrint, HandlebarsNative_lex_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsNative, parse, HandlebarsNative_lex_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsNative, parsePrint, HandlebarsNative_lex_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsNative, compile, HandlebarsNative_compile_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsNative, compilePrint, HandlebarsNative_compile_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsNative, nameLookup, HandlebarsNative_nameLookup_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsNative, isIntArray, HandlebarsNative_isIntArray_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsNative, expression, HandlebarsNative_expression_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsNative, escapeExpression, HandlebarsNative_expression_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsNative, escapeExpressionCompat, HandlebarsNative_expression_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
   { NULL, NULL, NULL }
 };
 
 static zend_function_entry HandlebarsSafeString_methods[] = {
-    PHP_ME(HandlebarsSafeString, __construct, handlebars_safestring_construct_args, ZEND_ACC_PUBLIC)
-    PHP_ME(HandlebarsSafeString, getValue, handlebars_safestring_get_value_args, ZEND_ACC_PUBLIC)
-    PHP_ME(HandlebarsSafeString, __toString, handlebars_safestring_to_string_args, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsSafeString, __construct, HandlebarsSafeString_construct_args, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsSafeString, __toString, HandlebarsSafeString_toString_args, ZEND_ACC_PUBLIC)
     { NULL, NULL, NULL }
 };
 
@@ -1415,6 +1301,7 @@ static PHP_MINIT_FUNCTION(handlebars)
     zend_class_entry ce;
     zend_class_entry * exception_ce = zend_exception_get_default(TSRMLS_C);
     int flags = CONST_CS | CONST_PERSISTENT;
+    const char * version = handlebars_version_string();
     
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_NONE", handlebars_compiler_flag_none, flags);
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_USE_DEPTHS", handlebars_compiler_flag_use_depths, flags);
@@ -1425,8 +1312,10 @@ static PHP_MINIT_FUNCTION(handlebars)
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_ALL", handlebars_compiler_flag_all, flags);
 
     // Handlebars\Native
-    INIT_CLASS_ENTRY(ce, "Handlebars\\Native", Handlebars_methods);
-    Handlebars_ce_ptr = zend_register_internal_class(&ce TSRMLS_CC);
+    INIT_CLASS_ENTRY(ce, "Handlebars\\Native", HandlebarsNative_methods);
+    HandlebarsNative_ce_ptr = zend_register_internal_class(&ce TSRMLS_CC);
+    zend_declare_class_constant_stringl(HandlebarsNative_ce_ptr, ZEND_STRL("LIBVERSION"), version, strlen(version) TSRMLS_CC);
+    zend_declare_class_constant_stringl(HandlebarsNative_ce_ptr, ZEND_STRL("VERSION"), PHP_HANDLEBARS_VERSION, sizeof(PHP_HANDLEBARS_VERSION)-1 TSRMLS_CC);
     
     // Handlebars\Exception
     INIT_CLASS_ENTRY(ce, "Handlebars\\Exception", NULL);
@@ -1480,7 +1369,7 @@ static PHP_MINFO_FUNCTION(handlebars)
 zend_module_entry handlebars_module_entry = {
     STANDARD_MODULE_HEADER,
     PHP_HANDLEBARS_NAME,                /* Name */
-    handlebars_functions,               /* Functions */
+    NULL,                               /* Functions */
     PHP_MINIT(handlebars),              /* MINIT */
     NULL,                               /* MSHUTDOWN */
     NULL,                               /* RINIT */
