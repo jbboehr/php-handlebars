@@ -502,14 +502,22 @@ static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compile
     php_handlebars_compilers_to_zval(compiler->children, compiler->children_length, tmp TSRMLS_CC);
     add_assoc_zval_ex(current, _HBS_STRS("children"), tmp);
 
-    // useDepths
-    // @todo make sure this works
+    // Input flags
+    if( compiler->string_params ) {
+    	add_assoc_bool_ex(current, _HBS_STRS("stringParams"), compiler->string_params);
+    }
+    if( compiler->track_ids ) {
+    	add_assoc_bool_ex(current, _HBS_STRS("trackIds"), compiler->track_ids);
+    }
+
+    // Output flags
     if( compiler->use_depths ) {
+        // @todo make sure this works
     	add_assoc_bool_ex(current, _HBS_STRS("useDepths"), compiler->use_depths);
     }
-    
-    // BlockParams
-    // @todo fix
+    if( compiler->use_partial ) {
+    	add_assoc_bool_ex(current, _HBS_STRS("usePartial"), compiler->use_partial);
+    }
     add_assoc_long_ex(current, _HBS_STRS("blockParams"), 0);
 }
 

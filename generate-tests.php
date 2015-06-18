@@ -28,8 +28,8 @@ function patch_opcodes(array &$opcodes) {
         foreach( $main as $k => $v ) {
             if( $k === 'options' ) {
                 unset($main[$k]);
-            } else if( $k === 'isSimple' || $k === 'guid' || $k === 'usePartial' || 
-                       $k === 'trackIds' || $k === 'stringParams' ) {
+            } else if( $k === 'isSimple' || $k === 'guid' /*|| $k === 'usePartial' || 
+                       $k === 'trackIds' || $k === 'stringParams'*/ ) {
                 // @todo add?
                 unset($main[$k]);
             } else if( $k === 'children' ) {
@@ -40,6 +40,12 @@ function patch_opcodes(array &$opcodes) {
             } else if( $k === 'opcodes' ) {
                 // @todo remove this
                 foreach( $main[$k] as &$opcode ) {
+                    // @todo we could fix this by adding a distinct null operand type
+                    if( $opcode['opcode'] === 'emptyHash' && count($opcode['args']) === 0 ) {
+                        $opcode['args'] = array(null);
+                    } else if( $opcode['opcode'] === 'pushId' && count($opcode['args']) === 2 ) {
+                        $opcode['args'][] = null;
+                    } 
                     unset($opcode['loc']);                
                 }
             }
