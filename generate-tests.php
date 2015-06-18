@@ -34,10 +34,18 @@ function patch_opcodes(array &$opcodes) {
                 unset($main[$k]);
             } else if( $k === 'children' ) {
                 $childrenFn($main[$k]);
-            } else if( $k === 'depths' ) {
-                $main[$k] = $main[$k]['list'];
-                //unset($main[$k]['list']);
+            } else if( $k === 'sourceNode' ) {
+                // @todo add this back?
+                unset($main[$k]);
+            } else if( $k === 'opcodes' ) {
+                // @todo remove this
+                foreach( $main[$k] as &$opcode ) {
+                    unset($opcode['loc']);                
+                }
             }
+            //} else if( $k === 'depths' ) {
+            //    $main[$k] = $main[$k]['list'];
+            //    //unset($main[$k]['list']);
         }
         return $main;
     };
@@ -51,19 +59,25 @@ function makeCompilerFlags(array $options = null)
     // Make flags
     $flags = 0;
     if( !empty($options['compat']) ) {
-        $flags |= (1 << 0); //HANDLEBARS_COMPILER_FLAG_COMPAT;
-    }
-    if( !empty($options['stringParams']) ) {
-        $flags |= (1 << 1); //HANDLEBARS_COMPILER_FLAG_STRING_PARAMS;
-    }
-    if( !empty($options['trackIds']) ) {
-        $flags |= (1 << 2); //HANDLEBARS_COMPILER_FLAG_TRACK_IDS;
+        $flags |= (1 << 0); //Handlebars\COMPILER_FLAG_COMPAT;
     }
     if( !empty($options['useDepths']) ) {
-        $flags |= (1 << 0); //HANDLEBARS_COMPILER_FLAG_USE_DEPTHS;
+        $flags |= (1 << 0); //Handlebars\COMPILER_FLAG_USE_DEPTHS;
+    }
+    if( !empty($options['stringParams']) ) {
+        $flags |= (1 << 1); //Handlebars\COMPILER_FLAG_STRING_PARAMS;
+    }
+    if( !empty($options['trackIds']) ) {
+        $flags |= (1 << 2); //Handlebars\COMPILER_FLAG_TRACK_IDS;
+    }
+    if( !empty($options['noEscape']) ) {
+        $flags |= (1 << 3); //Handlebars\COMPILER_FLAG_NO_ESCAPE;
     }
     if( !empty($options['knownHelpersOnly']) ) {
-        $flags |= (1 << 4); //HANDLEBARS_COMPILER_FLAG_KNOWN_HELPERS_ONLY;
+        $flags |= (1 << 4); //Handlebars\COMPILER_FLAG_KNOWN_HELPERS_ONLY;
+    }
+    if( !empty($options['preventIndent']) ) {
+        $flags |= (1 << 5); //Handlebars\COMPILER_FLAG_PREVENT_INDENT;
     }
     return $flags;
 }
@@ -186,18 +200,18 @@ try {
     var_export(Native::parsePrint($tmpl));
     var_export(gettype(Native::parse($tmpl)));
 } catch( Handlebars\ParseException $e ) {
-    echo "exception";
-    //echo $e->getMessage();
+    echo "exception: ", $e->getMessage();
 }
 ' . PHP_EOL;
     $output .= 'echo PHP_EOL;' . PHP_EOL;
     $output .= '' . PHP_EOL;
-    $output .= '--EXPECT--' . PHP_EOL;
     if( empty($test['exception']) ) {
+    	$output .= '--EXPECT--' . PHP_EOL;
         $output .= var_export($expected, true);
         $output .= var_export('array', true);
     } else {
-        $output .= 'exception'; 
+    	$output .= '--EXPECTF--' . PHP_EOL;
+        $output .= 'exception%s'; 
         //$output .= $test['message'];
     }
     return $output;
