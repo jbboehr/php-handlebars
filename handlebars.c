@@ -839,6 +839,50 @@ PHP_METHOD(HandlebarsNative, nameLookup)
 }
 
 /* }}} Handlebars\Native::nameLookup */
+/* {{{ proto boolean Handlebars\Native::isCallable(mixed name) */
+
+PHP_METHOD(HandlebarsNative, isCallable)
+{
+	zval * var;
+	char * error;
+	zend_bool retval = 0;
+	int check_flags = 0; //IS_CALLABLE_CHECK_SYNTAX_ONLY;
+
+	if( zend_parse_parameters(ZEND_NUM_ARGS(), "z", &var) == FAILURE ) {
+		return;
+	}
+
+	switch( Z_TYPE_P(var) ) {
+#if PHP_MAJOR_VERSION < 7
+		case IS_BOOL:
+#else
+		case IS_TRUE:
+		case IS_FALSE:
+#endif
+		case IS_DOUBLE:
+		case IS_LONG:
+		case IS_STRING:
+			RETURN_FALSE;
+			break;
+
+		default:
+			break;
+	}
+	
+#if PHP_MAJOR_VERSION < 7
+	retval = zend_is_callable_ex(var, NULL, check_flags, NULL, NULL, NULL, &error TSRMLS_CC);
+#else
+	retval = zend_is_callable_ex(var, NULL, check_flags, NULL, NULL, &error);
+#endif
+	
+	if (error) {
+		efree(error);
+	}
+
+	RETURN_BOOL(retval);
+}
+
+/* }}} Handlebars\Native::isCallable */
 /* {{{ proto boolean Handlebars\Native::isIntArray(mixed value) */
 
 #if PHP_MAJOR_VERSION < 7
@@ -1248,6 +1292,10 @@ ZEND_BEGIN_ARG_INFO_EX(HandlebarsNative_nameLookup_args, ZEND_SEND_BY_VAL, ZEND_
     ZEND_ARG_INFO(0, field)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsNative_isCallable_args, ZEND_SEND_BY_VAL, 0, 1)
+    ZEND_ARG_INFO(0, name)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(HandlebarsNative_isIntArray_args, ZEND_SEND_BY_VAL, 0, 1)
     ZEND_ARG_INFO(0, arr)
 ZEND_END_ARG_INFO()
@@ -1275,6 +1323,7 @@ static zend_function_entry HandlebarsNative_methods[] = {
     PHP_ME(HandlebarsNative, compile, HandlebarsNative_compile_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(HandlebarsNative, compilePrint, HandlebarsNative_compile_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(HandlebarsNative, nameLookup, HandlebarsNative_nameLookup_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsNative, isCallable, HandlebarsNative_isCallable_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(HandlebarsNative, isIntArray, HandlebarsNative_isIntArray_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(HandlebarsNative, expression, HandlebarsNative_expression_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(HandlebarsNative, escapeExpression, HandlebarsNative_expression_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
