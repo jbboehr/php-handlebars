@@ -92,6 +92,15 @@ class Native
     public static function compilePrint($tmpl, $flags = 0, array $knownHelpers = null) {}
 
     /**
+     * Same as is_callable(), but does not allow simple strings and removes
+     * the second and third arguments.
+     *
+     * @param array $array
+     * @return boolean
+     */
+    public static function isCallable($arr) {}
+
+    /**
      * Is the array a numeric array?
      *
      * @param array $array
