@@ -28,8 +28,7 @@ function patch_opcodes(array &$opcodes) {
         foreach( $main as $k => $v ) {
             if( $k === 'options' ) {
                 unset($main[$k]);
-            } else if( $k === 'isSimple' || $k === 'guid' /*|| $k === 'usePartial' || 
-                       $k === 'trackIds' || $k === 'stringParams'*/ ) {
+            } else if( $k === 'isSimple' || $k === 'guid' ) {
                 // @todo add?
                 unset($main[$k]);
             } else if( $k === 'children' ) {
@@ -38,21 +37,57 @@ function patch_opcodes(array &$opcodes) {
                 // @todo add this back?
                 unset($main[$k]);
             } else if( $k === 'opcodes' ) {
-                // @todo remove this
+                // Patch opcodes
                 foreach( $main[$k] as &$opcode ) {
                     // @todo we could fix this by adding a distinct null operand type
-                    if( $opcode['opcode'] === 'emptyHash' && count($opcode['args']) === 0 ) {
-                        $opcode['args'] = array(null);
-                    } else if( $opcode['opcode'] === 'pushId' && count($opcode['args']) === 2 ) {
-                        $opcode['args'][] = null;
-                    } 
+                    if( $opcode['opcode'] === 'emptyHash' ) {
+                        // Add null operand - currently only supports fixed number of operands
+                        if( count($opcode['args']) === 0 ) {
+                            $opcode['args'] = array(null);
+                        }
+                    } else if( $opcode['opcode'] === 'pushId' ) {
+                        // Add null operand - currently only supports fixed number of operands
+                        if( count($opcode['args']) === 2 ) {
+                            $opcode['args'][] = null;
+                        }
+                        // Stringify - array operands only support strings
+                        if( is_array($opcode['args'][1]) ) {
+                            $opcode['args'][1][0] = (string) $opcode['args'][1][0];
+                            $opcode['args'][1][1] = (string) $opcode['args'][1][1];
+                        }
+                    } else if( $opcode['opcode'] === 'lookupBlockParam' ) {
+                        // Stringify - array operands only support strings
+                        if( is_array($opcode['args'][0]) ) {
+                            settype($opcode['args'][0][0], 'string');
+                            settype($opcode['args'][0][1], 'string');
+                        }
+                    } else if( $opcode['opcode'] === 'pushLiteral' ) {
+                        // Stringify - operands don't support floats/decimals
+                        if( is_float($opcode['args'][0]) ) {
+                            settype($opcode['args'][0], 'string');
+                        }
+                    }
                     unset($opcode['loc']);                
                 }
             }
-            //} else if( $k === 'depths' ) {
-            //    $main[$k] = $main[$k]['list'];
-            //    //unset($main[$k]['list']);
         }
+        // Make sure the keys are always in the same order
+        uksort($main, function($a, $b) {
+            $keys = array(
+                'opcodes', 'children', 'stringParams', 'trackIds',
+                'useDepths', 'usePartial', 'blockParams'
+            );
+            $ai = array_search($a, $keys);
+            $bi = array_search($b, $keys);
+            if( $ai === false && $bi === false ) {
+                return 0;
+            } else if( $ai === false ) {
+                return -1;
+            } else if( $bi === false ) {
+                return 1;
+            }
+            return ($ai == $bi ? 0 : ($ai > $bi ? 1 : -1));
+        });
         return $main;
     };
     

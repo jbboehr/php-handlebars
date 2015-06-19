@@ -511,14 +511,18 @@ static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compile
     }
 
     // Output flags
-    if( compiler->use_depths ) {
-        // @todo make sure this works
-    	add_assoc_bool_ex(current, _HBS_STRS("useDepths"), compiler->use_depths);
+    if( compiler->result_flags & handlebars_compiler_flag_use_depths ) {
+    	add_assoc_bool_ex(current, _HBS_STRS("useDepths"), 1);
     }
-    if( compiler->use_partial ) {
-    	add_assoc_bool_ex(current, _HBS_STRS("usePartial"), compiler->use_partial);
+    if( compiler->result_flags & handlebars_compiler_flag_use_partial ) {
+    	add_assoc_bool_ex(current, _HBS_STRS("usePartial"), 1);
     }
-    add_assoc_long_ex(current, _HBS_STRS("blockParams"), 0);
+    /*if( compiler->result_flags & handlebars_compiler_flag_is_simple ) {
+    	add_assoc_bool_ex(current, _HBS_STRS("isSimple"), 1);
+    } else {
+    	add_assoc_bool_ex(current, _HBS_STRS("isSimple"), 0);
+    }*/
+    add_assoc_long_ex(current, _HBS_STRS("blockParams"), compiler->block_params);
 }
 
 static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval * arr TSRMLS_DC)
