@@ -13,8 +13,8 @@
 #define PHP_HANDLEBARS_H
 
 #define PHP_HANDLEBARS_NAME "handlebars"
-#define PHP_HANDLEBARS_VERSION "0.4.0"
-#define PHP_HANDLEBARS_RELEASE "2015-06-03"
+#define PHP_HANDLEBARS_VERSION "0.4.1"
+#define PHP_HANDLEBARS_RELEASE "2015-06-19"
 #define PHP_HANDLEBARS_AUTHORS "John Boehr <jbboehr@gmail.com> (lead)"
 #define PHP_HANDLEBARS_SPEC "2.0.0"
 
