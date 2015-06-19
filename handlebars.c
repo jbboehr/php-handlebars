@@ -848,7 +848,7 @@ PHP_METHOD(HandlebarsNative, isCallable)
 	zend_bool retval = 0;
 	int check_flags = 0; //IS_CALLABLE_CHECK_SYNTAX_ONLY;
 
-	if( zend_parse_parameters(ZEND_NUM_ARGS(), "z", &var) == FAILURE ) {
+	if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &var) == FAILURE ) {
 		return;
 	}
 
