@@ -612,13 +612,17 @@ static zend_always_inline void php_handlebars_parse(INTERNAL_FUNCTION_PARAMETERS
     ctx->tmpl = tmpl;
     retval = handlebars_yy_parse(ctx);
 
-    if( ctx->error != NULL ) {
+    if( ctx->error ) {
         // errmsg will be freed by the destruction of ctx
         errmsg = handlebars_context_get_errmsg(ctx);
         php_handlebars_set_error(errmsg TSRMLS_CC);
-        zend_throw_exception(HandlebarsParseException_ce_ptr, errmsg, 0 TSRMLS_CC);
+        zend_throw_exception(HandlebarsParseException_ce_ptr, errmsg, ctx->errnum TSRMLS_CC);
         goto done;
-    } 
+    } else if( ctx->errnum ) {
+        php_handlebars_set_error("An error occurred during parsing" TSRMLS_CC);
+        zend_throw_exception(HandlebarsCompileException_ce_ptr, "An error occurred during parsing", ctx->errnum TSRMLS_CC);
+        goto done;
+    }
     
     if( print ) {
         output = handlebars_ast_print(ctx->program, 0);
@@ -685,20 +689,28 @@ static zend_always_inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETE
     ctx->tmpl = tmpl;
     retval = handlebars_yy_parse(ctx);
     
-    if( ctx->error != NULL ) {
+    if( ctx->error ) {
         // errmsg will be freed by the destruction of ctx
         errmsg = handlebars_context_get_errmsg(ctx);
         php_handlebars_set_error(errmsg TSRMLS_CC);
-        zend_throw_exception(HandlebarsParseException_ce_ptr, errmsg, 0 TSRMLS_CC);
+        zend_throw_exception(HandlebarsParseException_ce_ptr, errmsg, ctx->errnum TSRMLS_CC);
+        goto done;
+    } else if( ctx->errnum ) {
+        php_handlebars_set_error("An error occurred during parsing" TSRMLS_CC);
+        zend_throw_exception(HandlebarsCompileException_ce_ptr, "An error occurred during parsing", ctx->errnum TSRMLS_CC);
         goto done;
     }
     
     // Compile
     handlebars_compiler_compile(compiler, ctx->program);
-    if( compiler->errnum ) {
-        // @todo provide a better error message
+
+    if( compiler->error ) {
+        php_handlebars_set_error(compiler->error TSRMLS_CC);
+        zend_throw_exception(HandlebarsCompileException_ce_ptr, compiler->error, compiler->errnum TSRMLS_CC);
+        goto done;
+    } else if( compiler->errnum ) {
         php_handlebars_set_error("An error occurred during compilation" TSRMLS_CC);
-        zend_throw_exception(HandlebarsCompileException_ce_ptr, "An error occurred during compilation", 0 TSRMLS_CC);
+        zend_throw_exception(HandlebarsCompileException_ce_ptr, "An error occurred during compilation", compiler->errnum TSRMLS_CC);
         goto done;
     }
 
