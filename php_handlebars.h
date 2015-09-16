@@ -1,5 +1,6 @@
 
-/* vim: tabstop=4:softtabstop=4:shiftwidth=4:expandtab */
+#ifndef PHP_HANDLEBARS_H
+#define PHP_HANDLEBARS_H
 
 #include "php.h"
 #include "php_ini.h"
@@ -8,9 +9,6 @@
 #ifdef ZTS
 #include "TSRM.h"
 #endif
-
-#ifndef PHP_HANDLEBARS_H
-#define PHP_HANDLEBARS_H
 
 #define PHP_HANDLEBARS_NAME "handlebars"
 #define PHP_HANDLEBARS_VERSION "0.4.3"
@@ -38,3 +36,13 @@ ZEND_END_MODULE_GLOBALS(handlebars)
 #endif
 
 #endif	/* PHP_HANDLEBARS_H */
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */
+

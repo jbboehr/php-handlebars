@@ -1,6 +1,4 @@
 
-/* vim: tabstop=4:softtabstop=4:shiftwidth=4:expandtab */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -40,10 +38,13 @@
 
 ZEND_DECLARE_MODULE_GLOBALS(handlebars)
 
+/* {{{ Prototypes */
 static void php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node, zval * current TSRMLS_DC);
 static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compiler, zval * current TSRMLS_DC);
 static void php_handlebars_ast_list_to_zval(struct handlebars_ast_list * list, zval * current TSRMLS_DC);
+/* }}} Prototypes */
 
+/* {{{ Variable Declarations */
 static zend_class_entry * HandlebarsNative_ce_ptr;
 static zend_class_entry * HandlebarsSafeString_ce_ptr;
 static zend_class_entry * HandlebarsException_ce_ptr;
@@ -51,9 +52,9 @@ static zend_class_entry * HandlebarsLexException_ce_ptr;
 static zend_class_entry * HandlebarsParseException_ce_ptr;
 static zend_class_entry * HandlebarsCompileException_ce_ptr;
 static zend_class_entry * HandlebarsRuntimeException_ce_ptr;
+/* }}} Variable Declarations */
 
-/* {{{ PHP7 Compat ---------------------------------------------------------- */
-
+/* {{{ PHP7 Compat */
 #if PHP_MAJOR_VERSION < 7
 #define _add_next_index_string(...) add_next_index_string(__VA_ARGS__, 1)
 #define _add_assoc_string(...) add_assoc_string(__VA_ARGS__, 1)
@@ -85,10 +86,24 @@ typedef size_t strsize_t;
 #endif
 
 #define _DECLARE_ALLOC_INIT_ZVAL(name) _DECLARE_ZVAL(name); _ALLOC_INIT_ZVAL(name)
+/* }}} PHP7 Compat */
 
-/* }}} ---------------------------------------------------------------------- */
-/* {{{ Utils ---------------------------------------------------------------- */
+/* {{{ Misc Utils */
+static zend_always_inline void php_handlebars_set_error(char * msg TSRMLS_DC)
+{
+    if( HANDLEBARS_G(handlebars_last_error) ) {
+        efree(HANDLEBARS_G(handlebars_last_error));
+        HANDLEBARS_G(handlebars_last_error) = NULL;
+    }
+    if( msg ) {
+        HANDLEBARS_G(handlebars_last_error) = estrdup(msg);
+    } else {
+        HANDLEBARS_G(handlebars_last_error) = NULL;
+    }
+}
+/* }}} Misc Utils */
 
+/* {{{ Array Utils */
 #define add_assoc_handlebars_ast_node_ex(current, str, node) \
     add_assoc_handlebars_ast_node(current, _HBS_STRS(str), node TSRMLS_CC)
 
@@ -132,23 +147,9 @@ static zend_always_inline void add_next_index_handlebars_ast_node(zval * current
         add_next_index_zval(current, tmp);
     }
 }
+/* }}} Array Utils */
 
-static zend_always_inline void php_handlebars_set_error(char * msg TSRMLS_DC)
-{
-    if( HANDLEBARS_G(handlebars_last_error) ) {
-        efree(HANDLEBARS_G(handlebars_last_error));
-        HANDLEBARS_G(handlebars_last_error) = NULL;
-    }
-    if( msg ) {
-        HANDLEBARS_G(handlebars_last_error) = estrdup(msg);
-    } else {
-        HANDLEBARS_G(handlebars_last_error) = NULL;
-    }
-}
-
-/* }}} ---------------------------------------------------------------------- */
-/* {{{ Data Conversion (inline) --------------------------------------------- */
-
+/* {{{ Conversion Utils (inline) */
 static zend_always_inline void php_handlebars_ast_list_to_zval(struct handlebars_ast_list * list, zval * current TSRMLS_DC)
 {
     struct handlebars_ast_list_item * item;
@@ -242,10 +243,9 @@ static zend_always_inline void php_handlebars_loc_to_zval(struct handlebars_loci
     add_assoc_zval_ex(current, _HBS_STRS("start"), start);
     add_assoc_zval_ex(current, _HBS_STRS("end"), end);
 }
+/* }}} Conversion Utils (inline) */
 
-/* }}} ---------------------------------------------------------------------- */
-/* {{{ Data Conversion ------------------------------------------------------ */
-
+/* {{{ Conversion Utils */
 static void php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node, zval * current TSRMLS_DC)
 {
     _DECLARE_ZVAL(tmp);
@@ -582,22 +582,18 @@ static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval 
 
     return known_helpers;
 }
-
-/* }}} ---------------------------------------------------------------------- */
-/* {{{ Functions ------------------------------------------------------------ */
+/* }}} Conversion Utils */
 
 /* {{{ proto string Handlebars\Native::getLastError(void) */
-
 PHP_METHOD(HandlebarsNative, getLastError)
 {
     if( HANDLEBARS_G(handlebars_last_error) ) {
         _RETURN_STRING(HANDLEBARS_G(handlebars_last_error));
     }
 }
-
 /* }}} Handlebars\Native::getLastError */
-/* {{{ proto mixed Handlebars\Native::lex(string tmpl) */
 
+/* {{{ proto mixed Handlebars\Native::lex(string tmpl) */
 static zend_always_inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
 {
     char * tmpl;
@@ -650,10 +646,9 @@ PHP_METHOD(HandlebarsNative, lexPrint)
 {
     php_handlebars_lex(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1);
 }
-
 /* }}} Handlebars\Native::lex */
-/* {{{ proto mixed Handlebars\Native::parse(string tmpl) */
 
+/* {{{ proto mixed Handlebars\Native::parse(string tmpl) */
 static zend_always_inline void php_handlebars_parse(INTERNAL_FUNCTION_PARAMETERS, short print)
 {
     char * tmpl;
@@ -703,10 +698,9 @@ PHP_METHOD(HandlebarsNative, parsePrint)
 {
     php_handlebars_parse(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1);
 }
-
 /* }}} Handlebars\Native::parse */
-/* {{{ proto mixed Handlebars\Native::compile(string tmpl[, long flags[, array knownHelpers]]) */
 
+/* {{{ proto mixed Handlebars\Native::compile(string tmpl[, long flags[, array knownHelpers]]) */
 static zend_always_inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short print)
 {
     char * tmpl;
@@ -793,10 +787,9 @@ PHP_METHOD(HandlebarsNative, compilePrint)
 {
     php_handlebars_compile(INTERNAL_FUNCTION_PARAM_PASSTHRU, 1);
 }
-
 /* }}} Handlebars\Native::compile */
-/* {{{ proto mixed Handlebars\Native::nameLookup(mixed value, string field) */
 
+/* {{{ proto mixed Handlebars\Native::nameLookup(mixed value, string field) */
 #if PHP_MAJOR_VERSION < 7
 static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * field, zval * return_value TSRMLS_DC)
 {
@@ -908,10 +901,9 @@ PHP_METHOD(HandlebarsNative, nameLookup)
     
     php_handlebars_name_lookup(value, field, return_value TSRMLS_CC);
 }
-
 /* }}} Handlebars\Native::nameLookup */
-/* {{{ proto boolean Handlebars\Native::isCallable(mixed name) */
 
+/* {{{ proto boolean Handlebars\Native::isCallable(mixed name) */
 PHP_METHOD(HandlebarsNative, isCallable)
 {
 	zval * var;
@@ -952,10 +944,9 @@ PHP_METHOD(HandlebarsNative, isCallable)
 
 	RETURN_BOOL(retval);
 }
-
 /* }}} Handlebars\Native::isCallable */
-/* {{{ proto boolean Handlebars\Native::isIntArray(mixed value) */
 
+/* {{{ proto boolean Handlebars\Native::isIntArray(mixed value) */
 #if PHP_MAJOR_VERSION < 7
 static zend_always_inline zend_bool php_handlebars_is_int_array(zval * arr TSRMLS_DC)
 {
@@ -1041,10 +1032,9 @@ PHP_METHOD(HandlebarsNative, isIntArray)
         RETURN_FALSE;
     }
 }
-
 /* }}} Handlebars\Native::isIntArray */
-/* {{{ proto string Handlebars\Native::expression(mixed value) */
 
+/* {{{ proto string Handlebars\Native::expression(mixed value) */
 #if PHP_MAJOR_VERSION < 7
 static zend_always_inline zend_bool php_handlebars_expression(zval * val, zval * return_value TSRMLS_DC)
 {
@@ -1114,10 +1104,9 @@ PHP_METHOD(HandlebarsNative, expression)
     
     php_handlebars_expression(val, return_value TSRMLS_CC);
 }
-
 /* }}} Handlebars\Native::expression */
-/* {{{ proto string Handlebars\Native::escapeExpression(mixed value) */
 
+/* {{{ proto string Handlebars\Native::escapeExpression(mixed value) */
 #if PHP_MAJOR_VERSION < 7
 static zend_always_inline void php_handlebars_escape_expression(zval * val, zval * return_value TSRMLS_DC)
 {
@@ -1164,10 +1153,9 @@ PHP_METHOD(HandlebarsNative, escapeExpression)
 
     php_handlebars_escape_expression(val, return_value TSRMLS_CC);
 }
-
 /* }}} Handlebars\Native::escapeExpression */
-/* {{{ proto string Handlebars\Native::escapeExpressionCompat(mixed value) */
 
+/* {{{ proto string Handlebars\Native::escapeExpressionCompat(mixed value) */
 static zend_always_inline char * php_handlebars_escape_expression_replace_helper(char * input TSRMLS_DC)
 {
     char * output;
@@ -1298,10 +1286,9 @@ PHP_METHOD(HandlebarsNative, escapeExpressionCompat)
 
     php_handlebars_escape_expression_compat(val, return_value TSRMLS_CC);
 }
-
 /* }}} Handlebars\Native::escapeExpressionCompat */
-/* {{{ proto Handlebars\SafeString::__construct(string value) */
 
+/* {{{ proto Handlebars\SafeString::__construct(string value) */
 PHP_METHOD(HandlebarsSafeString, __construct)
 {
     zval * _this_zval;
@@ -1315,10 +1302,9 @@ PHP_METHOD(HandlebarsSafeString, __construct)
 
 	zend_update_property_stringl(Z_OBJCE_P(_this_zval), _this_zval, "value", sizeof("value")-1, value, value_len TSRMLS_CC);
 }
-
 /* }}} Handlebars\SafeString::__construct */
-/* {{{ proto string Handlebars\SafeString::__toString() */
 
+/* {{{ proto string Handlebars\SafeString::__toString() */
 PHP_METHOD(HandlebarsSafeString, __toString)
 {
     zval * _this_zval;
@@ -1337,10 +1323,9 @@ PHP_METHOD(HandlebarsSafeString, __toString)
 #endif
     RETURN_ZVAL(value, 1, 0);
 }
-
 /* }}} HandlebarsSafeString::__toString */
-/* {{{ Argument Info -------------------------------------------------------- */
 
+/* {{{ Argument Info */
 ZEND_BEGIN_ARG_INFO_EX(HandlebarsNative_getLastError_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 
@@ -1381,10 +1366,9 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(HandlebarsSafeString_toString_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
+/* }}} Argument Info */
 
-/* }}} ---------------------------------------------------------------------- */
-/* {{{ Method Entry --------------------------------------------------------- */
-
+/* {{{ HandlebarsNative methods */
 static zend_function_entry HandlebarsNative_methods[] = {
     PHP_ME(HandlebarsNative, getLastError, HandlebarsNative_getLastError_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(HandlebarsNative, lex, HandlebarsNative_lex_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
@@ -1401,21 +1385,24 @@ static zend_function_entry HandlebarsNative_methods[] = {
     PHP_ME(HandlebarsNative, escapeExpressionCompat, HandlebarsNative_expression_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
   { NULL, NULL, NULL }
 };
+/* }}} HandlebarsNative methods */
 
+/* {{{ HandlebarsSafeString methods */
 static zend_function_entry HandlebarsSafeString_methods[] = {
     PHP_ME(HandlebarsSafeString, __construct, HandlebarsSafeString_construct_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsSafeString, __toString, HandlebarsSafeString_toString_args, ZEND_ACC_PUBLIC)
     { NULL, NULL, NULL }
 };
+/* }}} HandlebarsSafeString methods */
 
-/* }}} ---------------------------------------------------------------------- */
-/* {{{ Module Hooks --------------------------------------------------------- */
-
+/* {{{ PHP_GINIT_FUNCTION */
 static PHP_GINIT_FUNCTION(handlebars)
 {
     handlebars_globals->handlebars_last_error = NULL;
 }
+/* }}} */
 
+/* {{{ PHP_MINIT_FUNCTION */
 static PHP_MINIT_FUNCTION(handlebars)
 {
     zend_class_entry ce;
@@ -1469,13 +1456,17 @@ static PHP_MINIT_FUNCTION(handlebars)
 
     return SUCCESS;
 }
+/* }}} */
 
+/* {{{ PHP_RSHUTDOWN_FUNCTION */
 static PHP_RSHUTDOWN_FUNCTION(handlebars)
 {
     php_handlebars_set_error(NULL TSRMLS_CC);
     return SUCCESS;
 }
+/* }}} */
 
+/* {{{ PHP_MINFO_FUNCTION */
 static PHP_MINFO_FUNCTION(handlebars)
 {
     php_info_print_table_start();
@@ -1487,10 +1478,9 @@ static PHP_MINFO_FUNCTION(handlebars)
     php_info_print_table_row(2, "libhandlebars Version", handlebars_version_string());
     php_info_print_table_end();
 }
+/* }}} */
 
-/* }}} ---------------------------------------------------------------------- */
-/* {{{ Module Entry --------------------------------------------------------- */
-
+/* {{{ Module Entry */
 zend_module_entry handlebars_module_entry = {
     STANDARD_MODULE_HEADER,
     PHP_HANDLEBARS_NAME,                /* Name */
@@ -1507,9 +1497,16 @@ zend_module_entry handlebars_module_entry = {
     NULL,
     STANDARD_MODULE_PROPERTIES_EX
 };
-
 #ifdef COMPILE_DL_HANDLEBARS 
     ZEND_GET_MODULE(handlebars)      // Common for all PHP extensions which are build as shared modules  
 #endif
+/* }}} */
 
-/* }}} ---------------------------------------------------------------------- */
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: noet sw=4 ts=4
+ */
