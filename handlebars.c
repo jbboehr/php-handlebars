@@ -164,6 +164,7 @@ static zend_always_inline void php_handlebars_ast_list_to_zval(struct handlebars
     }
 }
 
+/*
 static zend_always_inline void php_handlebars_depths_to_zval(long depths, zval * current)
 {
     int depthi = 1;
@@ -178,7 +179,7 @@ static zend_always_inline void php_handlebars_depths_to_zval(long depths, zval *
         depths = depths >> 1;
     }
 }
-
+*/
 
 static zend_always_inline void php_handlebars_strip_to_zval(unsigned strip, zval * current)
 {
@@ -192,12 +193,63 @@ static zend_always_inline void php_handlebars_strip_to_zval(unsigned strip, zval
     add_assoc_bool_ex(current, _HBS_STRS("rightStriped"), 1 && (strip & handlebars_ast_strip_flag_right_stripped));
 }
 
+static zend_always_inline void php_handlebars_ast_node_add_path_params_hash(struct handlebars_ast_node * node, zval * current TSRMLS_DC)
+{
+	struct handlebars_ast_node * path = handlebars_ast_node_get_path(node);
+	struct handlebars_ast_list * params = handlebars_ast_node_get_params(node);
+	struct handlebars_ast_node * hash = handlebars_ast_node_get_hash(node);
+	if( path ) {
+		if( node->type == HANDLEBARS_AST_NODE_PARTIAL ) {
+			add_assoc_handlebars_ast_node_ex(current, "name", path);
+		} else {
+			add_assoc_handlebars_ast_node_ex(current, "path", path);
+		}
+	}
+	if( params ) {
+		add_assoc_handlebars_ast_list_ex(current, "params", params);
+	}
+	if( hash ) {
+		add_assoc_handlebars_ast_node_ex(current, "hash", hash);
+	}
+}
+
+static zend_always_inline void php_handlebars_ast_node_add_literal(struct handlebars_ast_node_literal * literal, zval * current TSRMLS_DC)
+{
+    if( literal->value ) {
+        _add_assoc_string_ex(current, _HBS_STRS("value"), literal->value);
+    }
+    if( literal->original ) {
+        _add_assoc_string_ex(current, _HBS_STRS("original"), literal->original);
+    }
+}
+
+static zend_always_inline void php_handlebars_loc_to_zval(struct handlebars_locinfo * locinfo, zval * current TSRMLS_DC)
+{
+    _DECLARE_ZVAL(start);
+    _DECLARE_ZVAL(end);
+
+    _ALLOC_INIT_ZVAL(start);
+    array_init(start);
+    add_assoc_long_ex(start, _HBS_STRS("line"), locinfo->first_line);
+    add_assoc_long_ex(start, _HBS_STRS("column"), locinfo->first_column);
+
+    _ALLOC_INIT_ZVAL(end);
+    array_init(end);
+    add_assoc_long_ex(end, _HBS_STRS("line"), locinfo->last_line);
+    add_assoc_long_ex(end, _HBS_STRS("column"), locinfo->last_column);
+
+    array_init(current);
+    add_assoc_zval_ex(current, _HBS_STRS("start"), start);
+    add_assoc_zval_ex(current, _HBS_STRS("end"), end);
+}
+
 /* }}} ---------------------------------------------------------------------- */
 /* {{{ Data Conversion ------------------------------------------------------ */
 
 static void php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node, zval * current TSRMLS_DC)
 {
     _DECLARE_ZVAL(tmp);
+    _DECLARE_ZVAL(tmp2);
     array_init(current);
     
     if( node == NULL ) {
@@ -206,150 +258,140 @@ static void php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node, z
     
     _add_assoc_string_ex(current, _HBS_STRS("type"), (char *) handlebars_ast_node_readable_type(node->type));
     
+    // Strip
     if( node->strip ) {
         _ALLOC_INIT_ZVAL(tmp);
         php_handlebars_strip_to_zval(node->strip, tmp);
         add_assoc_zval_ex(current, _HBS_STRS("strip"), tmp);   
     }
     
+    // Locinfo
+    _ALLOC_INIT_ZVAL(tmp);
+    php_handlebars_loc_to_zval(&node->loc, tmp TSRMLS_CC);
+    add_assoc_zval_ex(current, _HBS_STRS("loc"), tmp);
+
+    // Main
     switch( node->type ) {
         case HANDLEBARS_AST_NODE_PROGRAM: {
             add_assoc_handlebars_ast_list_ex(current, "statements", node->node.program.statements);
+            add_assoc_long_ex(current, _HBS_STRS("chained"), node->node.program.chained);
+            if( node->node.program.block_param1 ) {
+            	_add_assoc_string_ex(current, _HBS_STRS("block_param1"), node->node.program.block_param1);
+            }
+            if( node->node.program.block_param2 ) {
+            	_add_assoc_string_ex(current, _HBS_STRS("block_param2"), node->node.program.block_param2);
+            }
             break;
         }
         case HANDLEBARS_AST_NODE_MUSTACHE: {
-            add_assoc_handlebars_ast_node_ex(current, "sexpr", node->node.mustache.sexpr);
+        	php_handlebars_ast_node_add_path_params_hash(node, current TSRMLS_CC);
             add_assoc_long_ex(current, _HBS_STRS("unescaped"), node->node.mustache.unescaped);
             break;
         }
         case HANDLEBARS_AST_NODE_SEXPR: {
-            add_assoc_handlebars_ast_node_ex(current, "hash", node->node.sexpr.hash);
-            add_assoc_handlebars_ast_node_ex(current, "id", node->node.sexpr.id);
-            add_assoc_handlebars_ast_list_ex(current, "params", node->node.sexpr.params);
+        	php_handlebars_ast_node_add_path_params_hash(node, current TSRMLS_CC);
             break;
         }
         case HANDLEBARS_AST_NODE_PARTIAL:
-            add_assoc_handlebars_ast_node_ex(current, "partial_name", node->node.partial.partial_name);
-            add_assoc_handlebars_ast_node_ex(current, "context", node->node.partial.context);
-            add_assoc_handlebars_ast_node_ex(current, "hash", node->node.partial.hash);
+        	php_handlebars_ast_node_add_path_params_hash(node, current TSRMLS_CC);
             break;
         case HANDLEBARS_AST_NODE_RAW_BLOCK: {
-            add_assoc_handlebars_ast_node_ex(current, "mustache", node->node.raw_block.mustache);
-            add_assoc_handlebars_ast_node_ex(current, "program", node->node.raw_block.program);
-            if( node->node.raw_block.close ) {
-                _add_assoc_string_ex(current, _HBS_STRS("close"), node->node.raw_block.close);
-            }
+        	php_handlebars_ast_node_add_path_params_hash(node, current TSRMLS_CC);
+        	if( node->node.raw_block.program ) {
+        		add_assoc_handlebars_ast_node_ex(current, "program", node->node.raw_block.program);
+        	}
+        	if( node->node.raw_block.inverse ) {
+        		add_assoc_handlebars_ast_node_ex(current, "inverse", node->node.raw_block.inverse);
+        	}
+            add_assoc_long_ex(current, _HBS_STRS("open_strip"), node->node.raw_block.open_strip);
+            add_assoc_long_ex(current, _HBS_STRS("inverse_strip"), node->node.raw_block.inverse_strip);
+            add_assoc_long_ex(current, _HBS_STRS("close_strip"), node->node.raw_block.close_strip);
             break;
         }
         case HANDLEBARS_AST_NODE_BLOCK: {
-            add_assoc_handlebars_ast_node_ex(current, "mustache", node->node.block.mustache);
-            add_assoc_handlebars_ast_node_ex(current, "program", node->node.block.program);
-            add_assoc_handlebars_ast_node_ex(current, "inverse", node->node.block.inverse);
-            add_assoc_handlebars_ast_node_ex(current, "close", node->node.block.close);
-            add_assoc_long_ex(current, _HBS_STRS("inverted"), node->node.block.inverted);
+        	php_handlebars_ast_node_add_path_params_hash(node, current TSRMLS_CC);
+        	if( node->node.raw_block.program ) {
+        		add_assoc_handlebars_ast_node_ex(current, "program", node->node.block.program);
+        	}
+        	if( node->node.raw_block.inverse ) {
+        		add_assoc_handlebars_ast_node_ex(current, "inverse", node->node.block.inverse);
+        	}
+            add_assoc_long_ex(current, _HBS_STRS("open_strip"), node->node.block.open_strip);
+            add_assoc_long_ex(current, _HBS_STRS("inverse_strip"), node->node.block.inverse_strip);
+            add_assoc_long_ex(current, _HBS_STRS("close_strip"), node->node.block.close_strip);
             break;
         }
         case HANDLEBARS_AST_NODE_CONTENT: {
-            if( node->node.content.string ) {
-                _add_assoc_stringl_ex(current, _HBS_STRS("string"),
-                    node->node.content.string,
-                    node->node.content.length);
-            }
-            if( node->node.content.original ) {
-                _add_assoc_stringl_ex(current, _HBS_STRS("original"),
-                    node->node.content.original,
-                    strlen(node->node.content.original));
-            }
+        	php_handlebars_ast_node_add_literal(&node->node.content, current TSRMLS_CC);
             break;
         }
         case HANDLEBARS_AST_NODE_HASH: {
-            add_assoc_handlebars_ast_list_ex(current, "segments", node->node.hash.segments);
+            add_assoc_handlebars_ast_list_ex(current, "pairs", node->node.hash.pairs);
             break;
         }
-        case HANDLEBARS_AST_NODE_HASH_SEGMENT: {
-            if( node->node.hash_segment.key ) {
-                _add_assoc_stringl_ex(current, _HBS_STRS("key"),
-                    node->node.hash_segment.key,
-                    node->node.hash_segment.key_length);
+        case HANDLEBARS_AST_NODE_HASH_PAIR: {
+            if( node->node.hash_pair.key ) {
+                _add_assoc_string_ex(current, _HBS_STRS("key"),
+                    node->node.hash_pair.key);
             }
-            add_assoc_handlebars_ast_node_ex(current, "value", node->node.hash_segment.value);
+            add_assoc_handlebars_ast_node_ex(current, "value", node->node.hash_pair.value);
             break;
         }
-        case HANDLEBARS_AST_NODE_ID: {
-            add_assoc_handlebars_ast_list_ex(current, "parts", node->node.id.parts);
-            add_assoc_long_ex(current, _HBS_STRS("depth"), node->node.id.depth);
-            add_assoc_long_ex(current, _HBS_STRS("is_simple"), node->node.id.is_simple);
-            add_assoc_long_ex(current, _HBS_STRS("is_scoped"), node->node.id.is_scoped);
-            if( node->node.id.id_name ) {
-                _add_assoc_stringl_ex(current, _HBS_STRS("id_name"),
-                    node->node.id.id_name,
-                    node->node.id.id_name_length);
+        case HANDLEBARS_AST_NODE_PATH: {
+            add_assoc_handlebars_ast_list_ex(current, "parts", node->node.path.parts);
+            if( node->node.path.original ) {
+                _add_assoc_string_ex(current, _HBS_STRS("original"),
+                    node->node.path.original);
             }
-            if( node->node.id.string ) {
-                _add_assoc_stringl_ex(current, _HBS_STRS("string"),
-                    node->node.id.string,
-                    node->node.id.string_length);
-            }
-            if( node->node.id.original ) {
-                _add_assoc_stringl_ex(current, _HBS_STRS("original"),
-                    node->node.id.original,
-                    node->node.id.original_length);
-            }
-            break;
-        }
-        case HANDLEBARS_AST_NODE_PARTIAL_NAME: {
-            add_assoc_handlebars_ast_node_ex(current, "name", node->node.partial_name.name);
-            break;
-        }
-        case HANDLEBARS_AST_NODE_DATA: {
-            add_assoc_handlebars_ast_node_ex(current, "id", node->node.data.id);
+            add_assoc_long_ex(current, _HBS_STRS("depth"), node->node.path.depth);
+            add_assoc_long_ex(current, _HBS_STRS("data"), node->node.path.data);
+            add_assoc_long_ex(current, _HBS_STRS("falsy"), node->node.path.falsy);
             break;
         }
         case HANDLEBARS_AST_NODE_STRING: {
-            if( node->node.string.string ) {
-                _add_assoc_stringl_ex(current, _HBS_STRS("string"),
-                    node->node.string.string,
-                    node->node.string.length);
-            }
+        	php_handlebars_ast_node_add_literal(&node->node.string, current TSRMLS_CC);
             break;
         }
         case HANDLEBARS_AST_NODE_NUMBER: {
-            if( node->node.number.string ) {
-                _add_assoc_stringl_ex(current, _HBS_STRS("number"),
-                    node->node.number.string,
-                    node->node.number.length);
-            }
+        	php_handlebars_ast_node_add_literal(&node->node.number, current TSRMLS_CC);
             break;
         }
         case HANDLEBARS_AST_NODE_BOOLEAN: {
-            if( node->node.boolean.string ) {
-                _add_assoc_stringl_ex(current, _HBS_STRS("boolean"),
-                    node->node.boolean.string,
-                    node->node.boolean.length);
-            }
+        	php_handlebars_ast_node_add_literal(&node->node.boolean, current TSRMLS_CC);
+            break;
+        }
+        case HANDLEBARS_AST_NODE_NUL: {
+        	php_handlebars_ast_node_add_literal(&node->node.nul, current TSRMLS_CC);
+            break;
+        }
+        case HANDLEBARS_AST_NODE_UNDEFINED: {
+        	php_handlebars_ast_node_add_literal(&node->node.undefined, current TSRMLS_CC);
             break;
         }
         case HANDLEBARS_AST_NODE_COMMENT: {
-            if( node->node.comment.comment ) {
-                _add_assoc_stringl_ex(current, _HBS_STRS("comment"),
-                    node->node.comment.comment,
-                    node->node.boolean.length);
+            if( node->node.comment.value ) {
+                _add_assoc_string_ex(current, _HBS_STRS("value"), node->node.comment.value);
             }
             break;
         }
         case HANDLEBARS_AST_NODE_PATH_SEGMENT: {
             if( node->node.path_segment.separator ) {
-                _add_assoc_stringl_ex(current, _HBS_STRS("separator"),
-                    node->node.path_segment.separator,
-                    node->node.path_segment.separator_length);
+                _add_assoc_string_ex(current, _HBS_STRS("separator"),
+                    node->node.path_segment.separator);
             }
             if( node->node.path_segment.part ) {
-                _add_assoc_stringl_ex(current, _HBS_STRS("part"),
-                    node->node.path_segment.part,
-                    node->node.path_segment.part_length);
+                _add_assoc_string_ex(current, _HBS_STRS("part"),
+                    node->node.path_segment.part);
+            }
+            if( node->node.path_segment.original ) {
+                _add_assoc_string_ex(current, _HBS_STRS("original"),
+                    node->node.path_segment.original);
             }
             break;
         }
+        // These should never happen
+        case HANDLEBARS_AST_NODE_INTERMEDIATE:
+        case HANDLEBARS_AST_NODE_INVERSE:
         case HANDLEBARS_AST_NODE_NIL:
             break;
     }
@@ -459,11 +501,28 @@ static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compile
     _ALLOC_INIT_ZVAL(tmp);
     php_handlebars_compilers_to_zval(compiler->children, compiler->children_length, tmp TSRMLS_CC);
     add_assoc_zval_ex(current, _HBS_STRS("children"), tmp);
-    
-    // Depths
-    _ALLOC_INIT_ZVAL(tmp);
-    php_handlebars_depths_to_zval(compiler->depths, tmp);
-    add_assoc_zval_ex(current, _HBS_STRS("depths"), tmp);
+
+    // Input flags
+    if( compiler->string_params ) {
+    	add_assoc_bool_ex(current, _HBS_STRS("stringParams"), compiler->string_params);
+    }
+    if( compiler->track_ids ) {
+    	add_assoc_bool_ex(current, _HBS_STRS("trackIds"), compiler->track_ids);
+    }
+
+    // Output flags
+    if( compiler->result_flags & handlebars_compiler_flag_use_depths ) {
+    	add_assoc_bool_ex(current, _HBS_STRS("useDepths"), 1);
+    }
+    if( compiler->result_flags & handlebars_compiler_flag_use_partial ) {
+    	add_assoc_bool_ex(current, _HBS_STRS("usePartial"), 1);
+    }
+    /*if( compiler->result_flags & handlebars_compiler_flag_is_simple ) {
+    	add_assoc_bool_ex(current, _HBS_STRS("isSimple"), 1);
+    } else {
+    	add_assoc_bool_ex(current, _HBS_STRS("isSimple"), 0);
+    }*/
+    add_assoc_long_ex(current, _HBS_STRS("blockParams"), compiler->block_params);
 }
 
 static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval * arr TSRMLS_DC)
@@ -1124,7 +1183,7 @@ static zend_always_inline char * php_handlebars_escape_expression_replace_helper
     }
     
     // Count the ocurrences of ` and '
-    for( source = input; c = *source; source++ ) {
+    for( source = input; (c = *source); source++ ) {
         switch( c ) {
             case '`':
             case '\'':
@@ -1144,7 +1203,7 @@ static zend_always_inline char * php_handlebars_escape_expression_replace_helper
     output = target = (char *) emalloc(sizeof(char) * newlen);
     
     // Replace copy
-    for( source = input; c = *source; source++ ) {
+    for( source = input; (c = *source); source++ ) {
         switch( c ) {
             case '`':
                 *target++ = '&';
@@ -1330,8 +1389,8 @@ static zend_function_entry HandlebarsNative_methods[] = {
     PHP_ME(HandlebarsNative, getLastError, HandlebarsNative_getLastError_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(HandlebarsNative, lex, HandlebarsNative_lex_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(HandlebarsNative, lexPrint, HandlebarsNative_lex_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(HandlebarsNative, parse, HandlebarsNative_lex_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(HandlebarsNative, parsePrint, HandlebarsNative_lex_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsNative, parse, HandlebarsNative_parse_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsNative, parsePrint, HandlebarsNative_parse_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(HandlebarsNative, compile, HandlebarsNative_compile_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(HandlebarsNative, compilePrint, HandlebarsNative_compile_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(HandlebarsNative, nameLookup, HandlebarsNative_nameLookup_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
@@ -1368,9 +1427,14 @@ static PHP_MINIT_FUNCTION(handlebars)
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_USE_DEPTHS", handlebars_compiler_flag_use_depths, flags);
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_STRING_PARAMS", handlebars_compiler_flag_string_params, flags);
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_TRACK_IDS", handlebars_compiler_flag_track_ids, flags);
+    REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_NO_ESCAPE", handlebars_compiler_flag_no_escape, flags);
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_KNOWN_HELPERS_ONLY", handlebars_compiler_flag_known_helpers_only, flags);
+    REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_PREVENT_INDENT", handlebars_compiler_flag_prevent_indent, flags);
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_COMPAT", handlebars_compiler_flag_compat, flags);
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_ALL", handlebars_compiler_flag_all, flags);
+
+    REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_RESULT_FLAG_USE_PARTIAL", handlebars_compiler_flag_use_partial, flags);
+    REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_RESULT_FLAG_IS_SIMPLE", handlebars_compiler_flag_is_simple, flags);
 
     // Handlebars\Native
     INIT_CLASS_ENTRY(ce, "Handlebars\\Native", HandlebarsNative_methods);
