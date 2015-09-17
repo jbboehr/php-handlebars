@@ -20,7 +20,7 @@ if [ ! -f $HOME/build/bin/bison ]; then
     make
     make install
     cd ..
-    rm =Rf bison-3.0.2.tar.gz bison-3.0.2
+    rm -Rf bison-3.0.2.tar.gz bison-3.0.2
 fi
 
 if [ ! -f $HOME/build/include/handlebars.h ]; then
