@@ -884,7 +884,7 @@ static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * f
         if (Z_TYPE_P(entry) == IS_INDIRECT) {
             entry = Z_INDIRECT_P(entry);
         }
-        RETURN_ZVAL_FAST(entry);
+        RETVAL_ZVAL(entry, 1, 0);
     }
 }
 #endif
