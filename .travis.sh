@@ -24,13 +24,12 @@ if [ ! -f $HOME/build/bin/bison ]; then
 fi
 
 if [ ! -f $HOME/build/include/handlebars.h ]; then
-    wget https://github.com/jbboehr/handlebars.c/archive/v0.3.1.tar.gz
-    tar xfv v0.3.1.tar.gz
-    cd handlebars.c-0.3.1
+    git clone -b v0.3.1 https://github.com/jbboehr/handlebars.c handlebars-c --recursive
+    cd handlebars-c
     ./bootstrap
     ./configure --prefix=$HOME/build
     make install
     cd ..
-    rm -Rf v0.3.1.tar.gz handlebars.c-0.3.1
+    rm -Rf handlebars-c
 fi
 
