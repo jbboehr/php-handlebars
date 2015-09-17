@@ -9,7 +9,7 @@ if [ ! -f $HOME/build/include/check.h ]; then
     make
     make install
     cd ..
-    rm check-0.9.14.tar.gz
+    rm -Rf check-0.9.14.tar.gz check-0.9.14
 fi
 
 if [ ! -f $HOME/build/bin/bison ]; then
@@ -20,15 +20,16 @@ if [ ! -f $HOME/build/bin/bison ]; then
     make
     make install
     cd ..
-    rm bison-3.0.2.tar.gz
+    rm -Rf bison-3.0.2.tar.gz bison-3.0.2
 fi
 
 if [ ! -f $HOME/build/include/handlebars.h ]; then
-    git clone https://github.com/jbboehr/handlebars.c handlebars-c --recursive
+    git clone -b v0.3.1 https://github.com/jbboehr/handlebars.c handlebars-c --recursive
     cd handlebars-c
     ./bootstrap
     ./configure --prefix=$HOME/build
     make install
     cd ..
+    rm -Rf handlebars-c
 fi
 
