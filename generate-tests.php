@@ -149,16 +149,17 @@ function hbs_test_file(array $test) {
 
 function hbs_generate_test_head(array $test) {
     // Skip this test for now
-    $skip = '';
+    $skip = "!extension_loaded('handlebars')";
+    $reason = '';
+    
     switch( $test['description'] . '-' . $test['it'] ) {
 		case 'basic context-escaping':
+		    if( $test['number'] != 3 ) {
+		        break;
+		    }
 		case 'helpers-helper for nested raw block gets raw content':
 	        $skip = 'true';
 	        $reason = 'skip for now'; 
-        break;
-        default:
-	        $skip = "!extension_loaded('handlebars')";
-	        $reason = '';
         break;
     }
     
