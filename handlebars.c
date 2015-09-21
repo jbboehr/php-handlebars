@@ -504,6 +504,13 @@ static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compile
     _ALLOC_INIT_ZVAL(tmp);
     php_handlebars_compilers_to_zval(compiler->children, compiler->children_length, tmp TSRMLS_CC);
     add_assoc_zval_ex(current, _HBS_STRS("children"), tmp);
+    
+    // Decorators
+    if( compiler->flags & handlebars_compiler_flag_alternate_decorators ) {
+        _ALLOC_INIT_ZVAL(tmp);
+        php_handlebars_compilers_to_zval(compiler->decorators, compiler->decorators_length, tmp TSRMLS_CC);
+        add_assoc_zval_ex(current, _HBS_STRS("decorators"), tmp);
+    }
 
     // Input flags
     if( compiler->string_params ) {
