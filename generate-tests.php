@@ -126,6 +126,9 @@ function makeCompilerFlags(array $options = null)
     if( !empty($options['explicitPartialContext']) ) {
         $flags |= (1 << 7); //Handlebars\COMPILER_FLAG_EXPLICIT_PARTIAL_CONTEXT;
     }
+    if( !empty($options['ignoreStandalone']) ) {
+        $flags |= (1 << 8); //Handlebars\COMPILER_FLAG_IGNORE_STANDALONE;
+    }
     return $flags;
 }
 

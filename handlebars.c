@@ -514,18 +514,18 @@ static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compile
     }
 
     // Output flags
-    if( compiler->result_flags & handlebars_compiler_flag_use_depths ) {
+    if( compiler->result_flags & handlebars_compiler_result_flag_use_depths ) {
     	add_assoc_bool_ex(current, _HBS_STRS("useDepths"), 1);
     }
-    if( compiler->result_flags & handlebars_compiler_flag_use_partial ) {
+    if( compiler->result_flags & handlebars_compiler_result_flag_use_partial ) {
     	add_assoc_bool_ex(current, _HBS_STRS("usePartial"), 1);
     }
-    /*if( compiler->result_flags & handlebars_compiler_flag_is_simple ) {
+    /*if( compiler->result_flags & handlebars_compiler_result_flag_is_simple ) {
     	add_assoc_bool_ex(current, _HBS_STRS("isSimple"), 1);
     } else {
     	add_assoc_bool_ex(current, _HBS_STRS("isSimple"), 0);
     }*/
-    if( compiler->result_flags & handlebars_compiler_flag_use_decorators ) {
+    if( compiler->result_flags & handlebars_compiler_result_flag_use_decorators ) {
     	add_assoc_bool_ex(current, _HBS_STRS("useDecorators"), 1);
     }
     add_assoc_long_ex(current, _HBS_STRS("blockParams"), compiler->block_params);
@@ -1423,12 +1423,13 @@ static PHP_MINIT_FUNCTION(handlebars)
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_KNOWN_HELPERS_ONLY", handlebars_compiler_flag_known_helpers_only, flags);
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_PREVENT_INDENT", handlebars_compiler_flag_prevent_indent, flags);
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_EXPLICIT_PARTIAL_CONTEXT", handlebars_compiler_flag_explicit_partial_context, flags);
+    REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_IGNORE_STANDALONE", handlebars_compiler_flag_ignore_standalone, flags);
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_COMPAT", handlebars_compiler_flag_compat, flags);
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_ALL", handlebars_compiler_flag_all, flags);
 
-    REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_RESULT_FLAG_USE_PARTIAL", handlebars_compiler_flag_use_partial, flags);
-    REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_RESULT_FLAG_IS_SIMPLE", handlebars_compiler_flag_is_simple, flags);
-    REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_RESULT_FLAG_USE_DECORATORS", handlebars_compiler_flag_use_decorators, flags);
+    REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_RESULT_FLAG_USE_PARTIAL", handlebars_compiler_result_flag_use_partial, flags);
+    REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_RESULT_FLAG_IS_SIMPLE", handlebars_compiler_result_flag_is_simple, flags);
+    REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_RESULT_FLAG_USE_DECORATORS", handlebars_compiler_result_flag_use_decorators, flags);
 
     // Handlebars\Native
     INIT_CLASS_ENTRY(ce, "Handlebars\\Native", HandlebarsNative_methods);
