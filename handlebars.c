@@ -1424,12 +1424,14 @@ static PHP_MINIT_FUNCTION(handlebars)
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_PREVENT_INDENT", handlebars_compiler_flag_prevent_indent, flags);
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_EXPLICIT_PARTIAL_CONTEXT", handlebars_compiler_flag_explicit_partial_context, flags);
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_IGNORE_STANDALONE", handlebars_compiler_flag_ignore_standalone, flags);
+    REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_ALTERNATE_DECORATORS", handlebars_compiler_flag_alternate_decorators, flags);
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_COMPAT", handlebars_compiler_flag_compat, flags);
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_ALL", handlebars_compiler_flag_all, flags);
 
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_RESULT_FLAG_USE_PARTIAL", handlebars_compiler_result_flag_use_partial, flags);
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_RESULT_FLAG_IS_SIMPLE", handlebars_compiler_result_flag_is_simple, flags);
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_RESULT_FLAG_USE_DECORATORS", handlebars_compiler_result_flag_use_decorators, flags);
+    REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_RESULT_FLAG_ALL", handlebars_compiler_result_flag_all, flags);
 
     // Handlebars\Native
     INIT_CLASS_ENTRY(ce, "Handlebars\\Native", HandlebarsNative_methods);
