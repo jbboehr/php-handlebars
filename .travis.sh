@@ -24,7 +24,7 @@ if [ ! -f $HOME/build/bin/bison ]; then
 fi
 
 if [ ! -f $HOME/build/include/handlebars.h ]; then
-    git clone https://github.com/jbboehr/handlebars.c handlebars-c --recursive
+    git clone -b v$LIBHANDLEBARS_VERSION https://github.com/jbboehr/handlebars.c handlebars-c --recursive
     cd handlebars-c
     ./bootstrap
     ./configure --prefix=$HOME/build
