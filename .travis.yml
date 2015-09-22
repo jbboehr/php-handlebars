@@ -12,6 +12,7 @@ env: LIBHANDLEBARS_VERSION=0.3.2
 branches:
   only:
     - dev-0.4
+    - dev-0.5
     - master
     - travis-fix
 
