@@ -24,6 +24,8 @@ var_dump(Native::nameLookup(null, 'foo'));
 var_dump((array) Native::nameLookup((object) array('foo' => (object) array('bar' => 'baz')), 'foo'));
 var_dump(Native::nameLookup(array(404 => 'bar'), 404));
 var_dump(Native::nameLookup(array(404 => 'bar'), '404'));
+// Make sure it doesn't cause a notice
+var_dump(Native::nameLookup((object) array(), 'missing'));
 --EXPECT--
 string(3) "bar"
 string(3) "bar"
@@ -36,3 +38,4 @@ array(1) {
 }
 string(3) "bar"
 string(3) "bar"
+NULL

@@ -768,23 +768,20 @@ static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * f
             zval_copy_ctor(return_value);
         }
     } else if( Z_TYPE_P(value) == IS_OBJECT ) {
-        ALLOC_INIT_ZVAL(prop);
-        ZVAL_STRINGL(prop, Z_STRVAL_P(field), Z_STRLEN_P(field), 0);
+        // @todo call offsetExists?
         if( zend_hash_exists(&Z_OBJCE_P(value)->function_table, "offsetget", sizeof("offsetget")) ) {
+            ALLOC_INIT_ZVAL(prop);
+            ZVAL_STRINGL(prop, Z_STRVAL_P(field), Z_STRLEN_P(field), 0);
             ALLOC_INIT_ZVAL(fname);
             ZVAL_STRINGL(fname, "offsetget", sizeof("offsetget")-1, 0);
             params[0] = prop;
             call_user_function(&Z_OBJCE_P(value)->function_table, &value, fname, return_value, 1, params TSRMLS_CC);
             efree(fname);
-        } else if( Z_OBJ_HT_P(value)->read_property != NULL ) {
-#if PHP_API_VERSION > 20090626
-            *return_value = *Z_OBJ_HT_P(value)->read_property(value, prop, 0, NULL TSRMLS_CC);
-#else
-            *return_value = *Z_OBJ_HT_P(value)->read_property(value, prop, 0 TSRMLS_CC);
-#endif
+            efree(prop);
+       } else {
+            *return_value = *zend_read_property(Z_OBJCE_P(value), value, Z_STRVAL_P(field), Z_STRLEN_P(field), 1 TSRMLS_CC);
             zval_copy_ctor(return_value);
-        }
-        efree(prop);
+       }
     }
 }
 #else
@@ -817,15 +814,17 @@ static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * f
             entry = zend_hash_str_find(Z_ARRVAL_P(value), Z_STRVAL_P(field), Z_STRLEN_P(field));
         }
     } else if( Z_TYPE_P(value) == IS_OBJECT ) {
+        // @todo call offsetExists?
         ZVAL_STRINGL(&fname, "offsetget", sizeof("offsetget")-1);
-        ZVAL_STRINGL(&prop, Z_STRVAL_P(field), Z_STRLEN_P(field));
         if( zend_hash_str_exists(&Z_OBJCE_P(value)->function_table, Z_STRVAL(fname), Z_STRLEN(fname)) ) {
+    		ZVAL_STRINGL(&prop, Z_STRVAL_P(field), Z_STRLEN_P(field));
             call_user_function(&Z_OBJCE_P(value)->function_table, value, &fname, return_value, 1, &prop);
-        } else if( Z_OBJ_HT_P(value)->read_property != NULL ) {
-            entry = Z_OBJ_HT_P(value)->read_property(value, &prop, 0, NULL, NULL TSRMLS_CC);
+    		zval_dtor(&prop);
+        } else {
+            *return_value = *zend_read_property(Z_OBJCE_P(value), value, Z_STRVAL_P(field), Z_STRLEN_P(field), 1, NULL TSRMLS_CC);
+            zval_copy_ctor(return_value);
         }
         zval_dtor(&fname);
-        zval_dtor(&prop);
     }
 
     if( entry ) {
