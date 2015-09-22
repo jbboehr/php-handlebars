@@ -7,6 +7,8 @@ php:
   - 5.6
   - 7.0
 
+env: LIBHANDLEBARS_VERSION=0.2.6
+
 branches:
   only:
     - dev-0.4
