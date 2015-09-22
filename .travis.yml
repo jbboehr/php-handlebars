@@ -21,6 +21,7 @@ php:
 
 branches:
   only:
+    - dev-0.4
     - master
 
 script:
