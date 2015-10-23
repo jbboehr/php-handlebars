@@ -3,24 +3,24 @@
 namespace Handlebars;
 
 const COMPILER_FLAG_NONE = 0;
-const COMPILER_FLAG_USE_DEPTHS = (1 << 0);
-const COMPILER_FLAG_STRING_PARAMS = (1 << 1);
-const COMPILER_FLAG_TRACK_IDS = (1 << 2);
-const COMPILER_FLAG_NO_ESCAPE = (1 << 3);
-const COMPILER_FLAG_KNOWN_HELPERS_ONLY = (1 << 4);
-const COMPILER_FLAG_PREVENT_INDENT = (1 << 5);
-const COMPILER_FLAG_USE_DATA = (1 << 6);
-const COMPILER_FLAG_EXPLICIT_PARTIAL_CONTEXT = (1 << 7);
-const COMPILER_FLAG_IGNORE_STANDALONE = (1 << 8);
-const COMPILER_FLAG_ALTERNATE_DECORATORS = (1 << 9);
-const COMPILER_FLAG_COMPAT = (1 << 0);
-const COMPILER_FLAG_ALL = (1 << 10) - 1;
+const COMPILER_FLAG_USE_DEPTHS = 1;
+const COMPILER_FLAG_STRING_PARAMS = 2;
+const COMPILER_FLAG_TRACK_IDS = 4;
+const COMPILER_FLAG_NO_ESCAPE = 8;
+const COMPILER_FLAG_KNOWN_HELPERS_ONLY = 16;
+const COMPILER_FLAG_PREVENT_INDENT = 32;
+const COMPILER_FLAG_USE_DATA = 64;
+const COMPILER_FLAG_EXPLICIT_PARTIAL_CONTEXT = 128;
+const COMPILER_FLAG_IGNORE_STANDALONE = 256;
+const COMPILER_FLAG_ALTERNATE_DECORATORS = 512;
+const COMPILER_FLAG_COMPAT = 1;
+const COMPILER_FLAG_ALL = 1023;
 
-const COMPILER_RESULT_FLAG_USE_DEPTHS = (1 << 0);
-const COMPILER_RESULT_FLAG_USE_PARTIAL = (1 << 1);
-const COMPILER_RESULT_FLAG_IS_SIMPLE = (1 << 2);
-const COMPILER_RESULT_FLAG_USE_DECORATORS = (1 << 3);
-const COMPILER_RESULT_FLAG_ALL = (1 << 4) - 1;
+const COMPILER_RESULT_FLAG_USE_DEPTHS = 1;
+const COMPILER_RESULT_FLAG_USE_PARTIAL = 2;
+const COMPILER_RESULT_FLAG_IS_SIMPLE = 4;
+const COMPILER_RESULT_FLAG_USE_DECORATORS = 8;
+const COMPILER_RESULT_FLAG_ALL = 15;
 
 class Exception extends \Exception {}
 class LexException extends Exception {}
@@ -102,23 +102,24 @@ class Native
      * @throws \Handlebars\CompileException
      */
     public static function compilePrint($tmpl, $flags = 0, array $knownHelpers = null) {}
+}
+
+class Utils
+{
+    /**
+     * Append context path for trackIds
+     *
+     * @param mixed $contextPath
+     * @param string $id
+     * @return string
+     */
+    public static function appendContextPath($contextPath, $id) {}
 
     /**
-     * Same as is_callable(), but does not allow simple strings and removes
-     * the second and third arguments.
-     *
-     * @param array $array
-     * @return boolean
+     * @param mixed $value
+     * @return array
      */
-    public static function isCallable($arr) {}
-
-    /**
-     * Is the array a numeric array?
-     *
-     * @param array $array
-     * @return boolean
-     */
-    public static function isIntArray($arr) {}
+    public static function createFrame($value) {}
 
     /**
      * Prepare an expression for the output buffer. Handles certain
@@ -149,6 +150,34 @@ class Native
      * @throws \Handlebars\RuntimeException
      */
     public static function escapeExpressionCompat($value) {}
+
+    /**
+     * Similar to is_callable(), but only allows closures and objects
+     * with an __invoke method, and removes the second and third 
+     * arguments.
+     *
+     * @param array $array
+     * @return boolean
+     */
+    public static function isCallable($arr) {}
+
+    /**
+     * Is the array a numeric array?
+     *
+     * @param array $array
+     * @return boolean
+     */
+    public static function isIntArray($arr) {}
+
+    /**
+     * Looks up a field in an object or array without
+     * causing a notice
+     * 
+     * @param mixed $objOrArray
+     * @param string $field
+     * @return mixed
+     */
+    public static function nameLookup($objOrArray, $field) {}
 }
 
 class SafeString
@@ -172,4 +201,13 @@ class SafeString
      */
     public function __toString() {}
 }
+
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: et sw=4 ts=4
+ */
 
