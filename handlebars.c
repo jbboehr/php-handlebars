@@ -8,12 +8,13 @@
 
 #include "php.h"
 #include "php_ini.h"
-#include "ext/standard/info.h"
-#include "ext/standard/html.h"
-#include "ext/standard/php_string.h"
 #include "zend_exceptions.h"
 #include "zend_hash.h"
 #include "zend_types.h"
+#include "ext/standard/info.h"
+#include "ext/standard/html.h"
+#include "ext/standard/php_string.h"
+#include "ext/spl/spl_exceptions.h"
 
 #ifdef ZTS
 #include "TSRM.h"
@@ -51,6 +52,7 @@ static zend_class_entry * HandlebarsException_ce_ptr;
 static zend_class_entry * HandlebarsLexException_ce_ptr;
 static zend_class_entry * HandlebarsParseException_ce_ptr;
 static zend_class_entry * HandlebarsCompileException_ce_ptr;
+static zend_class_entry * HandlebarsInvalidArgumentException_ce_ptr;
 static zend_class_entry * HandlebarsRuntimeException_ce_ptr;
 /* }}} Variable Declarations */
 
@@ -1446,30 +1448,39 @@ static PHP_MINIT_FUNCTION(handlebars)
     zend_declare_class_constant_stringl(HandlebarsNative_ce_ptr, ZEND_STRL("LIBVERSION"), version, strlen(version) TSRMLS_CC);
     zend_declare_class_constant_stringl(HandlebarsNative_ce_ptr, ZEND_STRL("VERSION"), PHP_HANDLEBARS_VERSION, sizeof(PHP_HANDLEBARS_VERSION)-1 TSRMLS_CC);
     
-    // Handlebars\Exception
-    INIT_CLASS_ENTRY(ce, "Handlebars\\Exception", NULL);
-    HandlebarsException_ce_ptr = _zend_register_internal_class_ex(&ce, exception_ce);
-
-    // Handlebars\LexException
-    INIT_CLASS_ENTRY(ce, "Handlebars\\LexException", NULL);
-    HandlebarsLexException_ce_ptr = _zend_register_internal_class_ex(&ce, HandlebarsException_ce_ptr);
-
-    // Handlebars\ParseException
-    INIT_CLASS_ENTRY(ce, "Handlebars\\ParseException", NULL);
-    HandlebarsParseException_ce_ptr = _zend_register_internal_class_ex(&ce, HandlebarsException_ce_ptr);
-
-    // Handlebars\CompileException
-    INIT_CLASS_ENTRY(ce, "Handlebars\\CompileException", NULL);
-    HandlebarsCompileException_ce_ptr = _zend_register_internal_class_ex(&ce, HandlebarsException_ce_ptr);
-
-    // Handlebars\RuntimeException
-    INIT_CLASS_ENTRY(ce, "Handlebars\\RuntimeException", NULL);
-    HandlebarsRuntimeException_ce_ptr = _zend_register_internal_class_ex(&ce, HandlebarsException_ce_ptr);
-
     // Handlebars\SafeString
     INIT_CLASS_ENTRY(ce, "Handlebars\\SafeString", HandlebarsSafeString_methods);
     HandlebarsSafeString_ce_ptr = zend_register_internal_class(&ce TSRMLS_CC);
 	zend_declare_property_null(HandlebarsSafeString_ce_ptr, "value", sizeof("value")-1, ZEND_ACC_PROTECTED TSRMLS_CC);
+
+    // Handlebars\Exception
+    INIT_CLASS_ENTRY(ce, "Handlebars\\Exception", NULL);
+    HandlebarsException_ce_ptr = zend_register_internal_interface(&ce TSRMLS_CC);
+
+    // Handlebars\LexException
+    INIT_CLASS_ENTRY(ce, "Handlebars\\LexException", NULL);
+    HandlebarsLexException_ce_ptr = _zend_register_internal_class_ex(&ce, exception_ce);
+    zend_class_implements(HandlebarsLexException_ce_ptr TSRMLS_CC, 1, HandlebarsException_ce_ptr);
+
+    // Handlebars\ParseException
+    INIT_CLASS_ENTRY(ce, "Handlebars\\ParseException", NULL);
+    HandlebarsParseException_ce_ptr = _zend_register_internal_class_ex(&ce, exception_ce);
+    zend_class_implements(HandlebarsParseException_ce_ptr TSRMLS_CC, 1, HandlebarsException_ce_ptr);
+
+    // Handlebars\CompileException
+    INIT_CLASS_ENTRY(ce, "Handlebars\\CompileException", NULL);
+    HandlebarsCompileException_ce_ptr = _zend_register_internal_class_ex(&ce, exception_ce);
+    zend_class_implements(HandlebarsCompileException_ce_ptr TSRMLS_CC, 1, HandlebarsException_ce_ptr);
+
+    // Handlebars\InvalidArgumentException
+    INIT_CLASS_ENTRY(ce, "Handlebars\\InvalidArgumentException", NULL);
+    HandlebarsInvalidArgumentException_ce_ptr = _zend_register_internal_class_ex(&ce, spl_ce_RuntimeException);
+    zend_class_implements(HandlebarsInvalidArgumentException_ce_ptr TSRMLS_CC, 1, HandlebarsException_ce_ptr);
+
+    // Handlebars\RuntimeException
+    INIT_CLASS_ENTRY(ce, "Handlebars\\RuntimeException", NULL);
+    HandlebarsRuntimeException_ce_ptr = _zend_register_internal_class_ex(&ce, spl_ce_RuntimeException);
+    zend_class_implements(HandlebarsRuntimeException_ce_ptr TSRMLS_CC, 1, HandlebarsException_ce_ptr);
 
     return SUCCESS;
 }
