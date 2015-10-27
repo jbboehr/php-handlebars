@@ -75,7 +75,7 @@ function patch_opcodes(array &$opcodes) {
         uksort($main, function($a, $b) {
             $keys = array(
                 'opcodes', 'children', 'stringParams', 'trackIds',
-                'useDepths', 'usePartial', 'blockParams'
+                'useDepths', 'usePartial', 'useDecorators', 'blockParams'
             );
             $ai = array_search($a, $keys);
             $bi = array_search($b, $keys);
@@ -120,6 +120,12 @@ function makeCompilerFlags(array $options = null)
     if( !empty($options['preventIndent']) ) {
         $flags |= (1 << 5); //Handlebars\COMPILER_FLAG_PREVENT_INDENT;
     }
+    if( !empty($options['useData']) ) {
+        $flags |= (1 << 6); //Handlebars\COMPILER_FLAG_USE_DATA;
+    }
+    if( !empty($options['explicitPartialContext']) ) {
+        $flags |= (1 << 7); //Handlebars\COMPILER_FLAG_EXPLICIT_PARTIAL_CONTEXT;
+    }
     return $flags;
 }
 
@@ -144,12 +150,16 @@ function hbs_test_file(array $test) {
 function hbs_generate_test_head(array $test) {
     // Skip this test for now
     $skip = '';
-    if( $test['number'] == 3 && $test['suiteName'] === 'basic' ) {
-        $skip = 'true';
-        $reason = 'skip for now'; 
-    } else {
-        $skip = "!extension_loaded('handlebars')";
-        $reason = '';
+    switch( $test['description'] . '-' . $test['it'] ) {
+		case 'basic context-escaping':
+		case 'helpers-helper for nested raw block gets raw content':
+	        $skip = 'true';
+	        $reason = 'skip for now'; 
+        break;
+        default:
+	        $skip = "!extension_loaded('handlebars')";
+	        $reason = '';
+        break;
     }
     
     $output = '';

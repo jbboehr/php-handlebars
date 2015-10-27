@@ -449,6 +449,9 @@ static void php_handlebars_opcode_to_zval(struct handlebars_opcode * opcode, zva
     if( num >= 3 ) {
         php_handlebars_operand_append_zval(&opcode->op3, args TSRMLS_CC);
     }
+    if( num >= 4 ) {
+        php_handlebars_operand_append_zval(&opcode->op4, args TSRMLS_CC);
+    }
     add_assoc_zval_ex(current, _HBS_STRS("args"), args);
 }
 
@@ -522,6 +525,9 @@ static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compile
     } else {
     	add_assoc_bool_ex(current, _HBS_STRS("isSimple"), 0);
     }*/
+    if( compiler->result_flags & handlebars_compiler_flag_use_decorators ) {
+    	add_assoc_bool_ex(current, _HBS_STRS("useDecorators"), 1);
+    }
     add_assoc_long_ex(current, _HBS_STRS("blockParams"), compiler->block_params);
 }
 
@@ -1416,11 +1422,13 @@ static PHP_MINIT_FUNCTION(handlebars)
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_NO_ESCAPE", handlebars_compiler_flag_no_escape, flags);
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_KNOWN_HELPERS_ONLY", handlebars_compiler_flag_known_helpers_only, flags);
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_PREVENT_INDENT", handlebars_compiler_flag_prevent_indent, flags);
+    REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_EXPLICIT_PARTIAL_CONTEXT", handlebars_compiler_flag_explicit_partial_context, flags);
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_COMPAT", handlebars_compiler_flag_compat, flags);
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_FLAG_ALL", handlebars_compiler_flag_all, flags);
 
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_RESULT_FLAG_USE_PARTIAL", handlebars_compiler_flag_use_partial, flags);
     REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_RESULT_FLAG_IS_SIMPLE", handlebars_compiler_flag_is_simple, flags);
+    REGISTER_LONG_CONSTANT("Handlebars\\COMPILER_RESULT_FLAG_USE_DECORATORS", handlebars_compiler_flag_use_decorators, flags);
 
     // Handlebars\Native
     INIT_CLASS_ENTRY(ce, "Handlebars\\Native", HandlebarsNative_methods);
