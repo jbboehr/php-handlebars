@@ -301,6 +301,7 @@ static void php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node, z
             break;
     }
 }
+/* }}} Conversion Utils */
 
 /* {{{ proto mixed Handlebars\Parser::parse(string tmpl) */
 static zend_always_inline void php_handlebars_parse(INTERNAL_FUNCTION_PARAMETERS, short print)

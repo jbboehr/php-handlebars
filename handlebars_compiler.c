@@ -23,6 +23,7 @@ zend_class_entry * HandlebarsCompiler_ce_ptr;
 static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compiler, zval * current TSRMLS_DC);
 /* }}} Variables & Prototypes */
 
+/* {{{ Utils */
 static void php_handlebars_operand_append_zval(struct handlebars_operand * operand, zval * arr TSRMLS_DC)
 {
     switch( operand->type ) {
@@ -221,7 +222,7 @@ static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval 
 
     return known_helpers;
 }
-/* }}} Conversion Utils */
+/* }}} Utils */
 
 /* {{{ proto mixed Handlebars\Compiler::compile(string tmpl[, long flags[, array knownHelpers]]) */
 static zend_always_inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short print)

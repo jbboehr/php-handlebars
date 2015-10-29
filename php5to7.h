@@ -13,17 +13,17 @@ typedef int strsize_t;
 
 #define php5to7_register_internal_class_ex(class, parent) zend_register_internal_class_ex(class, parent, NULL TSRMLS_CC)
 
-static inline zval * php5to7_zend_hash_find(const HashTable *ht, const char *arKey, uint nKeyLength TSRMLS_DC) {
+static inline zval * php5to7_zend_hash_find(const HashTable *ht, const char *arKey, uint nKeyLength) {
 	zval ** entry = NULL;
-	if( zend_hash_find(ht, arKey, nKeyLength + 1, (void **) &entry TSRMLS_CC) == SUCCESS ) {
+	if( zend_hash_find(ht, arKey, nKeyLength + 1, (void **) &entry) == SUCCESS ) {
 		return *entry;
 	} else {
 		return NULL;
 	}
 }
-static inline zval * php5to7_zend_hash_index_find(const HashTable *ht, ulong h TSRMLS_DC) {
+static inline zval * php5to7_zend_hash_index_find(const HashTable *ht, ulong h) {
 	zval ** entry = NULL;
-	if( zend_hash_index_find(ht, h, (void **) &entry TSRMLS_CC) == SUCCESS ) {
+	if( zend_hash_index_find(ht, h, (void **) &entry) == SUCCESS ) {
 		return *entry;
 	} else {
 		return NULL;
@@ -49,6 +49,7 @@ typedef size_t strsize_t;
 #define php5to7_register_internal_class_ex(class, parent) zend_register_internal_class_ex(class, parent)
 
 #define php5to7_zend_hash_find zend_hash_str_find
+#define php5to7_zend_hash_index_find zend_hash_index_find
 
 #define _DECLARE_ZVAL(name) zval name ## _v; zval * name = &name ## _v
 #define _INIT_ZVAL ZVAL_NULL

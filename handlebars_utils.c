@@ -69,7 +69,7 @@ PHP_METHOD(HandlebarsUtils, appendContextPath)
 
 /* {{{ proto mixed Handlebars\Utils::createFrame(mixed $value) */
 #if PHP_MAJOR_VERSION < 7
-static inline void php_handlebars_create_frame(zval * return_value, zval * value, zval * frame)
+static inline void php_handlebars_create_frame(zval * return_value, zval * value, zval * frame TSRMLS_DC)
 {
     array_init(return_value);
 
@@ -116,7 +116,7 @@ PHP_METHOD(HandlebarsUtils, createFrame)
         return;
     }
 
-    php_handlebars_create_frame(return_value, value, frame);
+    php_handlebars_create_frame(return_value, value, frame TSRMLS_CC);
 }
 /* }}} Handlebars\Utils::createFrame */
 
@@ -143,7 +143,7 @@ static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * f
     }
 
     if( Z_TYPE_P(value) == IS_ARRAY ) {
-        if( index > -1 && (entry = php5to7_zend_hash_index_find(Z_ARRVAL_P(value), index TSRMLS_CC)) ) {
+        if( index > -1 && (entry = php5to7_zend_hash_index_find(Z_ARRVAL_P(value), index)) ) {
 
         } else {
         	entry = php5to7_zend_hash_find(Z_ARRVAL_P(value), Z_STRVAL_P(field), Z_STRLEN_P(field));
@@ -190,7 +190,7 @@ static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * f
     }
 
     if( Z_TYPE_P(value) == IS_ARRAY ) {
-        if( index > -1 && (entry = php5to7_zend_hash_find(Z_ARRVAL_P(value), index)) ) {
+        if( index > -1 && (entry = php5to7_zend_hash_index_find(Z_ARRVAL_P(value), index)) ) {
             // nothing
         } else {
             entry = php5to7_zend_hash_find(Z_ARRVAL_P(value), Z_STRVAL_P(field), Z_STRLEN_P(field));
