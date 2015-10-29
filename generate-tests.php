@@ -175,7 +175,9 @@ function hbs_generate_test_head(array $test) {
     $output .= "<?php if( $skip ) die('skip $reason'); ?>" . "\n";
     $output .= '--FILE--' . "\n";
     $output .= '<?php' . "\n";
-    $output .= 'use Handlebars\Native;' . "\n";
+    $output .= 'use Handlebars\Compiler;' . "\n";
+    $output .= 'use Handlebars\Parser;' . "\n";
+    $output .= 'use Handlebars\Tokenizer;' . "\n";
     //$output .= '$test = ' . var_export($test, true) . ';' . "\n";
     return $output;
 }
@@ -221,8 +223,8 @@ function hbs_generate_export_test_body(array $test) {
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
     $output .= '$compileFlags = ' . var_export($compileFlags, true) . ';' . PHP_EOL;
     $output .= '$knownHelpers = ' . var_export($knownHelpers, true) . ';' . PHP_EOL;
-    $output .= 'var_export(Native::compile($tmpl, $compileFlags, $knownHelpers));' . PHP_EOL;
-    $output .= 'var_export(gettype(Native::compilePrint($tmpl, $compileFlags, $knownHelpers)));' . PHP_EOL;
+    $output .= 'var_export(Compiler::compile($tmpl, $compileFlags, $knownHelpers));' . PHP_EOL;
+    $output .= 'var_export(gettype(Compiler::compilePrint($tmpl, $compileFlags, $knownHelpers)));' . PHP_EOL;
     $output .= '--EXPECT--' . PHP_EOL;
     $output .= var_export($expectedOpcodes, true) . var_export('string', true) . PHP_EOL;
     return $output;
@@ -231,9 +233,9 @@ function hbs_generate_export_test_body(array $test) {
 function hbs_generate_spec_test_body_tokenizer(array $test) {
     $output = '';
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
-    $output .= 'var_export(Native::lexPrint($tmpl));' . PHP_EOL;
+    $output .= 'var_export(Tokenizer::lexPrint($tmpl));' . PHP_EOL;
     $output .= 'echo PHP_EOL;' . PHP_EOL;
-    $output .= 'var_export(Native::lex($tmpl));' . PHP_EOL;
+    $output .= 'var_export(Tokenizer::lex($tmpl));' . PHP_EOL;
     $output .= '--EXPECT--' . PHP_EOL;
     $output .= var_export(token_print($test['expected']), true);
     $output .= PHP_EOL;
@@ -252,8 +254,8 @@ function hbs_generate_spec_test_body_parser(array $test) {
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
     $output .= '
 try {
-    var_export(Native::parsePrint($tmpl));
-    var_export(gettype(Native::parse($tmpl)));
+    var_export(Parser::parsePrint($tmpl));
+    var_export(gettype(Parser::parse($tmpl)));
 } catch( Handlebars\ParseException $e ) {
     echo "exception: ", $e->getMessage();
 }
