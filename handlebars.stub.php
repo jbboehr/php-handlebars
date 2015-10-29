@@ -2,39 +2,25 @@
 
 namespace Handlebars;
 
-const COMPILER_FLAG_NONE = 0;
-const COMPILER_FLAG_USE_DEPTHS = (1 << 0);
-const COMPILER_FLAG_STRING_PARAMS = (1 << 1);
-const COMPILER_FLAG_TRACK_IDS = (1 << 2);
-const COMPILER_FLAG_KNOWN_HELPERS_ONLY = (1 << 4);
-const COMPILER_FLAG_COMPAT = (1 << 0);
-const COMPILER_FLAG_ALL = (1 << 4) - 1;
+/**
+ * extension version
+ */
+const VERSION = "x.y.z";
 
-class Exception extends \Exception {}
-class LexException extends Exception {}
-class ParseException extends Exception {}
-class CompileException extends Exception {}
-class RuntimeException extends Exception {}
+/**
+ * libhandlebars version
+ */
+const LIBVERSION = "x.y.z";
 
-class Native
+interface Exception {}
+class LexException extends \Exception implements Exception {}
+class ParseException extends \Exception implements Exception {}
+class CompileException extends \Exception implements Exception {}
+class InvalidArgumentException extends \InvalidArgumentException implements Exception {}
+class RuntimeException extends \RuntimeException implements Exception {}
+
+class Tokenizer
 {
-    /**
-     * extension version
-     */
-    const VERSION = "x.y.z";
-
-    /**
-     * libhandlebars version
-     */
-    const LIBVERSION = "x.y.z";
-    
-    /**
-     * Get the last error that occurred.
-     * 
-     * @return string
-     */
-    public static function getLastError() {}
-
     /**
      * Tokenize a template and return an array of tokens
      *
@@ -50,7 +36,10 @@ class Native
      * @return string
      */
     public static function lexPrint($tmpl) {}
+}
 
+class Parser
+{
     /**
      * Parse a template and return the AST
      *
@@ -68,7 +57,31 @@ class Native
      * @throws \Handlebars\ParseException
      */
     public static function parsePrint($tmpl) {}
+}
 
+class Compiler
+{
+	const NONE = 0;
+	
+	const USE_DEPTHS = 1;
+	const STRING_PARAMS = 2;
+	const TRACK_IDS = 4;
+	const NO_ESCAPE = 8;
+	const KNOWN_HELPERS_ONLY = 16;
+	const PREVENT_INDENT = 32;
+	const USE_DATA = 64;
+	const EXPLICIT_PARTIAL_CONTEXT = 128;
+	const IGNORE_STANDALONE = 256;
+	const ALTERNATE_DECORATORS = 512;
+	const COMPAT = 1;
+	const ALL = 1023;
+	
+	const USE_DEPTHS = 1;
+	const USE_PARTIAL = 2;
+	const IS_SIMPLE = 4;
+	const USE_DECORATORS = 8;
+	const RESULT_ALL = 15;
+	
     /**
      * Compile a template and return the opcodes 
      * 
@@ -90,23 +103,24 @@ class Native
      * @throws \Handlebars\CompileException
      */
     public static function compilePrint($tmpl, $flags = 0, array $knownHelpers = null) {}
+}
+
+class Utils
+{
+    /**
+     * Append context path for trackIds
+     *
+     * @param mixed $contextPath
+     * @param string $id
+     * @return string
+     */
+    public static function appendContextPath($contextPath, $id) {}
 
     /**
-     * Same as is_callable(), but does not allow simple strings and removes
-     * the second and third arguments.
-     *
-     * @param array $array
-     * @return boolean
+     * @param mixed $value
+     * @return array
      */
-    public static function isCallable($arr) {}
-
-    /**
-     * Is the array a numeric array?
-     *
-     * @param array $array
-     * @return boolean
-     */
-    public static function isIntArray($arr) {}
+    public static function createFrame($value) {}
 
     /**
      * Prepare an expression for the output buffer. Handles certain
@@ -137,6 +151,34 @@ class Native
      * @throws \Handlebars\RuntimeException
      */
     public static function escapeExpressionCompat($value) {}
+
+    /**
+     * Similar to is_callable(), but only allows closures and objects
+     * with an __invoke method, and removes the second and third 
+     * arguments.
+     *
+     * @param array $array
+     * @return boolean
+     */
+    public static function isCallable($arr) {}
+
+    /**
+     * Is the array a numeric array?
+     *
+     * @param array $array
+     * @return boolean
+     */
+    public static function isIntArray($arr) {}
+
+    /**
+     * Looks up a field in an object or array without
+     * causing a notice
+     * 
+     * @param mixed $objOrArray
+     * @param string $field
+     * @return mixed
+     */
+    public static function nameLookup($objOrArray, $field) {}
 }
 
 class SafeString
@@ -161,3 +203,11 @@ class SafeString
     public function __toString() {}
 }
 
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: fdm=marker
+ * vim: et sw=4 ts=4
+ */
