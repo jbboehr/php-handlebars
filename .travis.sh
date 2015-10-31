@@ -23,7 +23,8 @@ if [ ! -f $HOME/build/bin/bison ]; then
     rm bison-3.0.2.tar.gz
 fi
 
-if [ ! -f $HOME/build/include/handlebars.h ]; then
+INSTALLED_HANDLEBARS_VERSION=`handlebarsc --version 2>&1 | awk '{ print $2 }'`
+if [ ! -f $HOME/build/include/handlebars.h ] || [ "$INSTALLED_HANDLEBARS_VERSION" != "v$LIBHANDLEBARS_VERSION" ]; then
     git clone -b v$LIBHANDLEBARS_VERSION https://github.com/jbboehr/handlebars.c handlebars-c --recursive
     cd handlebars-c
     ./bootstrap
