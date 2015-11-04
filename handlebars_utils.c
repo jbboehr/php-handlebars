@@ -121,6 +121,15 @@ PHP_METHOD(HandlebarsUtils, createFrame)
 /* }}} Handlebars\Utils::createFrame */
 
 /* {{{ proto mixed Handlebars\Utils::nameLookup(mixed value, string field) */
+static zend_always_inline short is_integer_string(char * str, strsize_t len) {
+    char * endstr = str + len;
+    for( ; str != endstr; str++ ) {
+        if( !ZEND_IS_DIGIT(*str) ) {
+            return 0;
+        }
+    }
+    return 1;
+}
 #if PHP_MAJOR_VERSION < 7
 static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * field, zval * return_value TSRMLS_DC)
 {
@@ -132,33 +141,41 @@ static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * f
     zval * params[1];
 
     // Support integer keys
-    if( Z_TYPE_P(field) == IS_LONG ) {
-        index = Z_LVAL_P(field);
-        convert_to_string(field);
-    } else {
-        convert_to_string(field);
-        if( is_numeric_string(Z_STRVAL_P(field), Z_STRLEN_P(field), NULL, NULL, 0) ) {
-            sscanf(Z_STRVAL_P(field), "%ld", &index);
-        }
+    switch( Z_TYPE_P(field) ) {
+        case IS_LONG:
+            index = Z_LVAL_P(field);
+            convert_to_string(field);
+            break;
+        default:
+            convert_to_string(field);
+            // fall-through
+        case IS_STRING:
+            if( is_integer_string(Z_STRVAL_P(field), Z_STRLEN_P(field)) ) {
+                sscanf(Z_STRVAL_P(field), "%ld", &index);
+            }
+            break;
     }
 
-    if( Z_TYPE_P(value) == IS_ARRAY ) {
-        if( index > -1 && (entry = php5to7_zend_hash_index_find(Z_ARRVAL_P(value), index)) ) {
+    switch( Z_TYPE_P(value) ) {
+        case IS_ARRAY:
+            if( index > -1 && (entry = php5to7_zend_hash_index_find(Z_ARRVAL_P(value), index)) ) {
 
-        } else {
-        	entry = php5to7_zend_hash_find(Z_ARRVAL_P(value), Z_STRVAL_P(field), Z_STRLEN_P(field));
-        }
-    } else if( Z_TYPE_P(value) == IS_OBJECT ) {
-        if( instanceof_function(Z_OBJCE_P(value), zend_ce_arrayaccess TSRMLS_CC) ) {
-            MAKE_STD_ZVAL(prop);
-            ZVAL_STRINGL(prop, Z_STRVAL_P(field), Z_STRLEN_P(field), 1);
-            if( Z_OBJ_HT_P(value)->has_dimension(value, prop, 0 TSRMLS_CC) ) {
-            	entry = Z_OBJ_HT_P(value)->read_dimension(value, prop, 0 TSRMLS_CC);
+            } else {
+            	entry = php5to7_zend_hash_find(Z_ARRVAL_P(value), Z_STRVAL_P(field), Z_STRLEN_P(field));
             }
-            zval_ptr_dtor(&prop);
-        } else {
-        	entry = zend_read_property(Z_OBJCE_P(value), value, Z_STRVAL_P(field), Z_STRLEN_P(field), 1 TSRMLS_CC);
-        }
+            break;
+        case IS_OBJECT:
+            if( instanceof_function(Z_OBJCE_P(value), zend_ce_arrayaccess TSRMLS_CC) ) {
+                MAKE_STD_ZVAL(prop);
+                ZVAL_STRINGL(prop, Z_STRVAL_P(field), Z_STRLEN_P(field), 1);
+                if( Z_OBJ_HT_P(value)->has_dimension(value, prop, 0 TSRMLS_CC) ) {
+                	entry = Z_OBJ_HT_P(value)->read_dimension(value, prop, 0 TSRMLS_CC);
+                }
+                zval_ptr_dtor(&prop);
+            } else {
+            	entry = zend_read_property(Z_OBJCE_P(value), value, Z_STRVAL_P(field), Z_STRLEN_P(field), 1 TSRMLS_CC);
+            }
+            break;
     }
 
     if( entry ) {
@@ -178,43 +195,50 @@ static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * f
     zval *retval = NULL;
 
     // Support integer keys
-    if( Z_TYPE_P(field) == IS_LONG ) {
-        index = Z_LVAL_P(field);
-        convert_to_string(field);
-    } else {
-        convert_to_string(field);
-        if( is_numeric_string(Z_STRVAL_P(field), Z_STRLEN_P(field), NULL, NULL, 0) ) {
-            sscanf(Z_STRVAL_P(field), "%ld", &long_index);
-            index = (zend_long) long_index;
-        }
+    switch( Z_TYPE_P(field) ) {
+        case IS_LONG:
+            index = Z_LVAL_P(field);
+            convert_to_string(field);
+            break;
+        default:
+            convert_to_string(field);
+            // fall-through
+        case IS_STRING:
+            if( is_integer_string(Z_STRVAL_P(field), Z_STRLEN_P(field)) ) {
+                sscanf(Z_STRVAL_P(field), "%ld", &index);
+            }
+            break;
     }
 
-    if( Z_TYPE_P(value) == IS_ARRAY ) {
-        if( index > -1 && (entry = php5to7_zend_hash_index_find(Z_ARRVAL_P(value), index)) ) {
-            // nothing
-        } else {
-            entry = php5to7_zend_hash_find(Z_ARRVAL_P(value), Z_STRVAL_P(field), Z_STRLEN_P(field));
-        }
-    } else if( Z_TYPE_P(value) == IS_OBJECT ) {
-        if( instanceof_function(Z_OBJCE_P(value), zend_ce_arrayaccess TSRMLS_CC) ) {
-            if( Z_OBJ_HT_P(value)->has_dimension(value, field, 0 TSRMLS_CC) ) {
-                retval = Z_OBJ_HT_P(value)->read_dimension(value, field, 0, &result TSRMLS_CC);
-                if( retval ) {
-                    if( &result != retval ) {
-                        ZVAL_COPY(&result, retval);
-                    }
-                } else {
-                    ZVAL_NULL(&result);
-                }
-                RETVAL_ZVAL(&result, 0, 0);
+    switch( Z_TYPE_P(value) ) {
+        case IS_ARRAY:
+            if( index > -1 && (entry = php5to7_zend_hash_index_find(Z_ARRVAL_P(value), index)) ) {
+                // nothing
+            } else {
+                entry = php5to7_zend_hash_find(Z_ARRVAL_P(value), Z_STRVAL_P(field), Z_STRLEN_P(field));
             }
-        } else {
-            entry = zend_read_property(Z_OBJCE_P(value), value, Z_STRVAL_P(field), Z_STRLEN_P(field), 1, NULL TSRMLS_CC);
-        }
+            break;
+        case IS_OBJECT:
+            if( instanceof_function(Z_OBJCE_P(value), zend_ce_arrayaccess TSRMLS_CC) ) {
+                if( Z_OBJ_HT_P(value)->has_dimension(value, field, 0 TSRMLS_CC) ) {
+                    retval = Z_OBJ_HT_P(value)->read_dimension(value, field, 0, &result TSRMLS_CC);
+                    if( retval ) {
+                        if( &result != retval ) {
+                            ZVAL_COPY(&result, retval);
+                        }
+                    } else {
+                        ZVAL_NULL(&result);
+                    }
+                    RETVAL_ZVAL(&result, 0, 0);
+                }
+            } else {
+                entry = zend_read_property(Z_OBJCE_P(value), value, Z_STRVAL_P(field), Z_STRLEN_P(field), 1, NULL TSRMLS_CC);
+            }
+            break;
     }
 
     if( entry ) {
-        if (Z_TYPE_P(entry) == IS_INDIRECT) {
+        if( Z_TYPE_P(entry) == IS_INDIRECT ) {
             entry = Z_INDIRECT_P(entry);
         }
         RETVAL_ZVAL(entry, 1, 0);
