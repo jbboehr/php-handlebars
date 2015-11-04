@@ -238,10 +238,18 @@ static zend_always_inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETE
     char * errmsg;
     char ** known_helpers_arr;
 
-    // Arguments
+#ifndef FAST_ZPP
     if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|lz", &tmpl, &tmpl_len, &compile_flags, &known_helpers) == FAILURE ) {
         return;
     }
+#else
+    ZEND_PARSE_PARAMETERS_START(1, 3)
+	    Z_PARAM_STRING(tmpl, tmpl_len)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_LONG(compile_flags)
+        Z_PARAM_ZVAL(known_helpers)
+    ZEND_PARSE_PARAMETERS_END();
+#endif
 
 #if PHP_MAJOR_VERSION >= 7
     // Dereference zval

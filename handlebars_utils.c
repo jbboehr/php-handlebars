@@ -27,9 +27,16 @@ PHP_METHOD(HandlebarsUtils, appendContextPath)
     strsize_t tmp_length = 0;
     char * out;
 
+#ifndef FAST_ZPP
     if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zs", &context_path, &id, &id_length) == FAILURE ) {
         return;
     }
+#else
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+	    Z_PARAM_ZVAL(context_path)
+        Z_PARAM_STRING(id, id_length)
+    ZEND_PARSE_PARAMETERS_END();
+#endif
 
     switch( Z_TYPE_P(context_path) ) {
         case IS_ARRAY:
@@ -69,7 +76,7 @@ PHP_METHOD(HandlebarsUtils, appendContextPath)
 
 /* {{{ proto mixed Handlebars\Utils::createFrame(mixed $value) */
 #if PHP_MAJOR_VERSION < 7
-static inline void php_handlebars_create_frame(zval * return_value, zval * value, zval * frame TSRMLS_DC)
+static inline void php_handlebars_create_frame(zval * return_value, zval * value TSRMLS_DC)
 {
     array_init(return_value);
 
@@ -87,7 +94,7 @@ static inline void php_handlebars_create_frame(zval * return_value, zval * value
     zval_copy_ctor(return_value);
 }
 #else
-static inline void php_handlebars_create_frame(zval * return_value, zval * value, zval * frame)
+static inline void php_handlebars_create_frame(zval * return_value, zval * value)
 {
     zval tmp;
 
@@ -110,13 +117,18 @@ static inline void php_handlebars_create_frame(zval * return_value, zval * value
 PHP_METHOD(HandlebarsUtils, createFrame)
 {
     zval * value;
-    zval * frame;
 
+#ifndef FAST_ZPP
     if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &value) == FAILURE ) {
         return;
     }
+#else
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+	    Z_PARAM_ZVAL(value)
+    ZEND_PARSE_PARAMETERS_END();
+#endif
 
-    php_handlebars_create_frame(return_value, value, frame TSRMLS_CC);
+    php_handlebars_create_frame(return_value, value TSRMLS_CC);
 }
 /* }}} Handlebars\Utils::createFrame */
 
@@ -251,10 +263,16 @@ PHP_METHOD(HandlebarsUtils, nameLookup)
     zval * value;
     zval * field;
 
-    // Arguments
+#ifndef FAST_ZPP
     if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &value, &field) == FAILURE ) {
         return;
     }
+#else
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+	    Z_PARAM_ZVAL(value)
+	    Z_PARAM_ZVAL(field)
+    ZEND_PARSE_PARAMETERS_END();
+#endif
 
     php_handlebars_name_lookup(value, field, return_value TSRMLS_CC);
 }
@@ -268,9 +286,15 @@ PHP_METHOD(HandlebarsUtils, isCallable)
     zend_bool retval = 0;
     int check_flags = 0; //IS_CALLABLE_CHECK_SYNTAX_ONLY;
 
+#ifndef FAST_ZPP
     if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &var) == FAILURE ) {
         return;
     }
+#else
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+	    Z_PARAM_ZVAL(var)
+    ZEND_PARSE_PARAMETERS_END();
+#endif
 
     if( Z_TYPE_P(var) != IS_OBJECT ) {
         RETURN_FALSE;
@@ -365,10 +389,15 @@ PHP_METHOD(HandlebarsUtils, isIntArray)
 {
     zval * arr;
 
-    // Arguments
+#ifndef FAST_ZPP
     if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &arr) == FAILURE ) {
         return;
     }
+#else
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+	    Z_PARAM_ZVAL(arr)
+    ZEND_PARSE_PARAMETERS_END();
+#endif
 
     if( php_handlebars_is_int_array(arr TSRMLS_CC) ) {
         RETURN_TRUE;
@@ -453,10 +482,15 @@ PHP_METHOD(HandlebarsUtils, expression)
 {
     zval * val;
 
-    // Arguments
+#ifndef FAST_ZPP
     if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &val) == FAILURE ) {
         return;
     }
+#else
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+	    Z_PARAM_ZVAL(val)
+    ZEND_PARSE_PARAMETERS_END();
+#endif
 
     php_handlebars_expression(val, return_value TSRMLS_CC);
 }
@@ -502,10 +536,15 @@ PHP_METHOD(HandlebarsUtils, escapeExpression)
 {
     zval * val;
 
-    // Arguments
+#ifndef FAST_ZPP
     if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &val) == FAILURE ) {
         return;
     }
+#else
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+	    Z_PARAM_ZVAL(val)
+    ZEND_PARSE_PARAMETERS_END();
+#endif
 
     php_handlebars_escape_expression(val, return_value TSRMLS_CC);
 }
@@ -635,10 +674,15 @@ PHP_METHOD(HandlebarsUtils, escapeExpressionCompat)
 {
     zval * val;
 
-    // Arguments
+#ifndef FAST_ZPP
     if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &val) == FAILURE ) {
         return;
     }
+#else
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+	    Z_PARAM_ZVAL(val)
+    ZEND_PARSE_PARAMETERS_END();
+#endif
 
     php_handlebars_escape_expression_compat(val, return_value TSRMLS_CC);
 }

@@ -28,10 +28,17 @@ PHP_METHOD(HandlebarsSafeString, __construct)
     char * value;
     strsize_t value_len;
 
+#ifndef FAST_ZPP
     if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Os",
             &_this_zval, HandlebarsSafeString_ce_ptr, &value, &value_len) == FAILURE) {
         return;
     }
+#else
+    _this_zval = getThis();
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+	    Z_PARAM_STRING(value, value_len)
+    ZEND_PARSE_PARAMETERS_END();
+#endif
 
     zend_update_property_stringl(Z_OBJCE_P(_this_zval), _this_zval, "value", sizeof("value")-1, value, value_len TSRMLS_CC);
 }
@@ -44,10 +51,14 @@ PHP_METHOD(HandlebarsSafeString, __toString)
     zval * value;
     zval rv;
 
+#ifndef FAST_ZPP
     if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "O",
             &_this_zval, HandlebarsSafeString_ce_ptr) == FAILURE) {
         return;
     }
+#else
+    _this_zval = getThis();
+#endif
 
 #if PHP_MAJOR_VERSION < 7
     value = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, "value", sizeof("value")-1, 1 TSRMLS_CC);

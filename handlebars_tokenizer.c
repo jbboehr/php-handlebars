@@ -34,10 +34,15 @@ static zend_always_inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, 
     char * output;
     _DECLARE_ZVAL(child);
 
-    // Arguments
+#ifndef FAST_ZPP
     if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &tmpl, &tmpl_len) == FAILURE ) {
         return;
     }
+#else
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+	    Z_PARAM_STRING(tmpl, tmpl_len)
+    ZEND_PARSE_PARAMETERS_END();
+#endif
 
     ctx = handlebars_context_ctor();
     ctx->tmpl = tmpl;
