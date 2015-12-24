@@ -3,7 +3,8 @@
 #include "config.h"
 #endif
 
-#include "php.h"
+#include "Zend/zend_API.h"
+#include "main/php.h"
 
 #include "php5to7.h"
 #include "php_handlebars.h"

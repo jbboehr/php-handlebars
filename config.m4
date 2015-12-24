@@ -14,12 +14,12 @@ AC_DEFUN([PHP_HANDLEBARS_ADD_SOURCES], [
 if test "$PHP_HANDLEBARS" != "no"; then
 	PHP_HANDLEBARS_ADD_SOURCES([
 		php_handlebars.c
-		handlebars_compiler.c
-		handlebars_exceptions.c
-		handlebars_parser.c
-		handlebars_safe_string.c
-		handlebars_tokenizer.c
-		handlebars_utils.c
+		compiler.c
+		exceptions.c
+		parser.c
+		safe_string.c
+		tokenizer.c
+		utils.c
 	])
     PHP_INSTALL_HEADERS([ext/handlebars], [php_handlebars.h])
     PHP_ADD_LIBRARY(handlebars, 1, HANDLEBARS_SHARED_LIBADD)

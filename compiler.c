@@ -3,7 +3,9 @@
 #include "config.h"
 #endif
 
-#include "php.h"
+#include "Zend/zend_API.h"
+#include "Zend/zend_types.h"
+#include "main/php.h"
 
 #include "handlebars.h"
 #include "handlebars_compiler.h"

@@ -3,8 +3,9 @@
 #include "config.h"
 #endif
 
-#include "php.h"
+#include "Zend/zend_API.h"
 #include "Zend/zend_interfaces.h"
+#include "main/php.h"
 #include "ext/standard/html.h"
 #include "ext/standard/php_array.h"
 
