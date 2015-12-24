@@ -3,6 +3,15 @@
 
 /* vim: tabstop=4:softtabstop=4:shiftwidth=4:expandtab */
 
+require __DIR__ . '/tests/utils.inc';
+
+if( !extension_loaded('handlebars') ) {
+    require 'handlebars.stub.php';
+}
+
+$startTime = microtime(true);
+$nTests = 0;
+
 // Utils
 
 function handlebarsc($tmpl, $op) {
@@ -15,6 +24,13 @@ function handlebarsc($tmpl, $op) {
         exit(1);
     }
     return array(($return_var == 0), join("\n", $output), $command);
+}
+
+function patch_tokens(array &$tokens) {
+    foreach( $tokens as $k => $token ) {
+        $tokens[$k] = new Handlebars\Token($token['name'], $token['text']);
+    }
+    return $tokens;
 }
 
 function patch_opcodes(array &$opcodes) {
@@ -67,7 +83,8 @@ function patch_opcodes(array &$opcodes) {
                             settype($opcode['args'][0], 'string');
                         }
                     }
-                    unset($opcode['loc']);                
+                    unset($opcode['loc']);
+                    $opcode = new Handlebars\Opcode($opcode['opcode'], $opcode['args']);
                 }
             }
         }
@@ -165,21 +182,21 @@ function hbs_generate_test_head(array $test) {
 	        $reason = 'skip for now'; 
         break;
     }
-    
-    $output = '';
-    $output .= '--TEST--' . "\n";
-    $output .= $test['suiteName'] . ' #' . $test['number'] . ' - ' . $test['it'] . "\n";
-    $output .= '--DESCRIPTION--' . "\n";
-    $output .= $test['description'] . "\n";
-    $output .= '--SKIPIF--' . "\n";
-    $output .= "<?php if( $skip ) die('skip $reason'); ?>" . "\n";
-    $output .= '--FILE--' . "\n";
-    $output .= '<?php' . "\n";
-    $output .= 'use Handlebars\Compiler;' . "\n";
-    $output .= 'use Handlebars\Parser;' . "\n";
-    $output .= 'use Handlebars\Tokenizer;' . "\n";
-    //$output .= '$test = ' . var_export($test, true) . ';' . "\n";
-    return $output;
+
+    return join("\n", array(
+        '--TEST--',
+        $test['suiteName'] . ' #' . $test['number'] . ' - ' . $test['it'],
+        '--DESCRIPTION--',
+        $test['description'],
+        '--SKIPIF--',
+        "<?php if( $skip ) die('skip $reason'); ?>",
+        '--FILE--',
+        '<?php',
+        'use Handlebars\Compiler;',
+        'use Handlebars\Parser;',
+        'use Handlebars\Tokenizer;',
+        'require __DIR__ . "/../../utils.inc";',
+    ));
 }
 
 function hbs_write_file($file, $contents) {
@@ -223,23 +240,23 @@ function hbs_generate_export_test_body(array $test) {
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
     $output .= '$compileFlags = ' . var_export($compileFlags, true) . ';' . PHP_EOL;
     $output .= '$knownHelpers = ' . var_export($knownHelpers, true) . ';' . PHP_EOL;
-    $output .= 'var_export(Compiler::compile($tmpl, $compileFlags, $knownHelpers));' . PHP_EOL;
-    $output .= 'var_export(gettype(Compiler::compilePrint($tmpl, $compileFlags, $knownHelpers)));' . PHP_EOL;
+    $output .= 'myprint(Compiler::compile($tmpl, $compileFlags, $knownHelpers), true);' . PHP_EOL;
+    $output .= 'myprint(gettype(Compiler::compilePrint($tmpl, $compileFlags, $knownHelpers)), true);' . PHP_EOL;
     $output .= '--EXPECT--' . PHP_EOL;
-    $output .= var_export($expectedOpcodes, true) . var_export('string', true) . PHP_EOL;
+    $output .= myprint($expectedOpcodes) . myprint('string') . PHP_EOL;
     return $output;
 }
 
 function hbs_generate_spec_test_body_tokenizer(array $test) {
     $output = '';
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
-    $output .= 'var_export(Tokenizer::lexPrint($tmpl));' . PHP_EOL;
+    $output .= 'myprint(Tokenizer::lexPrint($tmpl), true);' . PHP_EOL;
     $output .= 'echo PHP_EOL;' . PHP_EOL;
-    $output .= 'var_export(Tokenizer::lex($tmpl));' . PHP_EOL;
+    $output .= 'myprint(Tokenizer::lex($tmpl), true);' . PHP_EOL;
     $output .= '--EXPECT--' . PHP_EOL;
-    $output .= var_export(token_print($test['expected']), true);
+    $output .= myprint(token_print($test['expected']));
     $output .= PHP_EOL;
-    $output .= var_export($test['expected'], true);
+    $output .= myprint(patch_tokens($test['expected']));
     return $output;
 }
 

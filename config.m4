@@ -16,8 +16,10 @@ if test "$PHP_HANDLEBARS" != "no"; then
 		php_handlebars.c
 		compiler.c
 		exceptions.c
+		opcode.c
 		parser.c
 		safe_string.c
+		token.c
 		tokenizer.c
 		utils.c
 	])

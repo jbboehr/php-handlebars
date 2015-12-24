@@ -16,6 +16,7 @@
 extern PHP_MINIT_FUNCTION(handlebars_compiler);
 extern PHP_MINIT_FUNCTION(handlebars_exceptions);
 extern PHP_MINIT_FUNCTION(handlebars_parser);
+extern PHP_MINIT_FUNCTION(handlebars_opcode);
 extern PHP_MINIT_FUNCTION(handlebars_safe_string);
 extern PHP_MINIT_FUNCTION(handlebars_tokenizer);
 extern PHP_MINIT_FUNCTION(handlebars_utils);
@@ -33,8 +34,10 @@ static PHP_MINIT_FUNCTION(handlebars)
     
     PHP_MINIT(handlebars_compiler)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_exceptions)(INIT_FUNC_ARGS_PASSTHRU);
+    PHP_MINIT(handlebars_opcode)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_parser)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_safe_string)(INIT_FUNC_ARGS_PASSTHRU);
+    PHP_MINIT(handlebars_token)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_tokenizer)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_utils)(INIT_FUNC_ARGS_PASSTHRU);
 

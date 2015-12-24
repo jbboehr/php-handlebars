@@ -60,15 +60,16 @@ static void php_handlebars_operand_append_zval(struct handlebars_operand * opera
 
 static void php_handlebars_opcode_to_zval(struct handlebars_opcode * opcode, zval * current TSRMLS_DC)
 {
+    _DECLARE_ZVAL(type);
     _DECLARE_ZVAL(args);
-    short num = handlebars_opcode_num_operands(opcode->type);
+    short num;
 
-    array_init(current);
-
-    php5to7_add_assoc_string_ex(current, PHP5TO7_STRL("opcode"), (char *) handlebars_opcode_readable_type(opcode->type));
+    _ALLOC_INIT_ZVAL(type);
+    PHP5TO7_ZVAL_STRING(type, (char *) handlebars_opcode_readable_type(opcode->type));
 
     _ALLOC_INIT_ZVAL(args);
     array_init(args);
+    num = handlebars_opcode_num_operands(opcode->type);
     if( num >= 1 ) {
         php_handlebars_operand_append_zval(&opcode->op1, args TSRMLS_CC);
     }
@@ -81,7 +82,33 @@ static void php_handlebars_opcode_to_zval(struct handlebars_opcode * opcode, zva
     if( num >= 4 ) {
         php_handlebars_operand_append_zval(&opcode->op4, args TSRMLS_CC);
     }
-    add_assoc_zval_ex(current, PHP5TO7_STRL("args"), args);
+
+	object_init_ex(current, HandlebarsOpcode_ce_ptr);
+
+	do {
+		zval z_const, z_ret;
+#if PHP_MAJOR_VERSION < 7
+		zval **z_const_args = emalloc(2 * sizeof(zval *));
+
+		ZVAL_STRING(&z_const, "__construct", 0);
+		z_const_args[0] = type;
+		z_const_args[1] = args;
+
+	    call_user_function(&HandlebarsOpcode_ce_ptr->function_table, &current, &z_const, &z_ret, 2, z_const_args TSRMLS_CC);
+
+		efree(z_const_args);
+#else
+		zval z_const_args[2];
+
+		ZVAL_STRING(&z_const, "__construct");
+		z_const_args[0] = *type;
+		z_const_args[1] = *args;
+
+		call_user_function(&HandlebarsOpcode_ce_ptr->function_table, current, &z_const, &z_ret, 2, z_const_args TSRMLS_CC);
+
+		zval_dtor(&z_const);
+#endif
+	} while(0);
 }
 
 static zend_always_inline void php_handlebars_opcodes_to_zval(

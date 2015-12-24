@@ -5,6 +5,7 @@ typedef int strsize_t;
 
 #define PHP5TO7_STRL ZEND_STRS
 #define PHP5TO7_RETVAL_STRING(a) RETVAL_STRING(a, 1)
+#define PHP5TO7_ZVAL_STRING(z, s) ZVAL_STRING(z, s, 1)
 
 #define php5to7_add_next_index_string(...) add_next_index_string(__VA_ARGS__, 1)
 #define php5to7_add_assoc_string(...) add_assoc_string(__VA_ARGS__, 1)
@@ -40,6 +41,7 @@ typedef size_t strsize_t;
 
 #define PHP5TO7_STRL ZEND_STRL
 #define PHP5TO7_RETVAL_STRING(a) RETVAL_STRING(a)
+#define PHP5TO7_ZVAL_STRING ZVAL_STRING
 
 #define php5to7_add_next_index_string add_next_index_string
 #define php5to7_add_assoc_string(z, k, s) add_assoc_string_ex(z, k, strlen(k)+1, s)

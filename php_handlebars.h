@@ -30,7 +30,10 @@ extern zend_class_entry * HandlebarsParseException_ce_ptr;
 extern zend_class_entry * HandlebarsCompileException_ce_ptr;
 extern zend_class_entry * HandlebarsInvalidArgumentException_ce_ptr;
 extern zend_class_entry * HandlebarsRuntimeException_ce_ptr;
+extern zend_class_entry * HandlebarsParser_ce_ptr;
+extern zend_class_entry * HandlebarsOpcode_ce_ptr;
 extern zend_class_entry * HandlebarsSafeString_ce_ptr;
+extern zend_class_entry * HandlebarsToken_ce_ptr;
 extern zend_class_entry * HandlebarsTokenizer_ce_ptr;
 extern zend_class_entry * HandlebarsUtils_ce_ptr;
 

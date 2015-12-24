@@ -76,7 +76,6 @@ class Compiler
 	const COMPAT = 1;
 	const ALL = 1023;
 	
-	const USE_DEPTHS = 1;
 	const USE_PARTIAL = 2;
 	const IS_SIMPLE = 4;
 	const USE_DECORATORS = 8;
@@ -193,14 +192,66 @@ class SafeString
      *
      * @param string $value
      */
-    public function __construct($value) {}
+    public function __construct($value) {
+        $this->value = $value;
+    }
 
     /**
      * Magic toString method
      *
      * @return string
      */
-    public function __toString() {}
+    public function __toString() {
+        return (string) $this->value;
+    }
+}
+
+class Opcode
+{
+    /**
+     * @var string
+     */
+    public $opcode;
+
+    /**
+     * @var array
+     */
+    public $args;
+
+    /**
+     * Constructor
+     *
+     * @param string $opcode
+     * @param array $args
+     */
+    public function __construct($opcode, array $args) {
+        $this->opcode = $opcode;
+        $this->args = $args;
+    }
+}
+
+class Token
+{
+    /**
+     * @var string
+     */
+    public $name;
+
+    /**
+     * @var string
+     */
+    public $text;
+
+    /**
+     * Constructor
+     *
+     * @param string $name
+     * @param string $text
+     */
+    public function __construct($name, $text) {
+        $this->name = $name;
+        $this->text = $text;
+    }
 }
 
 /*
