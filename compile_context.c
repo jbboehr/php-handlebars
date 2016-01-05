@@ -66,6 +66,7 @@ PHP_MINIT_FUNCTION(handlebars_compile_context)
 
     zend_declare_property_null(HandlebarsCompileContext_ce_ptr, ZEND_STRL("opcodes"), ZEND_ACC_PUBLIC TSRMLS_CC);
     zend_declare_property_null(HandlebarsCompileContext_ce_ptr, ZEND_STRL("children"), ZEND_ACC_PUBLIC TSRMLS_CC);
+    zend_declare_property_null(HandlebarsCompileContext_ce_ptr, ZEND_STRL("decorators"), ZEND_ACC_PUBLIC TSRMLS_CC);
     zend_declare_property_bool(HandlebarsCompileContext_ce_ptr, ZEND_STRL("isSimple"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
     zend_declare_property_bool(HandlebarsCompileContext_ce_ptr, ZEND_STRL("useDepths"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
     zend_declare_property_bool(HandlebarsCompileContext_ce_ptr, ZEND_STRL("usePartial"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);

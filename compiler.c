@@ -221,6 +221,15 @@ static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compile
     if( compiler->result_flags & handlebars_compiler_result_flag_use_decorators ) {
         zend_update_property_bool(Z_OBJCE_P(current), current, ZEND_STRL("useDecorators"), 1 TSRMLS_CC);
     }
+
+	// Decorators
+	if( compiler->flags & handlebars_compiler_flag_alternate_decorators ) {
+	    _DECLARE_ZVAL(decorators);
+		_ALLOC_INIT_ZVAL(decorators);
+		php_handlebars_compilers_to_zval(compiler->decorators, compiler->decorators_length, decorators TSRMLS_CC);
+		zend_update_property(Z_OBJCE_P(current), current, ZEND_STRL("decorators"), decorators TSRMLS_CC);
+	    php5to7_zval_ptr_dtor(decorators);
+	}
 }
 
 static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval * arr TSRMLS_DC)

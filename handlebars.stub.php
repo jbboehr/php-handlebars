@@ -265,6 +265,11 @@ class CompileContext
 	 * @var CompileContext[]
 	 */
 	public $children;
+	
+	/**
+	 * @var CompileContext[]
+	 */
+	public $decorators;
 
 	/**
 	 * @var boolean
