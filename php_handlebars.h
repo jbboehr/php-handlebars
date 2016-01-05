@@ -23,6 +23,7 @@ extern zend_module_entry handlebars_module_entry;
 #define HANDLEBARS_G(v) (handlebars_globals.v)
 #endif
 
+extern zend_class_entry * HandlebarsCompileContext_ce_ptr;
 extern zend_class_entry * HandlebarsCompiler_ce_ptr;
 extern zend_class_entry * HandlebarsException_ce_ptr;
 extern zend_class_entry * HandlebarsLexException_ce_ptr;

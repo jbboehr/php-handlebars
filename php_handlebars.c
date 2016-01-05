@@ -31,7 +31,8 @@ static PHP_MINIT_FUNCTION(handlebars)
 
     REGISTER_STRING_CONSTANT("Handlebars\\VERSION", (char *) PHP_HANDLEBARS_VERSION, flags);
     REGISTER_STRING_CONSTANT("Handlebars\\LIBVERSION", (char *) version, flags);
-    
+
+    PHP_MINIT(handlebars_compile_context)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_compiler)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_exceptions)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_opcode)(INIT_FUNC_ARGS_PASSTHRU);

@@ -2,6 +2,7 @@
 #if PHP_MAJOR_VERSION < 7
 
 typedef int strsize_t;
+typedef long zend_long;
 
 #define PHP5TO7_STRL ZEND_STRS
 #define PHP5TO7_RETVAL_STRING(a) RETVAL_STRING(a, 1)

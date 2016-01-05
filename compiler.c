@@ -109,6 +109,9 @@ static void php_handlebars_opcode_to_zval(struct handlebars_opcode * opcode, zva
 		zval_dtor(&z_const);
 #endif
 	} while(0);
+
+	zval_ptr_dtor(type);
+	zval_ptr_dtor(args);
 }
 
 static zend_always_inline void php_handlebars_opcodes_to_zval(
@@ -147,26 +150,51 @@ static zend_always_inline void php_handlebars_compilers_to_zval(
 
 static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compiler, zval * current TSRMLS_DC)
 {
-    _DECLARE_ZVAL(tmp);
-
-    array_init(current);
+    _DECLARE_ZVAL(opcodes);
+    _DECLARE_ZVAL(children);
+    _DECLARE_ZVAL(blockParams);
 
     // Opcodes
-    _ALLOC_INIT_ZVAL(tmp);
-    php_handlebars_opcodes_to_zval(compiler->opcodes, compiler->opcodes_length, tmp TSRMLS_CC);
-    add_assoc_zval_ex(current, PHP5TO7_STRL("opcodes"), tmp);
+    _ALLOC_INIT_ZVAL(opcodes);
+    php_handlebars_opcodes_to_zval(compiler->opcodes, compiler->opcodes_length, opcodes TSRMLS_CC);
 
     // Children
-    _ALLOC_INIT_ZVAL(tmp);
-    php_handlebars_compilers_to_zval(compiler->children, compiler->children_length, tmp TSRMLS_CC);
-    add_assoc_zval_ex(current, PHP5TO7_STRL("children"), tmp);
+    _ALLOC_INIT_ZVAL(children);
+    php_handlebars_compilers_to_zval(compiler->children, compiler->children_length, children TSRMLS_CC);
 
-    // Decorators
-    if( compiler->flags & handlebars_compiler_flag_alternate_decorators ) {
-        _ALLOC_INIT_ZVAL(tmp);
-        php_handlebars_compilers_to_zval(compiler->decorators, compiler->decorators_length, tmp TSRMLS_CC);
-        add_assoc_zval_ex(current, PHP5TO7_STRL("decorators"), tmp);
-    }
+    // Block params
+    _ALLOC_INIT_ZVAL(blockParams);
+    ZVAL_LONG(blockParams, compiler->block_params);
+
+    // Construct object
+	object_init_ex(current, HandlebarsCompileContext_ce_ptr);
+
+	do {
+		zval z_const, z_ret;
+#if PHP_MAJOR_VERSION < 7
+		zval **z_const_args = emalloc(3 * sizeof(zval *));
+
+		ZVAL_STRING(&z_const, "__construct", 0);
+		z_const_args[0] = opcodes;
+		z_const_args[1] = children;
+		z_const_args[2] = blockParams;
+
+	    call_user_function(&HandlebarsCompileContext_ce_ptr->function_table, &current, &z_const, &z_ret, 3, z_const_args TSRMLS_CC);
+
+		efree(z_const_args);
+#else
+		zval z_const_args[3];
+
+		ZVAL_STRING(&z_const, "__construct");
+		z_const_args[0] = *opcodes;
+		z_const_args[1] = *children;
+		z_const_args[2] = *blockParams;
+
+		call_user_function(&HandlebarsCompileContext_ce_ptr->function_table, current, &z_const, &z_ret, 3, z_const_args TSRMLS_CC);
+
+		zval_dtor(&z_const);
+#endif
+	} while(0);
 
     // Input flags
     if( compiler->string_params ) {
@@ -177,21 +205,29 @@ static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compile
     }
 
     // Output flags
+    zval_ptr_dtor(opcodes);
+    zval_ptr_dtor(children);
+    zval_ptr_dtor(blockParams);
+
+#if PHP_MAJOR_VERSION < 7
+//    efree(opcodes);
+//    efree(children);
+//    efree(blockParams);
+#endif
+
+	// Set flags
     if( compiler->result_flags & handlebars_compiler_result_flag_use_depths ) {
-        add_assoc_bool_ex(current, PHP5TO7_STRL("useDepths"), 1);
+        zend_update_property_bool(Z_OBJCE_P(current), current, ZEND_STRL("useDepths"), 1 TSRMLS_CC);
     }
     if( compiler->result_flags & handlebars_compiler_result_flag_use_partial ) {
-        add_assoc_bool_ex(current, PHP5TO7_STRL("usePartial"), 1);
+        zend_update_property_bool(Z_OBJCE_P(current), current, ZEND_STRL("usePartial"), 1 TSRMLS_CC);
     }
-    /*if( compiler->result_flags & handlebars_compiler_result_flag_is_simple ) {
-        add_assoc_bool_ex(current, PHP5TO7_STRL("isSimple"), 1);
-    } else {
-        add_assoc_bool_ex(current, PHP5TO7_STRL("isSimple"), 0);
-    }*/
+//    if( compiler->result_flags & handlebars_compiler_result_flag_is_simple ) {
+//    	zend_update_property_bool(Z_OBJCE_P(current), current, ZEND_STRL("isSimple"), 1 TSRMLS_CC);
+//    }
     if( compiler->result_flags & handlebars_compiler_result_flag_use_decorators ) {
-        add_assoc_bool_ex(current, PHP5TO7_STRL("useDecorators"), 1);
+        zend_update_property_bool(Z_OBJCE_P(current), current, ZEND_STRL("useDecorators"), 1 TSRMLS_CC);
     }
-    add_assoc_long_ex(current, PHP5TO7_STRL("blockParams"), compiler->block_params);
 }
 
 static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval * arr TSRMLS_DC)

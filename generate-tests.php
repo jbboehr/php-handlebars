@@ -33,83 +33,63 @@ function patch_tokens(array &$tokens) {
     return $tokens;
 }
 
-function patch_opcodes(array &$opcodes) {
-    $childrenFn = function(&$children) {
-        foreach( $children as $k => $v ) {
-            patch_opcodes($children[$k]);
-        }
-        return $children;
-    };
-    $mainFn = function(&$main) use ($childrenFn) {
-        foreach( $main as $k => $v ) {
-            if( $k === 'options' ) {
-                unset($main[$k]);
-            } else if( $k === 'isSimple' || $k === 'guid' ) {
-                // @todo add?
-                unset($main[$k]);
-            } else if( $k === 'children' ) {
-                $childrenFn($main[$k]);
-            } else if( $k === 'sourceNode' ) {
-                // @todo add this back?
-                unset($main[$k]);
-            } else if( $k === 'opcodes' ) {
-                // Patch opcodes
-                foreach( $main[$k] as &$opcode ) {
-                    // @todo we could fix this by adding a distinct null operand type
-                    if( $opcode['opcode'] === 'emptyHash' ) {
-                        // Add null operand - currently only supports fixed number of operands
-                        if( count($opcode['args']) === 0 ) {
-                            $opcode['args'] = array(null);
-                        }
-                    } else if( $opcode['opcode'] === 'pushId' ) {
-                        // Add null operand - currently only supports fixed number of operands
-                        if( count($opcode['args']) === 2 ) {
-                            $opcode['args'][] = null;
-                        }
-                        // Stringify - array operands only support strings
-                        if( is_array($opcode['args'][1]) ) {
-                            $opcode['args'][1][0] = (string) $opcode['args'][1][0];
-                            $opcode['args'][1][1] = (string) $opcode['args'][1][1];
-                        }
-                    } else if( $opcode['opcode'] === 'lookupBlockParam' ) {
-                        // Stringify - array operands only support strings
-                        if( is_array($opcode['args'][0]) ) {
-                            settype($opcode['args'][0][0], 'string');
-                            settype($opcode['args'][0][1], 'string');
-                        }
-                    } else if( $opcode['opcode'] === 'pushLiteral' ) {
-                        // Stringify - operands don't support floats/decimals
-                        if( is_float($opcode['args'][0]) ) {
-                            settype($opcode['args'][0], 'string');
-                        }
-                    }
-                    unset($opcode['loc']);
-                    $opcode = new Handlebars\Opcode($opcode['opcode'], $opcode['args']);
-                }
-            }
-        }
-        // Make sure the keys are always in the same order
-        uksort($main, function($a, $b) {
-            $keys = array(
-                'opcodes', 'children', 'stringParams', 'trackIds',
-                'useDepths', 'usePartial', 'useDecorators', 'blockParams'
-            );
-            $ai = array_search($a, $keys);
-            $bi = array_search($b, $keys);
-            if( $ai === false && $bi === false ) {
-                return 0;
-            } else if( $ai === false ) {
-                return -1;
-            } else if( $bi === false ) {
-                return 1;
-            }
-            return ($ai == $bi ? 0 : ($ai > $bi ? 1 : -1));
-        });
-        return $main;
-    };
-    
-    
-    return $mainFn($opcodes);
+function patch_opcode(array $opcode) {
+	// @todo we could fix this by adding a distinct null operand type
+	if( $opcode['opcode'] === 'emptyHash' ) {
+		// Add null operand - currently only supports fixed number of operands
+		if( count($opcode['args']) === 0 ) {
+			$opcode['args'] = array(null);
+		}
+	} else if( $opcode['opcode'] === 'pushId' ) {
+		// Add null operand - currently only supports fixed number of operands
+		if( count($opcode['args']) === 2 ) {
+			$opcode['args'][] = null;
+		}
+		// Stringify - array operands only support strings
+		if( is_array($opcode['args'][1]) ) {
+			$opcode['args'][1][0] = (string) $opcode['args'][1][0];
+			$opcode['args'][1][1] = (string) $opcode['args'][1][1];
+		}
+	} else if( $opcode['opcode'] === 'lookupBlockParam' ) {
+		// Stringify - array operands only support strings
+		if( is_array($opcode['args'][0]) ) {
+			settype($opcode['args'][0][0], 'string');
+			settype($opcode['args'][0][1], 'string');
+		}
+	} else if( $opcode['opcode'] === 'pushLiteral' ) {
+		// Stringify - operands don't support floats/decimals
+		if( is_float($opcode['args'][0]) ) {
+			settype($opcode['args'][0], 'string');
+		}
+	}
+	unset($opcode['loc']);
+	return new Handlebars\Opcode($opcode['opcode'], $opcode['args']);
+}
+
+function patch_opcodes(array $opcodes) {
+	foreach( $opcodes as $k => $opcode ) {
+		$opcodes[$k] = patch_opcode($opcode);
+	}
+	return $opcodes;
+}
+
+function patch_context(array $context) {
+	$opcodes = patch_opcodes($context['opcodes']);
+	$children = array();
+	foreach( $context['children'] as $k => $v ) {
+		$children[$k] = patch_context($v);
+	}
+	$blockParams = isset($context['blockParams']) ? $context['blockParams'] : null;
+	
+	$obj = new Handlebars\CompileContext($opcodes, $children, $blockParams);
+	
+	foreach( array('useDepths', 'usePartial', 'useDecorators') as $k ) {
+		if( !empty($context[$k]) ) {
+			$obj->$k = true;
+		}
+	}
+	
+	return $obj;
 }
 
 function makeCompilerFlags(array $options = null)
@@ -233,7 +213,7 @@ function hbs_generate_export_test_body(array $test) {
     } else {
         $knownHelpers = array_keys($knownHelpers);
     }
-    $expectedOpcodes = patch_opcodes($test['opcodes']);
+    $expectedOpcodes = patch_context($test['opcodes']);
     
     $output = '';
     $output .= '$options = ' . var_export($options, true) . ';' . PHP_EOL;
