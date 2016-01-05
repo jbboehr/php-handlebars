@@ -110,8 +110,8 @@ static void php_handlebars_opcode_to_zval(struct handlebars_opcode * opcode, zva
 #endif
 	} while(0);
 
-	zval_ptr_dtor(type);
-	zval_ptr_dtor(args);
+	php5to7_zval_ptr_dtor(type);
+	php5to7_zval_ptr_dtor(args);
 }
 
 static zend_always_inline void php_handlebars_opcodes_to_zval(
@@ -204,16 +204,9 @@ static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compile
         add_assoc_bool_ex(current, PHP5TO7_STRL("trackIds"), compiler->track_ids);
     }
 
-    // Output flags
-    zval_ptr_dtor(opcodes);
-    zval_ptr_dtor(children);
-    zval_ptr_dtor(blockParams);
-
-#if PHP_MAJOR_VERSION < 7
-//    efree(opcodes);
-//    efree(children);
-//    efree(blockParams);
-#endif
+    php5to7_zval_ptr_dtor(opcodes);
+    php5to7_zval_ptr_dtor(children);
+    php5to7_zval_ptr_dtor(blockParams);
 
 	// Set flags
     if( compiler->result_flags & handlebars_compiler_result_flag_use_depths ) {

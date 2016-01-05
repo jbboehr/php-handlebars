@@ -35,6 +35,7 @@ static inline zval * php5to7_zend_hash_index_find(const HashTable *ht, ulong h) 
 #define _DECLARE_ZVAL(name) zval * name
 #define _INIT_ZVAL INIT_ZVAL
 #define _ALLOC_INIT_ZVAL(name) ALLOC_INIT_ZVAL(name)
+#define php5to7_zval_ptr_dtor(z) zval_ptr_dtor((&z))
 
 #else /* PHP_MAJOR_VERSION >= 7 */
 
@@ -57,6 +58,7 @@ typedef size_t strsize_t;
 #define _DECLARE_ZVAL(name) zval name ## _v; zval * name = &name ## _v
 #define _INIT_ZVAL ZVAL_NULL
 #define _ALLOC_INIT_ZVAL(name) ZVAL_NULL(name)
+#define php5to7_zval_ptr_dtor(z) zval_ptr_dtor(z)
 
 #endif
 
