@@ -32,6 +32,9 @@ cache:
   directories:
     - $HOME/build
 
+before_install:
+  - travis_retry gem install coveralls-lcov
+
 install:
   - export PATH="$HOME/build/bin:$PATH"
   - export CFLAGS="-L$HOME/build/lib"
@@ -39,15 +42,25 @@ install:
   - export PKG_CONFIG_PATH="$HOME/build/lib/pkgconfig"
   - ./.travis.sh
   - phpize
-  - ./configure --enable-handlebars
-  - make
+  - ./configure --enable-handlebars CFLAGS="--coverage -fprofile-arcs -ftest-coverage $CFLAGS" LDFLAGS="--coverage"
+  - make clean all
 
 before_script:
   - php generate-tests.php
+  - lcov --directory . --zerocounters
+  - lcov --directory . --capture --compat-libtool --initial --output-file coverage.info
 
 script:
   - export NO_INTERACTION=1
   - export REPORT_EXIT_STATUS=1
   - export TEST_PHP_EXECUTABLE=`which php`
   - php run-tests.php -d extension=handlebars.so -d extension_dir=modules -n ./tests/
+
+after_success:
+  - lcov --no-checksum --directory . --capture --compat-libtool --output-file coverage.info
+  - lcov --remove coverage.info "/usr*" --remove coverage.info "*/.phpenv/*" --compat-libtool --output-file coverage.info
+  - coveralls-lcov coverage.info
+
+after_failure:
   - for i in `find tests -name "*.out" 2>/dev/null`; do echo "-- START ${i}"; cat $i; echo "-- END"; done
+

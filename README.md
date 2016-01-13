@@ -2,6 +2,8 @@
 # php-handlebars
 
 [![Build Status](https://travis-ci.org/jbboehr/php-handlebars.svg?branch=master)](https://travis-ci.org/jbboehr/php-handlebars)
+[![Coverage Status](https://coveralls.io/repos/jbboehr/php-handlebars/badge.svg?branch=master&service=github)](https://coveralls.io/github/jbboehr/php-handlebars?branch=master)
+[![License](https://img.shields.io/badge/license-LGPLv3-brightgreen.svg)](LICENSE.md)
 
 PHP bindings for [handlebars.c](https://github.com/jbboehr/handlebars.c). Use with [handlebars.php](https://github.com/jbboehr/handlebars.php).
 

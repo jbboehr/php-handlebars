@@ -13,7 +13,7 @@ AC_DEFUN([PHP_HANDLEBARS_ADD_SOURCES], [
 # MAIN -------------------------------------------------------------------------
 if test "$PHP_HANDLEBARS" != "no"; then
 	PHP_HANDLEBARS_ADD_SOURCES([
-		handlebars.c
+		php_handlebars.c
 		handlebars_compiler.c
 		handlebars_exceptions.c
 		handlebars_parser.c
