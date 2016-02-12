@@ -2,7 +2,7 @@
 #ifndef PHP_HANDLEBARS_H
 #define PHP_HANDLEBARS_H
 
-#include "php.h"
+#include "main/php.h"
 
 #define PHP_HANDLEBARS_NAME "handlebars"
 #define PHP_HANDLEBARS_VERSION "0.6.1"
