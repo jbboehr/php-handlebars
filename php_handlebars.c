@@ -7,19 +7,25 @@
 #include <talloc.h>
 #include <handlebars.h>
 
-#include "php.h"
+#include "Zend/zend_API.h"
+#include "Zend/zend_constants.h"
+#include "main/php.h"
+#include "ext/standard/info.h"
 
 #include "php5to7.h"
 #include "php_handlebars.h"
 
 /* {{{ Prototypes */
+extern PHP_MINIT_FUNCTION(handlebars_compile_context);
 extern PHP_MINIT_FUNCTION(handlebars_compiler);
 extern PHP_MINIT_FUNCTION(handlebars_exceptions);
 extern PHP_MINIT_FUNCTION(handlebars_parser);
 extern PHP_MINIT_FUNCTION(handlebars_opcode);
 extern PHP_MINIT_FUNCTION(handlebars_safe_string);
+extern PHP_MINIT_FUNCTION(handlebars_token);
 extern PHP_MINIT_FUNCTION(handlebars_tokenizer);
 extern PHP_MINIT_FUNCTION(handlebars_utils);
+extern PHP_MINIT_FUNCTION(handlebars_vm);
 /* }}} Prototypes */
 
 /* {{{ PHP_MINIT_FUNCTION */
@@ -41,6 +47,7 @@ static PHP_MINIT_FUNCTION(handlebars)
     PHP_MINIT(handlebars_token)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_tokenizer)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_utils)(INIT_FUNC_ARGS_PASSTHRU);
+    PHP_MINIT(handlebars_vm)(INIT_FUNC_ARGS_PASSTHRU);
 
     return SUCCESS;
 }
@@ -56,7 +63,10 @@ static PHP_MINFO_FUNCTION(handlebars)
     // @todo make spec version from libhandlebars function
     php_info_print_table_row(2, "Spec Version", PHP_HANDLEBARS_SPEC);
     php_info_print_table_row(2, "libhandlebars Version", handlebars_version_string());
+    php_info_print_table_row(2, "libhandlebars Handlebars Spec Version", handlebars_spec_version_string());
+    php_info_print_table_row(2, "libhandlebars Mustache Spec Version", handlebars_mustache_spec_version_string());
     php_info_print_table_end();
+
 }
 /* }}} */
 

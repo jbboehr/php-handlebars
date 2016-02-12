@@ -144,7 +144,7 @@ function hbs_test_file(array $test) {
     //$name = $test['it'] . '-' . $test['description'];
     //$safeName = strtolower(trim(preg_replace('/[^a-z0-9]+/i', '-', $name), '-'));
     $testFile = __DIR__ . '/tests' 
-        . '/handlebars-' . $test['suiteType'] 
+        . '/handlebars/' . $test['suiteType'] 
         . '/' . $test['suiteName'] 
         . '/' . sprintf("%03d", $test['number']) /*. '-' . $safeName */ . '.phpt';
     return $testFile;
@@ -178,7 +178,8 @@ function hbs_generate_test_head(array $test) {
         'use Handlebars\Compiler;',
         'use Handlebars\Parser;',
         'use Handlebars\Tokenizer;',
-        'require __DIR__ . "/../../utils.inc";',
+        'use Handlebars\VM;',
+        'require __DIR__ . "/../../../utils.inc";',
     ));
 }
 
@@ -228,6 +229,42 @@ function hbs_generate_export_test_body(array $test) {
     $output .= '--EXPECT--' . PHP_EOL;
     $output .= myprint($expectedOpcodes) . myprint('string') . PHP_EOL;
     return $output;
+}
+
+function hbs_generate_spec_test_body_generic(array $test) {
+    $options = isset($test['options']) ? $test['options'] : array();
+    $compileOptions = isset($test['compileOptions']) ? $test['compileOptions'] : array();
+    $options += $compileOptions;
+    $helpers = array_merge((array)@$test['globalHelpers'], (array)@$test['helpers']);
+    $partials = array_merge((array)@$test['globalPartials'], (array)@$test['partials']);
+    $context = isset($test['data']) ? $test['data'] : null;
+    if( array_key_exists('expected', $test) ) {
+        $expected = $test['expected'];
+    } else if( !empty($test['exception']) ) {
+        if( !empty($test['message']) ) {
+            $expected = $test['message'];
+        } else {
+            $expected = 'exception';
+        }
+    } else {
+        echo "Whoops\n";
+        exit(1);
+    }
+    
+    return PHP_EOL . join(PHP_EOL, array_filter(array(
+        '$tmpl = ' . var_export($test['template'], true) . ';',
+        '$context = ' . var_export($context, true) . ';',
+        $helpers ? '$helpers = ' . var_export($helpers, true) . ';' : null,
+        $partials ? '$partials = ' . var_export($partials, true) . ';' : null,
+        '$options = ' . var_export($options, true) . ';',
+        //'$knownHelpers = ' . var_export($knownHelpers, true) . ';',
+        '$vm = new VM();',
+        $helpers ? '$vm->registerHelpers($helpers);' : null,
+        $partials ? '$vm->registerPartials($partials);' : null,
+        'echo $vm->render($tmpl, $context, $options);',
+        '--EXPECT--',
+        $expected
+    )));
 }
 
 function hbs_generate_spec_test_body_tokenizer(array $test) {
@@ -283,8 +320,7 @@ function hbs_generate_spec_test_body(array $test) {
             return hbs_generate_spec_test_body_tokenizer($test);
             break;
         default:
-            echo "Unknown spec: ", $test['suiteName'], PHP_EOL;
-            exit(1);
+            return hbs_generate_spec_test_body_generic($test);
             break;
     }
 }
@@ -320,13 +356,14 @@ function hbs_generate_spec_test(array $test) {
 // Main
 
 // Parser/Tokenizer
-$specDir = __DIR__ . '/spec/handlebars/spec';
-$parserSpecFile = $specDir . '/parser.json';
-$tokenizerSpecFile = $specDir. '/tokenizer.json';
-
-foreach( array($tokenizerSpecFile, $parserSpecFile) as $file ) {
-    $suiteName = substr(basename($file), 0, strpos(basename($file), '.'));
-    $tests = json_decode(file_get_contents($file), true);
+$specDir = __DIR__ . '/spec/handlebars/spec/';
+foreach( scandir($specDir) as $file ) {
+    if( $file[0] === '.' || substr($file, -5) !== '.json' ) {
+        continue;
+    }
+    $filePath = $specDir . $file;
+    $suiteName = substr(basename($filePath), 0, strpos(basename($filePath), '.'));
+    $tests = json_decode(file_get_contents($filePath), true);
     $number = 0;
     foreach( $tests as $test ) {
         ++$number;

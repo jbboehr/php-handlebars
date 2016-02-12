@@ -23,6 +23,7 @@ if test "$PHP_HANDLEBARS" != "no"; then
 		token.c
 		tokenizer.c
 		utils.c
+		vm.c
 	])
     PHP_INSTALL_HEADERS([ext/handlebars], [php_handlebars.h])
     PHP_ADD_LIBRARY(handlebars, 1, HANDLEBARS_SHARED_LIBADD)

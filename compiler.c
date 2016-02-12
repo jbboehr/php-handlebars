@@ -6,6 +6,7 @@
 #include <setjmp.h>
 
 #include "Zend/zend_API.h"
+#include "Zend/zend_constants.h"
 #include "Zend/zend_exceptions.h"
 #include "Zend/zend_types.h"
 #include "main/php.h"

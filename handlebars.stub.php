@@ -313,6 +313,23 @@ class CompileContext
 	}
 }
 
+class VM
+{
+    protected $helpers;
+
+    protected $partials;
+
+    public function registerHelper($name, $helper) {}
+
+    public function registerHelpers(array $helpers) {}
+
+    public function registerPartial($name, $helper) {}
+
+    public function registerPartials(array $partials) {}
+
+    public function render($tmpl, $context = null, $options = null) {}
+}
+
 /*
  * Local variables:
  * tab-width: 4

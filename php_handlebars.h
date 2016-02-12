@@ -37,6 +37,7 @@ extern zend_class_entry * HandlebarsSafeString_ce_ptr;
 extern zend_class_entry * HandlebarsToken_ce_ptr;
 extern zend_class_entry * HandlebarsTokenizer_ce_ptr;
 extern zend_class_entry * HandlebarsUtils_ce_ptr;
+extern zend_class_entry * HandlebarsVM_ce_ptr;
 
 #endif	/* PHP_HANDLEBARS_H */
 
