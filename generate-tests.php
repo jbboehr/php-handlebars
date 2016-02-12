@@ -88,6 +88,9 @@ function patch_context(array $context) {
 			$obj->$k = true;
 		}
 	}
+	foreach( array('stringParams', 'trackIds') as $k ) {
+			$obj->$k = !empty($context[$k]);
+	}
 	
 	return $obj;
 }

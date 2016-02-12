@@ -72,6 +72,8 @@ PHP_MINIT_FUNCTION(handlebars_compile_context)
     zend_declare_property_bool(HandlebarsCompileContext_ce_ptr, ZEND_STRL("usePartial"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
     zend_declare_property_bool(HandlebarsCompileContext_ce_ptr, ZEND_STRL("useDecorators"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
     zend_declare_property_long(HandlebarsCompileContext_ce_ptr, ZEND_STRL("blockParams"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
+    zend_declare_property_bool(HandlebarsCompileContext_ce_ptr, ZEND_STRL("stringParams"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
+    zend_declare_property_bool(HandlebarsCompileContext_ce_ptr, ZEND_STRL("trackIds"), 0, ZEND_ACC_PUBLIC TSRMLS_CC);
 
     return SUCCESS;
 }

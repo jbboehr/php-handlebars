@@ -196,14 +196,6 @@ static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compile
 #endif
 	} while(0);
 
-    // Input flags
-    if( compiler->string_params ) {
-        add_assoc_bool_ex(current, PHP5TO7_STRL("stringParams"), compiler->string_params);
-    }
-    if( compiler->track_ids ) {
-        add_assoc_bool_ex(current, PHP5TO7_STRL("trackIds"), compiler->track_ids);
-    }
-
     php5to7_zval_ptr_dtor(opcodes);
     php5to7_zval_ptr_dtor(children);
     php5to7_zval_ptr_dtor(blockParams);
@@ -220,6 +212,12 @@ static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compile
 //    }
     if( compiler->result_flags & handlebars_compiler_result_flag_use_decorators ) {
         zend_update_property_bool(Z_OBJCE_P(current), current, ZEND_STRL("useDecorators"), 1 TSRMLS_CC);
+    }
+    if( compiler->flags & handlebars_compiler_flag_string_params ) {
+        zend_update_property_bool(Z_OBJCE_P(current), current, ZEND_STRL("stringParams"), 1 TSRMLS_CC);
+    }
+    if( compiler->flags & handlebars_compiler_flag_track_ids ) {
+        zend_update_property_bool(Z_OBJCE_P(current), current, ZEND_STRL("trackIds"), 1 TSRMLS_CC);
     }
 
 	// Decorators

@@ -295,6 +295,16 @@ class CompileContext
 	 * @var integer
 	 */
 	public $blockParams;
+
+	/**
+	 * @var boolean
+	 */
+	public $stringParams;
+
+	/**
+	 * @var boolean
+	 */
+	public $trackIds;
 	
 	public function __construct(array $opcodes, array $children, $blockParams) {
 		$this->opcodes = $opcodes;
