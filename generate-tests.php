@@ -252,15 +252,17 @@ function hbs_generate_spec_test_body_generic(array $test) {
     }
     
     return PHP_EOL . join(PHP_EOL, array_filter(array(
+	'use Handlebars\HelperRegistry;',
+	'use Handlebars\PartialRegistry;',
         '$tmpl = ' . var_export($test['template'], true) . ';',
         '$context = ' . var_export($context, true) . ';',
-        $helpers ? '$helpers = ' . var_export($helpers, true) . ';' : null,
-        $partials ? '$partials = ' . var_export($partials, true) . ';' : null,
+        $helpers ? '$helpers = new HelperRegistry(' . var_export($helpers, true) . ');' : null,
+        $partials ? '$partials = new PartialRegistry(' . var_export($partials, true) . ');' : null,
         '$options = ' . var_export($options, true) . ';',
         //'$knownHelpers = ' . var_export($knownHelpers, true) . ';',
         '$vm = new VM();',
-        $helpers ? '$vm->registerHelpers($helpers);' : null,
-        $partials ? '$vm->registerPartials($partials);' : null,
+        $helpers ? '$vm->setHelpers($helpers);' : null,
+        $partials ? '$vm->setPartials($partials);' : null,
         'echo $vm->render($tmpl, $context, $options);',
         '--EXPECT--',
         $expected

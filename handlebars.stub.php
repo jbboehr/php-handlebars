@@ -2,6 +2,10 @@
 
 namespace Handlebars;
 
+use ArrayAccess;
+use IteratorAggregate;
+use ArrayObject;
+
 /**
  * extension version
  */
@@ -313,19 +317,19 @@ class CompileContext
 	}
 }
 
+interface Registry extends ArrayAccess, IteratorAggregate {}
+class HelperRegistry extends ArrayObject implements Registry {}
+class PartialRegistry extends ArrayObject implements Registry {}
+
 class VM
 {
     protected $helpers;
 
     protected $partials;
 
-    public function registerHelper($name, $helper) {}
+    public function setHelpers(Registry $helpers) {}
 
-    public function registerHelpers(array $helpers) {}
-
-    public function registerPartial($name, $helper) {}
-
-    public function registerPartials(array $partials) {}
+    public function setPartials(Registry $partials) {}
 
     public function render($tmpl, $context = null, $options = null) {}
 }

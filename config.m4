@@ -19,6 +19,7 @@ if test "$PHP_HANDLEBARS" != "no"; then
 		exceptions.c
 		opcode.c
 		parser.c
+		registry.c
 		safe_string.c
 		token.c
 		tokenizer.c
