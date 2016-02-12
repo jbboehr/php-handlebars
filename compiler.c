@@ -3,13 +3,17 @@
 #include "config.h"
 #endif
 
+#include <setjmp.h>
+
 #include "Zend/zend_API.h"
+#include "Zend/zend_exceptions.h"
 #include "Zend/zend_types.h"
 #include "main/php.h"
 
 #include "handlebars.h"
 #include "handlebars_compiler.h"
 #include "handlebars_context.h"
+#include "handlebars_helpers.h"
 #include "handlebars_memory.h"
 #include "handlebars_opcode_printer.h"
 #include "handlebars_opcodes.h"
@@ -250,7 +254,7 @@ static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval 
     }
 
     // Count builtins >.>
-    for( ptr2 = handlebars_builtins; *ptr2; ++ptr2, ++count );
+    for( ptr2 = handlebars_builtins_names(); *ptr2; ++ptr2, ++count );
 
     // Allocate array
     ptr = known_helpers = talloc_array(ctx, char *, count + 1);
@@ -278,7 +282,7 @@ static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval 
     } while(0);
 
     // Copy in builtins
-    for( ptr2 = handlebars_builtins; *ptr2; ++ptr2 ) {
+    for( ptr2 = handlebars_builtins_names(); *ptr2; ++ptr2 ) {
         *ptr++ = (char *) handlebars_talloc_strdup(ctx, *ptr2);
     }
 
@@ -290,7 +294,7 @@ static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval 
 /* }}} Utils */
 
 /* {{{ proto mixed Handlebars\Compiler::compile(string tmpl[, long flags[, array knownHelpers]]) */
-static zend_always_inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short print)
+static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short print)
 {
     char * tmpl;
     strsize_t tmpl_len;
@@ -302,6 +306,7 @@ static zend_always_inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETE
     int retval;
     char * errmsg;
     char ** known_helpers_arr;
+    struct zend_class_entry * volatile exception_ce = HandlebarsRuntimeException_ce_ptr;
 
 #ifndef FAST_ZPP
     if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|lz", &tmpl, &tmpl_len, &compile_flags, &known_helpers) == FAILURE ) {
@@ -325,8 +330,18 @@ static zend_always_inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETE
 
     // Initialize
     ctx = handlebars_context_ctor();
+
+    // Save jump buffer
+    ctx->e.ok = true;
+    if( setjmp(ctx->e.jmp) ) {
+        errmsg = handlebars_context_get_errmsg(ctx);
+        zend_throw_exception(exception_ce, errmsg, ctx->e.num TSRMLS_CC);
+        goto done;
+    }
+
+    // Intialize compiler and opcode printer
     compiler = handlebars_compiler_ctor(ctx);
-    printer = handlebars_opcode_printer_ctor(ctx);
+    printer = handlebars_opcode_printer_ctor(compiler);
     handlebars_compiler_set_flags(compiler, compile_flags);
 
     // Get known helpers
@@ -336,30 +351,16 @@ static zend_always_inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETE
     }
 
     // Parse
+    exception_ce = HandlebarsParseException_ce_ptr;
     ctx->tmpl = tmpl;
-    retval = handlebars_yy_parse(ctx);
-
-    if( ctx->error ) {
-        // errmsg will be freed by the destruction of ctx
-        errmsg = handlebars_context_get_errmsg(ctx);
-        zend_throw_exception(HandlebarsParseException_ce_ptr, errmsg, ctx->errnum TSRMLS_CC);
-        goto done;
-    } else if( ctx->errnum ) {
-        zend_throw_exception(HandlebarsCompileException_ce_ptr, "An error occurred during parsing", ctx->errnum TSRMLS_CC);
-        goto done;
-    }
+    handlebars_parse(ctx);
 
     // Compile
+    exception_ce = HandlebarsCompileException_ce_ptr;
     handlebars_compiler_compile(compiler, ctx->program);
 
-    if( compiler->error ) {
-        zend_throw_exception(HandlebarsCompileException_ce_ptr, compiler->error, compiler->errnum TSRMLS_CC);
-        goto done;
-    } else if( compiler->errnum ) {
-        zend_throw_exception(HandlebarsCompileException_ce_ptr, "An error occurred during compilation", compiler->errnum TSRMLS_CC);
-        goto done;
-    }
-
+    // Print or convert to zval
+    exception_ce = HandlebarsRuntimeException_ce_ptr;
     if( print ) {
         handlebars_opcode_printer_print(printer, compiler);
         PHP5TO7_RETVAL_STRING(printer->output);

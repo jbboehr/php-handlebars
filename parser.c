@@ -4,6 +4,7 @@
 #endif
 
 #include "Zend/zend_API.h"
+#include "Zend/zend_exceptions.h"
 #include "main/php.h"
 
 #include "handlebars.h"
@@ -305,7 +306,7 @@ static void php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node, z
 /* }}} Conversion Utils */
 
 /* {{{ proto mixed Handlebars\Parser::parse(string tmpl) */
-static zend_always_inline void php_handlebars_parse(INTERNAL_FUNCTION_PARAMETERS, short print)
+static void php_handlebars_parse(INTERNAL_FUNCTION_PARAMETERS, short print)
 {
     char * tmpl;
     strsize_t tmpl_len;
@@ -313,6 +314,7 @@ static zend_always_inline void php_handlebars_parse(INTERNAL_FUNCTION_PARAMETERS
     int retval;
     char * output;
     char * errmsg;
+    struct zend_class_entry * volatile exception_ce = HandlebarsRuntimeException_ce_ptr;
 
 #ifndef FAST_ZPP
     if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &tmpl, &tmpl_len) == FAILURE ) {
@@ -325,21 +327,24 @@ static zend_always_inline void php_handlebars_parse(INTERNAL_FUNCTION_PARAMETERS
 #endif
 
     ctx = handlebars_context_ctor();
-    ctx->tmpl = tmpl;
-    retval = handlebars_yy_parse(ctx);
 
-    if( ctx->error ) {
-        // errmsg will be freed by the destruction of ctx
+    // Save jump buffer
+    ctx->e.ok = true;
+    if( setjmp(ctx->e.jmp) ) {
         errmsg = handlebars_context_get_errmsg(ctx);
-        zend_throw_exception(HandlebarsParseException_ce_ptr, errmsg, ctx->errnum TSRMLS_CC);
-        goto done;
-    } else if( ctx->errnum ) {
-        zend_throw_exception(HandlebarsCompileException_ce_ptr, "An error occurred during parsing", ctx->errnum TSRMLS_CC);
+        zend_throw_exception(exception_ce, errmsg, ctx->e.num TSRMLS_CC);
         goto done;
     }
 
+    // Parse
+    exception_ce = HandlebarsParseException_ce_ptr;
+    ctx->tmpl = tmpl;
+    handlebars_parse(ctx);
+
+    // Print or convert to zval
+    exception_ce = HandlebarsRuntimeException_ce_ptr;
     if( print ) {
-        output = handlebars_ast_print(ctx->program, 0);
+        output = handlebars_ast_print(ctx, ctx->program, 0);
         PHP5TO7_RETVAL_STRING(output);
     } else {
         php_handlebars_ast_node_to_zval(ctx->program, return_value TSRMLS_CC);

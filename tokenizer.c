@@ -4,6 +4,7 @@
 #endif
 
 #include "Zend/zend_API.h"
+#include "Zend/zend_exceptions.h"
 #include "main/php.h"
 
 #include "handlebars.h"
@@ -68,7 +69,7 @@ static zend_always_inline void token_to_zval(struct handlebars_token * token, zv
 }
 
 /* {{{ proto mixed Handlebars\Tokenizer::lex(string tmpl) */
-static zend_always_inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
+static inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
 {
     char * tmpl;
     strsize_t tmpl_len;
@@ -77,6 +78,8 @@ static zend_always_inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, 
     struct handlebars_token_list_item * el = NULL;
     struct handlebars_token_list_item * tmp = NULL;
     char * output;
+    char * errmsg;
+    struct zend_class_entry * volatile exception_ce = HandlebarsRuntimeException_ce_ptr;
     _DECLARE_ZVAL(child);
 
 #ifndef FAST_ZPP
@@ -90,9 +93,22 @@ static zend_always_inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, 
 #endif
 
     ctx = handlebars_context_ctor();
+
+    // Save jump buffer
+    ctx->e.ok = true;
+    if( setjmp(ctx->e.jmp) ) {
+        errmsg = handlebars_context_get_errmsg(ctx);
+        zend_throw_exception(exception_ce, errmsg, ctx->e.num TSRMLS_CC);
+        goto done;
+    }
+
+    // Lex
+    exception_ce = HandlebarsLexException_ce_ptr;
     ctx->tmpl = tmpl;
     list = handlebars_lex(ctx);
 
+    // Print or convert to zval
+    exception_ce = HandlebarsRuntimeException_ce_ptr;
     if( print ) {
         output = handlebars_token_list_print(list, 0);
         PHP5TO7_RETVAL_STRING(output);
@@ -105,6 +121,7 @@ static zend_always_inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, 
         }
     }
 
+done:
     handlebars_context_dtor(ctx);
 }
 
