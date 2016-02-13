@@ -23,51 +23,6 @@
 zend_class_entry * HandlebarsTokenizer_ce_ptr;
 /* }}} Variables & Prototypes */
 
-static zend_always_inline void token_to_zval(struct handlebars_token * token, zval * current TSRMLS_DC)
-{
-	zval z_const;
-	zval z_ret;
-    _DECLARE_ZVAL(name);
-    _DECLARE_ZVAL(text);
-
-    _ALLOC_INIT_ZVAL(name);
-    PHP5TO7_ZVAL_STRING(name, (char *) handlebars_token_readable_type(token->token));
-
-    _ALLOC_INIT_ZVAL(text);
-    if( token->text ) {
-        PHP5TO7_ZVAL_STRING(text, token->text);
-    }
-
-	object_init_ex(current, HandlebarsToken_ce_ptr);
-
-	do {
-#if PHP_MAJOR_VERSION < 7
-		zval **z_const_args = emalloc(2 * sizeof(zval *));
-
-		ZVAL_STRING(&z_const, "__construct", 0);
-		z_const_args[0] = name;
-		z_const_args[1] = text;
-
-	    call_user_function(&HandlebarsToken_ce_ptr->function_table, &current, &z_const, &z_ret, 2, z_const_args TSRMLS_CC);
-
-		efree(z_const_args);
-#else
-		zval z_const_args[2];
-
-		ZVAL_STRING(&z_const, "__construct");
-		z_const_args[0] = *name;
-		z_const_args[1] = *text;
-
-		call_user_function(&HandlebarsToken_ce_ptr->function_table, current, &z_const, &z_ret, 2, z_const_args TSRMLS_CC);
-
-		zval_dtor(&z_const);
-#endif
-	} while(0);
-
-	php5to7_zval_ptr_dtor(name);
-	php5to7_zval_ptr_dtor(text);
-}
-
 /* {{{ proto mixed Handlebars\Tokenizer::lex(string tmpl) */
 static inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
 {
@@ -116,7 +71,7 @@ static inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
         array_init(return_value);
         handlebars_token_list_foreach(list, el, tmp) {
             _ALLOC_INIT_ZVAL(child);
-            token_to_zval(el->data, child TSRMLS_CC);
+            php_handlebars_token_ctor(el->data, child TSRMLS_CC);
             add_next_index_zval(return_value, child);
         }
     }

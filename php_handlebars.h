@@ -10,6 +10,9 @@
 #define PHP_HANDLEBARS_AUTHORS "John Boehr <jbboehr@gmail.com> (lead)"
 #define PHP_HANDLEBARS_SPEC "4.0.4"
 
+struct handlebars_options;
+struct handlebars_token;
+
 extern zend_module_entry handlebars_module_entry;
 #define phpext_handlebars_ptr &handlebars_module_entry
 
@@ -31,6 +34,7 @@ extern zend_class_entry * HandlebarsParseException_ce_ptr;
 extern zend_class_entry * HandlebarsCompileException_ce_ptr;
 extern zend_class_entry * HandlebarsInvalidArgumentException_ce_ptr;
 extern zend_class_entry * HandlebarsOpcode_ce_ptr;
+extern zend_class_entry * HandlebarsOptions_ce_ptr;
 extern zend_class_entry * HandlebarsParser_ce_ptr;
 extern zend_class_entry * HandlebarsRegistry_ce_ptr;
 extern zend_class_entry * HandlebarsHelperRegistry_ce_ptr;
@@ -41,6 +45,9 @@ extern zend_class_entry * HandlebarsToken_ce_ptr;
 extern zend_class_entry * HandlebarsTokenizer_ce_ptr;
 extern zend_class_entry * HandlebarsUtils_ce_ptr;
 extern zend_class_entry * HandlebarsVM_ce_ptr;
+
+PHPAPI void php_handlebars_options_ctor(struct handlebars_options * options, zval * z_options);
+PHPAPI void php_handlebars_token_ctor(struct handlebars_token * token, zval * z_token TSRMLS_DC);
 
 #endif	/* PHP_HANDLEBARS_H */
 

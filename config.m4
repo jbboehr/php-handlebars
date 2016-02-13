@@ -18,6 +18,7 @@ if test "$PHP_HANDLEBARS" != "no"; then
 		compiler.c
 		exceptions.c
 		opcode.c
+		options.c
 		parser.c
 		registry.c
 		safe_string.c

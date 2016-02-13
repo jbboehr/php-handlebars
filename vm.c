@@ -249,6 +249,11 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
         return NULL;
     }
 
+    // Construct options
+    zval * z_options;
+
+
+
     // Convert params
     // @todo
     //zval **z_const_args = emalloc(2 * sizeof(zval *));
