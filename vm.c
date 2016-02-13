@@ -1,9 +1,12 @@
 
 #ifdef HAVE_CONFIG_H
+
+#include <handlebars_value.h>
 #include "config.h"
 #endif
 
 #include "Zend/zend_API.h"
+#include "Zend/zend_constants.h"
 #include "main/php.h"
 
 #include "handlebars_private.h"
@@ -31,6 +34,43 @@ static struct handlebars_value * handlebars_value_from_zval(struct handlebars_co
 
 
 
+
+static zval * handlebars_value_to_zval(struct handlebars_value * value, zval * val TSRMLS_DC)
+{
+    zval * intern;
+
+    switch( value->type ) {
+        case HANDLEBARS_VALUE_TYPE_NULL:
+            ZVAL_NULL(val);
+            break;
+        case HANDLEBARS_VALUE_TYPE_BOOLEAN:
+            ZVAL_BOOL(val, value->v.bval);
+            break;
+        case HANDLEBARS_VALUE_TYPE_FLOAT:
+            ZVAL_DOUBLE(val, value->v.dval);
+            break;
+        case HANDLEBARS_VALUE_TYPE_INTEGER:
+            ZVAL_LONG(val, value->v.lval);
+            break;
+        case HANDLEBARS_VALUE_TYPE_STRING:
+            ZVAL_STRINGL(val, value->v.strval, talloc_array_length(value->v.strval), 1);
+            break;
+        case HANDLEBARS_VALUE_TYPE_ARRAY:
+            // @todo
+            ZVAL_NULL(val);
+            break;
+        case HANDLEBARS_VALUE_TYPE_MAP:
+            ZVAL_NULL(val);
+            break;
+        case HANDLEBARS_VALUE_TYPE_USER:
+            intern = (zval *) value->v.usr;
+            // @todo check to make sure it's a zval type
+            ZVAL_ZVAL(val, intern, 1, 0);
+            break;
+    }
+
+    return val;
+}
 
 static struct handlebars_value * handlebars_std_zval_copy(struct handlebars_value * value)
 {
@@ -251,21 +291,26 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
 
     // Construct options
     zval * z_options;
-
-
+    MAKE_STD_ZVAL(z_options);
+    php_handlebars_options_ctor(options, z_options TSRMLS_CC);
 
     // Convert params
     // @todo
-    //zval **z_const_args = emalloc(2 * sizeof(zval *));
     size_t n_args = handlebars_stack_length(options->params) + 1;
-    zval ** z_const_args = NULL;
+    zval **z_const_args = emalloc(n_args * sizeof(zval *));
 
-    //z_const_args[0] = name;
-    //z_const_args[1] = text;
+    int i;
+    for( i = 0; i < n_args - 1; i++ ) {
+        struct handlebars_value * val = handlebars_stack_get(options->params, i);
+        MAKE_STD_ZVAL(z_const_args[i]);
+        handlebars_value_to_zval(val, z_const_args[i]);
+    }
+
+    z_const_args[n_args - 1] = z_options;
 
     // Call
     ZVAL_STRING(&z_const, "__invoke", 0);
-    call_user_function(&Z_OBJCE_P(intern)->function_table, &intern, &z_const, &z_ret, 0, z_const_args TSRMLS_CC);
+    call_user_function(&Z_OBJCE_P(intern)->function_table, &intern, &z_const, &z_ret, n_args, z_const_args TSRMLS_CC);
     efree(z_const_args);
 
     // Check if safe string
@@ -476,7 +521,9 @@ PHP_METHOD(HandlebarsVM, render)
     // Execute
     handlebars_vm_execute(vm, compiler, context);
 
-    PHP5TO7_RETVAL_STRING(vm->buffer);
+    if( vm->buffer ) { // @todo this probably shouldn't be null?
+        PHP5TO7_RETVAL_STRING(vm->buffer);
+    }
 
 done:
     handlebars_context_dtor(ctx);

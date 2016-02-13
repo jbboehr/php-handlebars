@@ -261,6 +261,11 @@ function hbs_generate_test_head(array $test) {
         break;
     }
 
+    if( $test['suiteType'] == 'spec' && $test['suiteName'] == 'basic' && $test['it'] == 'compiling with a string context' ) {
+        $skip = true;
+        $reason = 'PHP does not have string methods';
+    }
+
     return join("\n", array(
         '--TEST--',
         $test['suiteName'] . ' #' . $test['number'] . ' - ' . $test['it'],
