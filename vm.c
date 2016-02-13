@@ -224,6 +224,61 @@ bool handlebars_std_zval_iterator_next(struct handlebars_value_iterator * it)
     return ret;
 }
 
+struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * value, struct handlebars_options * options)
+{
+    zval * intern = (zval *) value->v.usr;
+    zend_bool is_callable = 0;
+    int check_flags = 0; //IS_CALLABLE_CHECK_SYNTAX_ONLY;
+    char * error;
+    zval z_const = {0};
+    zval z_ret = {0};
+    TSRMLS_FETCH();
+
+    // Check if is callable object (closure or __invoke)
+    if( Z_TYPE_P(intern) != IS_OBJECT ) {
+        return NULL;
+    }
+
+#if PHP_MAJOR_VERSION < 7
+    is_callable = zend_is_callable_ex(intern, NULL, check_flags, NULL, NULL, NULL, &error TSRMLS_CC);
+#else
+    is_callable = zend_is_callable_ex(intern, NULL, check_flags, NULL, NULL, &error);
+#endif
+
+    if( !is_callable ) {
+        return NULL;
+    }
+
+    // Convert params
+    // @todo
+    //zval **z_const_args = emalloc(2 * sizeof(zval *));
+    size_t n_args = handlebars_stack_length(options->params) + 1;
+    zval ** z_const_args = NULL;
+
+    //z_const_args[0] = name;
+    //z_const_args[1] = text;
+
+    // Call
+    ZVAL_STRING(&z_const, "__invoke", 0);
+    call_user_function(&Z_OBJCE_P(intern)->function_table, &intern, &z_const, &z_ret, 0, z_const_args TSRMLS_CC);
+    efree(z_const_args);
+
+    // Check if safe string
+    bool is_safe_string = false;
+    if( Z_TYPE(z_ret) == IS_OBJECT && instanceof_function(Z_OBJCE(z_ret), HandlebarsSafeString_ce_ptr TSRMLS_CC) ) {
+        is_safe_string = true;
+    }
+    convert_to_string(&z_ret);
+
+    struct handlebars_value * retval = handlebars_value_ctor(value->ctx);
+    handlebars_value_stringl(retval, Z_STRVAL(z_ret), Z_STRLEN(z_ret));
+    if( is_safe_string ) {
+        retval->flags |= HANDLEBARS_VALUE_FLAG_SAFE_STRING;
+    }
+
+    return retval;
+}
+
 static struct handlebars_value_handlers handlebars_value_std_zval_handlers = {
         &handlebars_std_zval_copy,
         &handlebars_std_zval_dtor,
@@ -232,7 +287,8 @@ static struct handlebars_value_handlers handlebars_value_std_zval_handlers = {
         &handlebars_std_zval_map_find,
         &handlebars_std_zval_array_find,
         &handlebars_std_zval_iterator_ctor,
-        &handlebars_std_zval_iterator_next
+        &handlebars_std_zval_iterator_next,
+        &handlebars_std_zval_call
 };
 
 static struct handlebars_value * handlebars_value_from_zval(struct handlebars_context * context, zval * val TSRMLS_DC)
@@ -278,8 +334,11 @@ static struct handlebars_value * handlebars_value_from_zval(struct handlebars_co
 
         case IS_OBJECT:
         case IS_ARRAY:
-            nzv = talloc_zero(context, zval);
+            //nzv = talloc_zero(context, zval);
+            //nzv = ecalloc(1, sizeof(zval));
+            MAKE_STD_ZVAL(nzv);
             ZVAL_ZVAL(nzv, val, 1, 0);
+            // @todo destructor?
 
             value->type = HANDLEBARS_VALUE_TYPE_USER;
             value->handlers = &handlebars_value_std_zval_handlers;

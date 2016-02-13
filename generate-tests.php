@@ -26,6 +26,101 @@ function handlebarsc($tmpl, $op) {
     return array(($return_var == 0), join("\n", $output), $command);
 }
 
+function isIntArray($array)
+{
+    if( !is_array($array) ) {
+        return false;
+    }
+    
+    $i = 0;
+    foreach( $array as $k => $v ) {
+        if( is_string($k) ) {
+            return false;
+        } else if( $k !== $i++ ) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function indent($n, $str = '')
+{
+    return str_pad($str, $n * 4, ' ', STR_PAD_LEFT);
+}
+
+function indentVarExport($n, $var)
+{
+    return str_replace("\n", "\n" . indent($n), varExport($var));
+}
+
+class ClosureHolder
+{
+    private $closureText;
+    
+    public function __construct($closureText)
+    {
+        $this->closureText = $closureText;
+    }
+    
+    public function __toString()
+    {
+        return $this->closureText;
+    }
+}
+
+function convertLambdas(&$data)
+{
+    if( !is_array($data) ) {
+        return;
+    }
+    foreach( $data as $k => $v ) {
+        if( !is_array($v) ) {
+            continue;
+        }
+        if( !empty($v['!code']) ) {
+            $js = isset($v['javascript']) ? $v['javascript'] : null;
+            $data[$k] = new ClosureHolder($v['php'] . '/*' . $js . '*/');
+        } else {
+            convertLambdas($data[$k]);
+        }
+    }
+}
+
+function varExport($var, $indent = 0)
+{
+    convertLambdas($var);
+
+    if( $var instanceof ClosureHolder ) {
+        return (string) $var;
+    } else if( is_array($var) ) {
+        if( empty($var) ) {
+            return 'array()';
+        } else {
+            $output = "array(\n";
+            $isNormalArray = isIntArray($var);
+            foreach( $var as $k => $v ) {
+                if( $k === '!sparsearray' ) {
+                    continue;
+                }
+                $output .= indent($indent + 1)
+                        . (!$isNormalArray ? var_export($k, true)
+                        . ' => ' : '' )
+                        . varExport($v, $indent + 1) . ",\n";
+            }
+            $output .= indent($indent) . ')';
+            return $output;
+        }
+    } else {
+        $v = var_export($var, true);
+        if( is_string($var) ) {
+            $v = str_replace("\n", $v[0] . ' . "\n" . ' . $v[0], $v);
+            $v = str_replace("\r", $v[0] . ' . "\r" . ' . $v[0], $v);
+        }
+        return $v;
+    }
+}
+
 function patch_tokens(array &$tokens) {
     foreach( $tokens as $k => $token ) {
         $tokens[$k] = new Handlebars\Token($token['name'], $token['text']);
@@ -252,12 +347,13 @@ function hbs_generate_spec_test_body_generic(array $test) {
     }
     
     return PHP_EOL . join(PHP_EOL, array_filter(array(
-	'use Handlebars\HelperRegistry;',
-	'use Handlebars\PartialRegistry;',
+        'use Handlebars\HelperRegistry;',
+        'use Handlebars\PartialRegistry;',
+        'use Handlebars\SafeString;',
         '$tmpl = ' . var_export($test['template'], true) . ';',
-        '$context = ' . var_export($context, true) . ';',
-        $helpers ? '$helpers = new HelperRegistry(' . var_export($helpers, true) . ');' : null,
-        $partials ? '$partials = new PartialRegistry(' . var_export($partials, true) . ');' : null,
+        '$context = ' . varExport($context, true) . ';',
+        $helpers ? '$helpers = new HelperRegistry(' . varExport($helpers, true) . ');' : null,
+        $partials ? '$partials = new PartialRegistry(' . varExport($partials, true) . ');' : null,
         '$options = ' . var_export($options, true) . ';',
         //'$knownHelpers = ' . var_export($knownHelpers, true) . ';',
         '$vm = new VM();',
