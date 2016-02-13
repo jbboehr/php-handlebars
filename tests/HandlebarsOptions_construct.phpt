@@ -14,7 +14,7 @@ var_dump(get_class($options));
 var_dump($options);
 --EXPECT--
 string(18) "Handlebars\Options"
-object(Handlebars\Options)#1 (14) {
+object(Handlebars\Options)#1 (16) {
   ["name"]=>
   string(2) "if"
   ["hash"]=>
@@ -49,4 +49,8 @@ object(Handlebars\Options)#1 (14) {
   NULL
   ["partial"]=>
   NULL
+  ["programGuid":"Handlebars\Options":private]=>
+  int(-1)
+  ["inverseGuid":"Handlebars\Options":private]=>
+  int(-1)
 }

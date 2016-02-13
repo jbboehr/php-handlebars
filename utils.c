@@ -317,7 +317,7 @@ PHP_METHOD(HandlebarsUtils, isCallable)
 
 /* {{{ proto boolean Handlebars\Utils::isIntArray(mixed value) */
 #if PHP_MAJOR_VERSION < 7
-static zend_always_inline zend_bool php_handlebars_is_int_array(zval * arr TSRMLS_DC)
+zend_bool php_handlebars_is_int_array(zval * arr TSRMLS_DC)
 {
     HashTable * data_hash = NULL;
     HashPosition data_pointer = NULL;
@@ -353,7 +353,7 @@ static zend_always_inline zend_bool php_handlebars_is_int_array(zval * arr TSRML
     return 1;
 }
 #else
-static zend_always_inline zend_bool php_handlebars_is_int_array(zval * arr TSRMLS_DC)
+zend_bool php_handlebars_is_int_array(zval * arr TSRMLS_DC)
 {
     HashTable * data_hash = NULL;
     zend_string * key;

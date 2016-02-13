@@ -10,6 +10,7 @@
 #define PHP_HANDLEBARS_AUTHORS "John Boehr <jbboehr@gmail.com> (lead)"
 #define PHP_HANDLEBARS_SPEC "4.0.4"
 
+struct handlebars_context;
 struct handlebars_options;
 struct handlebars_token;
 
@@ -46,8 +47,12 @@ extern zend_class_entry * HandlebarsTokenizer_ce_ptr;
 extern zend_class_entry * HandlebarsUtils_ce_ptr;
 extern zend_class_entry * HandlebarsVM_ce_ptr;
 
+zend_bool php_handlebars_is_int_array(zval * arr TSRMLS_DC);
+
 PHPAPI void php_handlebars_options_ctor(struct handlebars_options * options, zval * z_options);
 PHPAPI void php_handlebars_token_ctor(struct handlebars_token * token, zval * z_token TSRMLS_DC);
+
+PHPAPI struct handlebars_value * handlebars_value_from_zval(struct handlebars_context * context, zval * val TSRMLS_DC);
 
 #endif	/* PHP_HANDLEBARS_H */
 
