@@ -338,13 +338,18 @@ function hbs_generate_spec_test_body_generic(array $test) {
     $helpers = array_merge((array)@$test['globalHelpers'], (array)@$test['helpers']);
     $partials = array_merge((array)@$test['globalPartials'], (array)@$test['partials']);
     $context = isset($test['data']) ? $test['data'] : null;
+    $expectHead = null;
+    $message = null;
     if( array_key_exists('expected', $test) ) {
         $expected = $test['expected'];
     } else if( !empty($test['exception']) ) {
+	$expectHead = 'EXPECTF';
+        // @todo improve this
+        $expected = '%AUncaught exception%A';
         if( !empty($test['message']) ) {
-            $expected = $test['message'];
+            /*$expected =*/ $message = $test['message'];
         } else {
-            $expected = 'exception';
+            //$expected = 'exception';
         }
     } else {
         echo "Whoops\n";
@@ -365,7 +370,8 @@ function hbs_generate_spec_test_body_generic(array $test) {
         $helpers ? '$vm->setHelpers($helpers);' : null,
         $partials ? '$vm->setPartials($partials);' : null,
         'echo $vm->render($tmpl, $context, $options);',
-        '--EXPECT--',
+	$message ? '/* Error message: ' . addcslashes($message, "\r\n") . ' */' : null,
+        '--'. ($expectHead ?: 'EXPECT') . '--',
         $expected
     )));
 }

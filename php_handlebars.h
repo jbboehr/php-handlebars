@@ -47,7 +47,8 @@ extern zend_class_entry * HandlebarsTokenizer_ce_ptr;
 extern zend_class_entry * HandlebarsUtils_ce_ptr;
 extern zend_class_entry * HandlebarsVM_ce_ptr;
 
-zend_bool php_handlebars_is_int_array(zval * arr TSRMLS_DC);
+zend_bool inline php_handlebars_is_callable(zval * var TSRMLS_DC);
+zend_bool inline php_handlebars_is_int_array(zval * arr TSRMLS_DC);
 
 PHPAPI void php_handlebars_options_ctor(struct handlebars_options * options, zval * z_options);
 PHPAPI void php_handlebars_token_ctor(struct handlebars_token * token, zval * z_token TSRMLS_DC);

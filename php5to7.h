@@ -16,6 +16,7 @@ typedef long zend_long;
 #define php5to7_register_internal_class_ex(class, parent) zend_register_internal_class_ex(class, parent, NULL TSRMLS_CC)
 
 #define php5to7_zend_read_property(a, b, c, d) zend_read_property(a, b, c, d TSRMLS_CC)
+#define php5to7_zend_read_property2(a, b, c, d, e) zend_read_property(a, b, c, d, e TSRMLS_CC)
 
 static inline zval * php5to7_zend_hash_find(const HashTable *ht, const char *arKey, uint nKeyLength) {
 	zval ** entry = NULL;

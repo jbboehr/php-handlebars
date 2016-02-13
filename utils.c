@@ -280,25 +280,14 @@ PHP_METHOD(HandlebarsUtils, nameLookup)
 /* }}} Handlebars\Utils::nameLookup */
 
 /* {{{ proto boolean Handlebars\Utils::isCallable(mixed name) */
-PHP_METHOD(HandlebarsUtils, isCallable)
+zend_bool inline php_handlebars_is_callable(zval * var TSRMLS_DC)
 {
-    zval * var;
-    char * error;
     zend_bool retval = 0;
     int check_flags = 0; //IS_CALLABLE_CHECK_SYNTAX_ONLY;
-
-#ifndef FAST_ZPP
-    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &var) == FAILURE ) {
-        return;
-    }
-#else
-    ZEND_PARSE_PARAMETERS_START(1, 1)
-	    Z_PARAM_ZVAL(var)
-    ZEND_PARSE_PARAMETERS_END();
-#endif
+    char * error;
 
     if( Z_TYPE_P(var) != IS_OBJECT ) {
-        RETURN_FALSE;
+        return 0;
     }
 
 #if PHP_MAJOR_VERSION < 7
@@ -311,13 +300,30 @@ PHP_METHOD(HandlebarsUtils, isCallable)
         efree(error);
     }
 
-    RETURN_BOOL(retval);
+    return retval;
+}
+
+PHP_METHOD(HandlebarsUtils, isCallable)
+{
+    zval * var;
+
+#ifndef FAST_ZPP
+    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &var) == FAILURE ) {
+        return;
+    }
+#else
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+	    Z_PARAM_ZVAL(var)
+    ZEND_PARSE_PARAMETERS_END();
+#endif
+
+    RETURN_BOOL(php_handlebars_is_callable(var TSRMLS_CC));
 }
 /* }}} Handlebars\Utils::isCallable */
 
 /* {{{ proto boolean Handlebars\Utils::isIntArray(mixed value) */
 #if PHP_MAJOR_VERSION < 7
-zend_bool php_handlebars_is_int_array(zval * arr TSRMLS_DC)
+zend_bool inline php_handlebars_is_int_array(zval * arr TSRMLS_DC)
 {
     HashTable * data_hash = NULL;
     HashPosition data_pointer = NULL;
