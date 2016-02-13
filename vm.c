@@ -33,6 +33,25 @@ zend_class_entry * HandlebarsVM_ce_ptr;
 
 
 
+long php_handlebars_process_options_zval(struct handlebars_compiler * compiler, zval * options)
+{
+    zval * entry;
+    HashTable * ht;
+    long flags = 0;
+
+    if( !options || Z_TYPE_P(options) != IS_ARRAY ) {
+        return 0;
+    }
+
+    ht = Z_ARRVAL_P(options);
+    if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("compat"))) ) {
+        if( Z_BVAL_P(entry) ) {
+            flags |= handlebars_compiler_flag_compat;
+        }
+    }
+
+    handlebars_compiler_set_flags(compiler, flags);
+}
 
 static zval * handlebars_value_to_zval(struct handlebars_value * value, zval * val TSRMLS_DC)
 {
@@ -170,6 +189,13 @@ static struct handlebars_value * handlebars_std_zval_map_find(struct handlebars_
 
     if( Z_TYPE_P(intern) == IS_ARRAY ) {
         entry = php5to7_zend_hash_find(Z_ARRVAL_P(intern), key, strlen(key));
+        if( !entry ) {
+            char * end;
+            long index = strtod(key, &end);
+            if( !*end ) {
+                entry = php5to7_zend_hash_index_find(Z_ARRVAL_P(intern), index);
+            }
+        }
     } else if( Z_TYPE_P(intern) == IS_OBJECT ) {
         if( instanceof_function(Z_OBJCE_P(intern), zend_ce_arrayaccess TSRMLS_CC) ) {
             MAKE_STD_ZVAL(prop);
@@ -305,6 +331,22 @@ bool handlebars_std_zval_iterator_next(struct handlebars_value_iterator * it)
     return ret;
 }
 
+long handlebars_std_zval_count(struct handlebars_value * value)
+{
+    zval * intern = (zval *) value->v.usr;
+
+    switch( Z_TYPE_P(intern) ) {
+        case IS_ARRAY:
+            return zend_hash_num_elements(Z_ARRVAL_P(intern));
+        case IS_OBJECT:
+            return -1; // @todo
+
+    }
+
+    return -1;
+
+}
+
 struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * value, struct handlebars_options * options)
 {
     zval * intern = (zval *) value->v.usr;
@@ -370,15 +412,32 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     call_user_function(&Z_OBJCE_P(intern)->function_table, &intern, &z_const, &z_ret, n_args, z_const_args TSRMLS_CC);
     efree(z_const_args);
 
-    // Check if safe string
+    struct handlebars_value * retval = NULL;
     bool is_safe_string = false;
-    if( Z_TYPE(z_ret) == IS_OBJECT && instanceof_function(Z_OBJCE(z_ret), HandlebarsSafeString_ce_ptr TSRMLS_CC) ) {
-        is_safe_string = true;
-    }
-    convert_to_string(&z_ret);
 
-    struct handlebars_value * retval = handlebars_value_ctor(value->ctx);
-    handlebars_value_stringl(retval, Z_STRVAL(z_ret), Z_STRLEN(z_ret));
+    switch( Z_TYPE(z_ret) ) {
+        case IS_OBJECT:
+            if( instanceof_function(Z_OBJCE(z_ret), HandlebarsSafeString_ce_ptr TSRMLS_CC) ) {
+                is_safe_string = true;
+                goto scalar;
+            }
+            // fall-through
+        case IS_ARRAY:
+            retval = handlebars_value_from_zval(options->vm->ctx, &z_ret);
+            break;
+
+        default: // not ideal?
+        case IS_NULL:
+        case IS_BOOL:
+        case IS_LONG:
+        case IS_DOUBLE:
+        case IS_STRING: scalar:
+            retval = handlebars_value_ctor(value->ctx);
+            convert_to_string(&z_ret);
+            handlebars_value_stringl(retval, Z_STRVAL(z_ret), Z_STRLEN(z_ret));
+            break;
+    }
+
     if( is_safe_string ) {
         retval->flags |= HANDLEBARS_VALUE_FLAG_SAFE_STRING;
     }
@@ -395,7 +454,8 @@ static struct handlebars_value_handlers handlebars_value_std_zval_handlers = {
         &handlebars_std_zval_array_find,
         &handlebars_std_zval_iterator_ctor,
         &handlebars_std_zval_iterator_next,
-        &handlebars_std_zval_call
+        &handlebars_std_zval_call,
+        &handlebars_std_zval_count
 };
 
 PHPAPI struct handlebars_value * handlebars_value_from_zval(struct handlebars_context * context, zval * val TSRMLS_DC)
@@ -558,6 +618,7 @@ PHP_METHOD(HandlebarsVM, render)
     // Compile
     exception_ce = HandlebarsCompileException_ce_ptr;
     compiler = handlebars_compiler_ctor(ctx);
+    php_handlebars_process_options_zval(compiler, z_options);
     handlebars_compiler_compile(compiler, ctx->program);
 
     // Make context
@@ -565,6 +626,7 @@ PHP_METHOD(HandlebarsVM, render)
 
     // Make VM
     vm = handlebars_vm_ctor(ctx);
+    vm->flags = compiler->flags;
 
     // Make helpers
     z_helpers = php5to7_zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("helpers"), 0);

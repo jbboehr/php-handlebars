@@ -251,26 +251,38 @@ function hbs_generate_test_head(array $test) {
     $reason = '';
     
     switch( $test['description'] . '-' . $test['it'] ) {
-		case 'basic context-escaping':
-		    if( $test['number'] != 3 ) {
-		        break;
-		    }
-		case 'helpers-helper for nested raw block gets raw content':
-	        $skip = 'true';
-	        $reason = 'skip for now'; 
+        case 'basic context-escaping':
+        if( $test['number'] != 3 ) {
+            break;
+        }
+        case 'helpers-helper for nested raw block gets raw content':
+        $skip = 'true';
+        $reason = 'skip for now'; 
         break;
     }
-
-    if( $test['suiteType'] == 'spec' && $test['suiteName'] == 'basic' && $test['it'] == 'compiling with a string context' ) {
-        $skip = true;
-        $reason = 'PHP does not have string methods';
+    if( $test['suiteType'] == 'spec' ) {
+        switch( $test['suiteName'] . '-' . $test['description'] . '-' . $test['it'] ) {
+            case 'basic-basic context-compiling with a string context':
+                $skip = 'true';
+                $reason = 'PHP does not have string methods';
+                break;
+            case 'blocks-decorators-should apply mustache decorators':
+            case 'blocks-decorators-should apply allow undefined return':
+            case 'blocks-decorators-should apply block decorators':
+            case 'blocks-decorators-should support nested decorators':
+            case 'blocks-decorators-should apply multiple decorators':
+            case 'blocks-decorators-should access parent variables':
+                $skip = 'true';
+                $reason = 'decorators are not currently supported';
+                break;
+        }
     }
 
     return join("\n", array(
         '--TEST--',
-        $test['suiteName'] . ' #' . $test['number'] . ' - ' . $test['it'],
+        $test['suiteName'] . ' #' . $test['number'] . ' - ' . $test['description'] /* . ' - ' . $test['it']*/,
         '--DESCRIPTION--',
-        $test['description'],
+        $test['description'] . '-' . $test['it'],
         '--SKIPIF--',
         "<?php if( $skip ) die('skip $reason'); ?>",
         '--FILE--',
