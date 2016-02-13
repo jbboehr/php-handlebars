@@ -294,6 +294,18 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     MAKE_STD_ZVAL(z_options);
     php_handlebars_options_ctor(options, z_options TSRMLS_CC);
 
+    // Add scope
+    zval * z_scope;
+    MAKE_STD_ZVAL(z_scope);
+    handlebars_value_to_zval(options->scope, z_scope);
+    zend_update_property(Z_OBJCE_P(z_options), z_options, ZEND_STRL("scope"), z_scope TSRMLS_CC);
+
+    // Add hash
+    zval * z_hash;
+    MAKE_STD_ZVAL(z_hash);
+    handlebars_value_to_zval(options->hash, z_hash);
+    zend_update_property(Z_OBJCE_P(z_options), z_options, ZEND_STRL("hash"), z_hash TSRMLS_CC);
+
     // Convert params
     // @todo
     size_t n_args = handlebars_stack_length(options->params) + 1;
