@@ -38,6 +38,18 @@ struct handlebars_zval {
     zval * intern;
 #endif
 };
+/* }}} Variables & Prototypes */
+
+
+
+static handlebars_zval_intern_dtor(struct handlebars_zval * intern) {
+#ifdef ZEND_ENGINE_3
+#else
+    if( intern->intern ) {
+        zval_ptr_dtor(&intern->intern);
+    }
+#endif
+}
 static inline zval * get_intern_zval(struct handlebars_value * value) {
     struct handlebars_zval * obj = talloc_get_type(value->v.usr, struct handlebars_zval);
     if( !obj ) {
@@ -55,7 +67,9 @@ static inline void set_intern_zval(struct handlebars_value * value, zval * val) 
         value->v.usr = obj = talloc(value->ctx, struct handlebars_zval);
 #ifndef ZEND_ENGINE_3
         MAKE_STD_ZVAL(obj->intern);
+        ZVAL_NULL(obj->intern);
 #endif
+        talloc_set_destructor(obj, handlebars_zval_intern_dtor);
     } else {
         obj = talloc_get_type(value->v.usr, struct handlebars_zval);
     }
@@ -65,7 +79,6 @@ static inline void set_intern_zval(struct handlebars_value * value, zval * val) 
     ZVAL_ZVAL(obj->intern, val, 1, 0);
 #endif
 }
-/* }}} Variables & Prototypes */
 
 
 
@@ -552,10 +565,10 @@ PHPAPI zval * handlebars_value_to_zval(struct handlebars_value * value, zval * v
             ZVAL_BOOL(val, value->v.bval);
             break;
         case HANDLEBARS_VALUE_TYPE_FLOAT:
-        ZVAL_DOUBLE(val, value->v.dval);
+            ZVAL_DOUBLE(val, value->v.dval);
             break;
         case HANDLEBARS_VALUE_TYPE_INTEGER:
-        ZVAL_LONG(val, value->v.lval);
+            ZVAL_LONG(val, value->v.lval);
             break;
         case HANDLEBARS_VALUE_TYPE_STRING:
             PHP5TO7_ZVAL_STRINGL(val, value->v.strval, talloc_array_length(value->v.strval) - 1);
@@ -631,14 +644,9 @@ PHPAPI struct handlebars_value * handlebars_value_from_zval(struct handlebars_co
             */
             // fall-through
         case IS_ARRAY:
-
             value->type = HANDLEBARS_VALUE_TYPE_USER;
             value->handlers = &handlebars_value_std_zval_handlers;
             set_intern_zval(value, val);
-            // @todo destructor?
-            //talloc_set_destructor(nzv, handlebars_std_zval_dtor);
-            //value->flags |= HANDLEBARS_VALUE_FLAG_TALLOC_DTOR;
-            // Increment refcount?
             break;
         default:
             // ruh roh
