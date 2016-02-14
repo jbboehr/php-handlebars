@@ -54,6 +54,7 @@ PHPAPI void php_handlebars_options_ctor(struct handlebars_options * options, zva
 PHPAPI void php_handlebars_token_ctor(struct handlebars_token * token, zval * z_token TSRMLS_DC);
 
 PHPAPI struct handlebars_value * handlebars_value_from_zval(struct handlebars_context * context, zval * val TSRMLS_DC);
+PHPAPI zval * handlebars_value_to_zval(struct handlebars_value * value, zval * val TSRMLS_DC);
 
 #endif	/* PHP_HANDLEBARS_H */
 

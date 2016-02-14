@@ -290,6 +290,7 @@ function hbs_generate_test_head(array $test) {
         'use Handlebars\Compiler;',
         'use Handlebars\Parser;',
         'use Handlebars\Tokenizer;',
+        'use Handlebars\Utils;',
         'use Handlebars\VM;',
         'require __DIR__ . "/../../../utils.inc";',
     ));
