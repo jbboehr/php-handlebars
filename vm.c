@@ -7,6 +7,7 @@
 
 #include "Zend/zend_API.h"
 #include "Zend/zend_constants.h"
+#include "Zend/zend_exceptions.h"
 #include "Zend/zend_interfaces.h"
 #include "main/php.h"
 
@@ -60,6 +61,11 @@ long php_handlebars_process_options_zval(struct handlebars_compiler * compiler, 
             flags |= handlebars_compiler_flag_use_data;
         }
     }
+    if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("knownHelpersOnly"))) ) {
+        if( Z_BVAL_P(entry) ) {
+            flags |= handlebars_compiler_flag_known_helpers_only;
+        }
+    }
 
     handlebars_compiler_set_flags(compiler, flags);
 
@@ -69,66 +75,18 @@ long php_handlebars_process_options_zval(struct handlebars_compiler * compiler, 
 /* {{{ handlebars zval value handlers */
 static struct handlebars_value * handlebars_std_zval_copy(struct handlebars_value * value)
 {
-    // @todo
+    handlebars_context_throw(value->ctx, HANDLEBARS_ERROR, "handlebars_std_zval_convert is not implemented");
     return NULL;
-//    const char * str = json_object_to_json_string(value->v.usr);
-//    return handlebars_value_from_json_string(value->ctx, str);
 }
 
 static void handlebars_std_zval_dtor(struct handlebars_value * value)
 {
     zval * intern = (zval *) value->v.usr;
-
-//    struct json_object * result = (struct json_object *) value->v.usr;
-//
-//    assert(value->type == HANDLEBARS_VALUE_TYPE_USER);
-//    assert(result != NULL);
-//
-//    if( result != NULL ) {
-//        json_object_put(result);
-//        value->v.usr = NULL;
-//    }
 }
 
 static void handlebars_std_zval_convert(struct handlebars_value * value, bool recurse)
 {
-    // @todo
-//    struct json_object * intern = (struct json_object *) value->v.usr;
-//    char * key;
-//    struct handlebars_value * new_value;
-//
-//    switch( json_object_get_type(intern) ) {
-//        case json_type_object: {
-//            handlebars_value_map_init(value);
-//            json_object_object_foreach(intern, k, v) {
-//                new_value = handlebars_value_from_json_object(value->ctx, v);
-//                handlebars_map_add(value->v.map, k, new_value);
-//                handlebars_value_delref(new_value);
-//                if( recurse && new_value->type == HANDLEBARS_VALUE_TYPE_USER ) {
-//                    handlebars_std_zval_convert(new_value, recurse);
-//                }
-//            }
-//            break;
-//        }
-//        case json_type_array: {
-//            handlebars_value_array_init(value);
-//            size_t i, l;
-//
-//            for( i = 0, l = json_object_array_length(intern); i < l; i++ ) {
-//                new_value = handlebars_value_from_json_object(value->ctx, json_object_array_get_idx(intern, i));
-//                handlebars_stack_set(value->v.map, i, new_value);
-//                handlebars_value_delref(new_value);
-//                if( recurse && new_value->type == HANDLEBARS_VALUE_TYPE_USER ) {
-//                    handlebars_std_zval_convert(new_value, recurse);
-//                }
-//            }
-//            break;
-//        }
-//    }
-//
-//    // Remove talloc destructor?
-//    talloc_set_destructor(value, NULL);
-//    value->flags &= ~HANDLEBARS_VALUE_FLAG_TALLOC_DTOR;
+    handlebars_context_throw(value->ctx, HANDLEBARS_ERROR, "handlebars_std_zval_convert is not implemented");
 }
 
 static enum handlebars_value_type handlebars_std_zval_type(struct handlebars_value * value)
@@ -325,7 +283,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     int check_flags = 0; //IS_CALLABLE_CHECK_SYNTAX_ONLY;
     char * error;
     zval z_const = {0};
-    zval z_ret = {0};
+    zval * z_ret;
     TSRMLS_FETCH();
 
     // Check if is callable object (closure or __invoke)
@@ -387,22 +345,23 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     z_const_args[n_args - 1] = z_options;
 
     // Call
+    MAKE_STD_ZVAL(z_ret);
     ZVAL_STRING(&z_const, "__invoke", 0);
-    call_user_function(&Z_OBJCE_P(intern)->function_table, &intern, &z_const, &z_ret, n_args, z_const_args TSRMLS_CC);
+    call_user_function(&Z_OBJCE_P(intern)->function_table, &intern, &z_const, z_ret, n_args, z_const_args TSRMLS_CC);
     efree(z_const_args);
 
     struct handlebars_value * retval = NULL;
     bool is_safe_string = false;
 
-    switch( Z_TYPE(z_ret) ) {
+    switch( Z_TYPE_P(z_ret) ) {
         case IS_OBJECT:
-            if( instanceof_function(Z_OBJCE(z_ret), HandlebarsSafeString_ce_ptr TSRMLS_CC) ) {
+            if( instanceof_function(Z_OBJCE_P(z_ret), HandlebarsSafeString_ce_ptr TSRMLS_CC) ) {
                 is_safe_string = true;
                 goto scalar;
             }
             // fall-through
         case IS_ARRAY:
-            retval = handlebars_value_from_zval(options->vm->ctx, &z_ret);
+            retval = handlebars_value_from_zval(options->vm->ctx, z_ret);
             break;
 
         default: // not ideal?
@@ -412,14 +371,17 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
         case IS_DOUBLE:
         case IS_STRING: scalar:
             retval = handlebars_value_ctor(value->ctx);
-            convert_to_string(&z_ret);
-            handlebars_value_stringl(retval, Z_STRVAL(z_ret), Z_STRLEN(z_ret));
+            convert_to_string(z_ret);
+            handlebars_value_stringl(retval, Z_STRVAL_P(z_ret), Z_STRLEN_P(z_ret));
             break;
     }
 
     if( is_safe_string ) {
         retval->flags |= HANDLEBARS_VALUE_FLAG_SAFE_STRING;
     }
+
+    // @todo this seems to cause a problem
+    //zval_ptr_dtor(z_ret);
 
     return retval;
 }
@@ -545,9 +507,17 @@ PHPAPI struct handlebars_value * handlebars_value_from_zval(struct handlebars_co
             break;
 
         case IS_OBJECT:
+            /*
+            if( instanceof_function(Z_OBJCE_P(val), HandlebarsSafeString_ce_ptr) ) {
+                convert_to_string(val);
+                value->type = HANDLEBARS_VALUE_TYPE_STRING;
+                value->v.strval = MC(handlebars_talloc_strndup(value, Z_STRVAL_P(val), Z_STRLEN_P(val)));
+                value->flags |= HANDLEBARS_VALUE_FLAG_SAFE_STRING;
+                break;
+            }
+            */
+            // fall-through
         case IS_ARRAY:
-            //nzv = talloc_zero(context, zval);
-            //nzv = ecalloc(1, sizeof(zval));
             MAKE_STD_ZVAL(nzv);
             ZVAL_ZVAL(nzv, val, 1, 0);
             // @todo destructor?
@@ -556,6 +526,7 @@ PHPAPI struct handlebars_value * handlebars_value_from_zval(struct handlebars_co
             value->handlers = &handlebars_value_std_zval_handlers;
             value->v.usr = (void *) nzv;
             // Increment refcount?
+
             break;
         default:
             // ruh roh
@@ -566,6 +537,41 @@ PHPAPI struct handlebars_value * handlebars_value_from_zval(struct handlebars_co
     return value;
 }
 /* }}} handlebars_value_from_zval */
+
+void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, zval * helpers)
+{
+    HashTable * data_hash = NULL;
+    HashPosition data_pointer = NULL;
+    zval ** data_entry = NULL;
+    char * key;
+    int key_len;
+    long index;
+    long idx = 0;
+    long num;
+    char ** known_helpers;
+
+    if( Z_TYPE_P(helpers) == IS_ARRAY ) {
+        data_hash = Z_ARRVAL_P(helpers);
+    } else if( Z_TYPE_P(helpers) == IS_OBJECT && Z_OBJ_HT_P(helpers)->get_properties != NULL ) {
+        data_hash = Z_OBJ_HT_P(helpers)->get_properties(helpers TSRMLS_CC);
+    } else {
+        return;
+    }
+
+    num = zend_hash_num_elements(data_hash);
+    known_helpers = handlebars_talloc_array(compiler->ctx, char *, num + 1);
+
+    zend_hash_internal_pointer_reset_ex(data_hash, &data_pointer);
+    while( zend_hash_get_current_data_ex(data_hash, (void**) &data_entry, &data_pointer) == SUCCESS ) {
+        if (zend_hash_get_current_key_ex(data_hash, &key, &key_len, &index, 0, &data_pointer) == HASH_KEY_IS_STRING) {
+            known_helpers[idx++] = handlebars_talloc_strndup(known_helpers, key, key_len);
+        }
+        zend_hash_move_forward_ex(data_hash, &data_pointer);
+    }
+
+    known_helpers[idx++] = 0;
+    compiler->known_helpers = known_helpers;
+}
 
 
 
@@ -660,21 +666,9 @@ PHP_METHOD(HandlebarsVM, render)
     compiler = handlebars_compiler_ctor(ctx);
     vm = handlebars_vm_ctor(ctx);
 
-    // Parse
-    exception_ce = HandlebarsParseException_ce_ptr;
-    ctx->tmpl = tmpl;
-    handlebars_parse(ctx);
-
-    // Compile
-    exception_ce = HandlebarsCompileException_ce_ptr;
-    php_handlebars_process_options_zval(compiler, vm, z_options);
-    handlebars_compiler_compile(compiler, ctx->program);
 
     // Make context
     context = handlebars_value_from_zval(ctx, z_context TSRMLS_CC);
-
-    // Make VM
-    vm->flags = compiler->flags;
 
     // Make helpers
     z_helpers = php5to7_zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("helpers"), 0);
@@ -683,6 +677,24 @@ PHP_METHOD(HandlebarsVM, render)
     // Make partials
     z_partials = php5to7_zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("partials"), 0);
     vm->partials = handlebars_value_from_zval(ctx, z_partials TSRMLS_CC);
+
+    // Process options
+    php_handlebars_process_options_zval(compiler, vm, z_options);
+    vm->flags = compiler->flags;
+
+    // Process known helpers
+    if( z_helpers ) {
+        php_handlebars_fetch_known_helpers(compiler, z_helpers);
+    }
+
+    // Parse
+    exception_ce = HandlebarsParseException_ce_ptr;
+    ctx->tmpl = tmpl;
+    handlebars_parse(ctx);
+
+    // Compile
+    exception_ce = HandlebarsCompileException_ce_ptr;
+    handlebars_compiler_compile(compiler, ctx->program);
 
     // Execute
     handlebars_vm_execute(vm, compiler, context);

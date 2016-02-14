@@ -14,6 +14,7 @@
 
 #include "handlebars_context.h"
 #include "handlebars_helpers.h"
+#include "handlebars_value.h"
 #include "handlebars_vm.h"
 
 /* {{{ Variables & Prototypes */
@@ -127,6 +128,18 @@ PHPAPI void php_handlebars_options_ctor(struct handlebars_options * options, zva
     intern->vm = options->vm;
     intern->program = options->program;
     intern->inverse = options->inverse;
+
+    if( options->name ) {
+        zend_update_property_stringl(Z_OBJCE_P(z_options), z_options, ZEND_STRL("name"), options->name, talloc_array_length(options->name) - 1 TSRMLS_CC);
+    }
+
+    // @todo we should use closures
+    if( options->program >= 0 ) {
+        zend_update_property_long(Z_OBJCE_P(z_options), z_options, ZEND_STRL("fn"), options->program TSRMLS_CC);
+    }
+    if( options->inverse >= 0 ) {
+        zend_update_property_long(Z_OBJCE_P(z_options), z_options, ZEND_STRL("inverse"), options->inverse TSRMLS_CC);
+    }
 }
 /* }}} */
 
@@ -173,12 +186,15 @@ PHP_METHOD(HandlebarsOptions, __construct)
 static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, short program)
 {
     zval * _this_zval;
-    zval * z_context;
-    zval * z_options;
+    zval * z_context = NULL;
+    zval * z_options = NULL;
+    zval * z_entry;
     struct php_handlebars_options_obj * intern;
     struct handlebars_vm * vm;
     long programGuid;
     struct handlebars_value * context;
+    struct handlebars_value * data = NULL;
+    struct handlebars_value * block_params = NULL;
 
 #ifndef FAST_ZPP
     if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "O|zz",
@@ -207,11 +223,27 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
         return;
     }
 
-    context = handlebars_value_from_zval(vm->ctx, z_context);
-    // @todo options
+    // Context
+    if( z_context ) {
+        context = handlebars_value_from_zval(vm->ctx, z_context);
+    } else {
+        context = handlebars_value_ctor(vm->ctx);
+    }
 
-    char * ret = handlebars_vm_execute_program(vm, programGuid, context);
-    RETVAL_STRINGL(ret, talloc_array_length(ret), 1);
+    // Options
+    if( z_options && Z_TYPE_P(z_options) == IS_ARRAY ) {
+        if( NULL != (z_entry = php5to7_zend_hash_find(Z_ARRVAL_P(z_options), ZEND_STRL("data"))) ) {
+            data = handlebars_value_from_zval(vm->ctx, z_entry);
+        }
+        if( NULL != (z_entry = php5to7_zend_hash_find(Z_ARRVAL_P(z_options), ZEND_STRL("blockParams"))) ) {
+            block_params = handlebars_value_from_zval(vm->ctx, z_entry);
+        }
+        // @todo block params?
+    }
+
+    // Execute
+    char * ret = handlebars_vm_execute_program_ex(vm, programGuid, context, data, block_params);
+    RETVAL_STRINGL(ret, talloc_array_length(ret) - 1, 1);
     talloc_free(ret);
 }
 
@@ -267,10 +299,6 @@ PHP_MINIT_FUNCTION(handlebars_options)
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("contexts"), ZEND_ACC_PUBLIC TSRMLS_CC);
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("args"), ZEND_ACC_PUBLIC TSRMLS_CC);
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("partial"), ZEND_ACC_PUBLIC TSRMLS_CC);
-
-    // Used by php-handlebars
-    zend_declare_property_long(HandlebarsOptions_ce_ptr, ZEND_STRL("programGuid"), -1, ZEND_ACC_PRIVATE TSRMLS_CC);
-    zend_declare_property_long(HandlebarsOptions_ce_ptr, ZEND_STRL("inverseGuid"), -1, ZEND_ACC_PRIVATE TSRMLS_CC);
 
     return SUCCESS;
 }

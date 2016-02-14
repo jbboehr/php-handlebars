@@ -245,7 +245,7 @@ function hbs_test_file(array $test) {
     return $testFile;
 }
 
-function hbs_generate_test_head(array $test) {
+function hbs_generate_test_head(array &$test) {
     // Skip this test for now
     $skip = "!extension_loaded('handlebars')";
     $reason = '';
@@ -275,6 +275,9 @@ function hbs_generate_test_head(array $test) {
                 $skip = 'true';
                 $reason = 'decorators are not currently supported';
                 break;
+            case 'helpers-block params-should take presednece over parent block params':
+		$test['expected'] = '15foo';
+		break;
         }
     }
 
@@ -282,7 +285,7 @@ function hbs_generate_test_head(array $test) {
         '--TEST--',
         $test['suiteName'] . ' #' . $test['number'] . ' - ' . $test['description'] /* . ' - ' . $test['it']*/,
         '--DESCRIPTION--',
-        $test['description'] . '-' . $test['it'],
+        $test['description'] . ' - ' . $test['it'],
         '--SKIPIF--',
         "<?php if( $skip ) die('skip $reason'); ?>",
         '--FILE--',
@@ -377,7 +380,7 @@ function hbs_generate_spec_test_body_generic(array $test) {
         '$context = ' . varExport($context, true) . ';',
         $helpers ? '$helpers = new HelperRegistry(' . varExport($helpers, true) . ');' : null,
         $partials ? '$partials = new PartialRegistry(' . varExport($partials, true) . ');' : null,
-        '$options = ' . var_export($options, true) . ';',
+        '$options = ' . varExport($options, true) . ';',
         //'$knownHelpers = ' . var_export($knownHelpers, true) . ';',
         '$vm = new VM();',
         $helpers ? '$vm->setHelpers($helpers);' : null,
@@ -462,13 +465,14 @@ function hbs_generate_export_test(array $test) {
 
 function hbs_generate_spec_test(array $test) {
     $file = hbs_test_file($test);
+    $head = hbs_generate_test_head($test);
     $body = hbs_generate_spec_test_body($test);
     if( !$body ) {
         return;
     }
     
     $output = '';
-    $output .= hbs_generate_test_head($test);
+    $output .= $head; //hbs_generate_test_head($test);
     $output .= $body;
     hbs_write_file($file, $output);
 }
