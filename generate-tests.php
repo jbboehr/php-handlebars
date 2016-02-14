@@ -238,8 +238,13 @@ function token_print($tokens) {
 function hbs_test_file(array $test) {
     //$name = $test['it'] . '-' . $test['description'];
     //$safeName = strtolower(trim(preg_replace('/[^a-z0-9]+/i', '-', $name), '-'));
+    if( $test['suiteType'] === 'mustache' ) {
+        $st = 'mustache';
+    } else {
+        $st = 'handlebars/' . $test['suiteType'];
+    }
     $testFile = __DIR__ . '/tests' 
-        . '/handlebars/' . $test['suiteType'] 
+        . '/' . $st
         . '/' . $test['suiteName'] 
         . '/' . sprintf("%03d", $test['number']) /*. '-' . $safeName */ . '.phpt';
     return $testFile;
@@ -249,6 +254,7 @@ function hbs_generate_test_head(array &$test) {
     // Skip this test for now
     $skip = "!extension_loaded('handlebars')";
     $reason = '';
+    $utilsPrefix = $test['suiteType'] === 'mustache' ? '' : '../';
     
     switch( $test['description'] . '-' . $test['it'] ) {
         case 'basic context-escaping':
@@ -324,7 +330,7 @@ function hbs_generate_test_head(array &$test) {
         'use Handlebars\Tokenizer;',
         'use Handlebars\Utils;',
         'use Handlebars\VM;',
-        'require __DIR__ . "/../../../utils.inc";',
+        'require __DIR__ . "/' . $utilsPrefix . '../../utils.inc";',
     ));
 }
 
@@ -511,11 +517,30 @@ function hbs_generate_spec_test(array $test) {
     hbs_write_file($file, $output);
 }
 
+function hbs_generate_mustache_spec_test(array $test) {
+    // Convert format to handlebars
+    $test['description'] = $test['name'];
+    $test['it'] = $test['desc'];
+    $test['options'] = array('compat' => true);
+
+    $file = hbs_test_file($test);
+    $head = hbs_generate_test_head($test);
+    $body = hbs_generate_spec_test_body($test);
+    if( !$body ) {
+        return;
+    }
+    
+    $output = '';
+    $output .= $head; //hbs_generate_test_head($test);
+    $output .= $body;
+    hbs_write_file($file, $output);
+}
+
 
 
 // Main
 
-// Parser/Tokenizer
+// Handlebars Spec
 $specDir = __DIR__ . '/spec/handlebars/spec/';
 foreach( scandir($specDir) as $file ) {
     if( $file[0] === '.' || substr($file, -5) !== '.json' ) {
@@ -534,7 +559,7 @@ foreach( scandir($specDir) as $file ) {
     }
 }
 
-// Export
+// Handlebars Export
 $exportDir = __DIR__ . '/spec/handlebars/export/';
 foreach( scandir($exportDir) as $file ) {
     if( $file[0] === '.' || substr($file, -5) !== '.json' ) {
@@ -559,3 +584,26 @@ foreach( scandir($exportDir) as $file ) {
         hbs_generate_export_test($test);
     }
 }
+
+// Mustache Spec
+$mustacheSpecDir = __DIR__ . '/spec/mustache/specs/';
+foreach( scandir($mustacheSpecDir) as $file ) {
+    if( $file[0] === '.' || $file[0] === '~' || substr($file, -5) !== '.json' ) {
+        continue;
+    }
+    $filePath = $mustacheSpecDir . $file;
+    $suiteName = substr(basename($filePath), 0, strpos(basename($filePath), '.'));
+    if( $suiteName === 'delimiters' ) continue;
+
+    $tests = json_decode(file_get_contents($filePath), true);
+    $number = 0;
+
+    foreach( $tests['tests'] as $test ) {
+        ++$number;
+        $test['suiteType'] = 'mustache';
+        $test['suiteName'] = $suiteName;
+        $test['number'] = $number;
+        hbs_generate_mustache_spec_test($test);
+    }
+}
+
