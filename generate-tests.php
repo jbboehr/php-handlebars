@@ -190,43 +190,6 @@ function patch_context(array $context) {
     return $obj;
 }
 
-function makeCompilerFlags(array $options = null)
-{
-    // Make flags
-    $flags = 0;
-    if( !empty($options['compat']) ) {
-        $flags |= (1 << 0); //Handlebars\COMPILER_FLAG_COMPAT;
-    }
-    if( !empty($options['useDepths']) ) {
-        $flags |= (1 << 0); //Handlebars\COMPILER_FLAG_USE_DEPTHS;
-    }
-    if( !empty($options['stringParams']) ) {
-        $flags |= (1 << 1); //Handlebars\COMPILER_FLAG_STRING_PARAMS;
-    }
-    if( !empty($options['trackIds']) ) {
-        $flags |= (1 << 2); //Handlebars\COMPILER_FLAG_TRACK_IDS;
-    }
-    if( !empty($options['noEscape']) ) {
-        $flags |= (1 << 3); //Handlebars\COMPILER_FLAG_NO_ESCAPE;
-    }
-    if( !empty($options['knownHelpersOnly']) ) {
-        $flags |= (1 << 4); //Handlebars\COMPILER_FLAG_KNOWN_HELPERS_ONLY;
-    }
-    if( !empty($options['preventIndent']) ) {
-        $flags |= (1 << 5); //Handlebars\COMPILER_FLAG_PREVENT_INDENT;
-    }
-    if( !empty($options['useData']) ) {
-        $flags |= (1 << 6); //Handlebars\COMPILER_FLAG_USE_DATA;
-    }
-    if( !empty($options['explicitPartialContext']) ) {
-        $flags |= (1 << 7); //Handlebars\COMPILER_FLAG_EXPLICIT_PARTIAL_CONTEXT;
-    }
-    if( !empty($options['ignoreStandalone']) ) {
-        $flags |= (1 << 8); //Handlebars\COMPILER_FLAG_IGNORE_STANDALONE;
-    }
-    return $flags;
-}
-
 function token_print($tokens) {
     $str = '';
     foreach( $tokens as $token ) {
@@ -355,28 +318,13 @@ function hbs_generate_export_test_body(array $test) {
     $compileOptions = isset($test['compileOptions']) ? $test['compileOptions'] : array();
     $options += $compileOptions;
     
-    $compileFlags = makeCompilerFlags($options);
-    $knownHelpers = isset($options['knownHelpers']) ? $options['knownHelpers'] : array();
-    /*if( isset($test['helpers']) ) {
-        $knownHelpers = array_merge($knownHelpers, array_keys($test['helpers']));
-    }
-    if( isset($test['globalHelpers']) ) {
-        $knownHelpers = array_merge($knownHelpers, array_keys($test['globalHelpers']));
-    }*/
-    if( empty($knownHelpers) ) {
-        $knownHelpers = null;
-    } else {
-        $knownHelpers = array_keys($knownHelpers);
-    }
     $expectedOpcodes = patch_context($test['opcodes']);
     
     $output = '';
     $output .= '$options = ' . var_export($options, true) . ';' . PHP_EOL;
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
-    $output .= '$compileFlags = ' . var_export($compileFlags, true) . ';' . PHP_EOL;
-    $output .= '$knownHelpers = ' . var_export($knownHelpers, true) . ';' . PHP_EOL;
-    $output .= 'myprint(Compiler::compile($tmpl, $compileFlags, $knownHelpers), true);' . PHP_EOL;
-    $output .= 'myprint(gettype(Compiler::compilePrint($tmpl, $compileFlags, $knownHelpers)), true);' . PHP_EOL;
+    $output .= 'myprint(Compiler::compile($tmpl, $options), true);' . PHP_EOL;
+    $output .= 'myprint(gettype(Compiler::compilePrint($tmpl, $options)), true);' . PHP_EOL;
     $output .= '--EXPECT--' . PHP_EOL;
     $output .= myprint($expectedOpcodes) . myprint('string') . PHP_EOL;
     return $output;

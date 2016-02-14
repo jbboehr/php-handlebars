@@ -34,53 +34,6 @@ zend_class_entry * HandlebarsVM_ce_ptr;
 
 
 
-/* {{{ php_handlebars_process_options_zval */
-long php_handlebars_process_options_zval(struct handlebars_compiler * compiler, struct handlebars_vm * vm, zval * options)
-{
-    zval * entry;
-    HashTable * ht;
-    long flags = 0;
-
-    if( !options || Z_TYPE_P(options) != IS_ARRAY ) {
-        return 0;
-    }
-
-    ht = Z_ARRVAL_P(options);
-    if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("compat"))) ) {
-        if( Z_BVAL_P(entry) ) {
-            flags |= handlebars_compiler_flag_compat;
-        }
-    }
-    if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("data"))) ) {
-        // @todo refine this
-        if( Z_TYPE_P(entry) != IS_BOOL ) {
-            if( vm ) {
-                vm->data = handlebars_value_from_zval(vm->ctx, entry);
-            }
-        } else if( Z_BVAL_P(entry) ) {
-            flags |= handlebars_compiler_flag_use_data;
-        }
-    }
-    if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("knownHelpersOnly"))) ) {
-        if( Z_BVAL_P(entry) ) {
-            flags |= handlebars_compiler_flag_known_helpers_only;
-        }
-    }
-    if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("explicitPartialContext"))) ) {
-        if( Z_BVAL_P(entry) ) {
-            flags |= handlebars_compiler_flag_explicit_partial_context;
-        }
-    }
-    if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("preventIndent"))) ) {
-        if( Z_BVAL_P(entry) ) {
-            flags |= handlebars_compiler_flag_prevent_indent;
-        }
-    }
-
-    handlebars_compiler_set_flags(compiler, flags);
-
-}
-/* }}} php_handlebars_process_options_zval */
 
 /* {{{ handlebars zval value handlers */
 static struct handlebars_value * handlebars_std_zval_copy(struct handlebars_value * value)

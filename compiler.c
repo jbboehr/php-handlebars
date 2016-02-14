@@ -18,6 +18,7 @@
 #include "handlebars_memory.h"
 #include "handlebars_opcode_printer.h"
 #include "handlebars_opcodes.h"
+#include "handlebars_vm.h"
 #include "handlebars.tab.h"
 #include "handlebars.lex.h"
 
@@ -29,6 +30,7 @@ zend_class_entry * HandlebarsCompiler_ce_ptr;
 
 static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compiler, zval * current TSRMLS_DC);
 /* }}} Variables & Prototypes */
+
 
 /* {{{ Utils */
 static void php_handlebars_operand_append_zval(struct handlebars_operand * operand, zval * arr TSRMLS_DC)
@@ -234,7 +236,9 @@ static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compile
 	    php5to7_zval_ptr_dtor(decorators);
 	}
 }
+/* }}} Utils */
 
+/* {{{ php_handlebars_compiler_known_helpers_from_zval */
 static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval * arr TSRMLS_DC)
 {
     HashTable * data_hash = NULL;
@@ -269,6 +273,15 @@ static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval 
         while( zend_hash_get_current_data_ex(data_hash, (void**) &data_entry, &data_pointer) == SUCCESS ) {
             if( Z_TYPE_PP(data_entry) == IS_STRING ) {
                 *ptr++ = (char *) handlebars_talloc_strdup(ctx, Z_STRVAL_PP(data_entry));
+            } else {
+                int key_type = 0;
+                char * key_str = NULL;
+                uint key_len = 0;
+                ulong key_nindex = 0;
+                key_type = zend_hash_get_current_key_ex(data_hash, &key_str, &key_len, &key_nindex, false, &data_pointer);
+                if( key_type == HASH_KEY_IS_STRING ) {
+                    *ptr++ = (char *) handlebars_talloc_strndup(ctx, key_str, key_len);
+                }
             }
             zend_hash_move_forward_ex(data_hash, &data_pointer);
         }
@@ -292,22 +305,91 @@ static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval 
 
     return known_helpers;
 }
-/* }}} Utils */
+/* }}} php_handlebars_compiler_known_helpers_from_zval */
+
+/* {{{ php_handlebars_process_options_zval */
+long php_handlebars_process_options_zval(struct handlebars_compiler * compiler, struct handlebars_vm * vm, zval * options)
+{
+    zval * entry;
+    HashTable * ht;
+    long flags = 0;
+
+    if( !options || Z_TYPE_P(options) != IS_ARRAY ) {
+        return 0;
+    }
+
+    ht = Z_ARRVAL_P(options);
+    if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("alternateDecorators"))) ) {
+        if( Z_BVAL_P(entry) ) {
+            flags |= handlebars_compiler_flag_alternate_decorators;
+        }
+    }
+    if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("compat"))) ) {
+        if( Z_BVAL_P(entry) ) {
+            flags |= handlebars_compiler_flag_compat;
+        }
+    }
+    if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("data"))) ) {
+        // @todo refine this
+        if( Z_TYPE_P(entry) != IS_BOOL ) {
+            if( vm ) {
+                vm->data = handlebars_value_from_zval(vm->ctx, entry);
+            } else {
+                flags |= handlebars_compiler_flag_use_data;
+            }
+        } else if( Z_BVAL_P(entry) ) {
+            flags |= handlebars_compiler_flag_use_data;
+        }
+    }
+    if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("explicitPartialContext"))) ) {
+        if( Z_BVAL_P(entry) ) {
+            flags |= handlebars_compiler_flag_explicit_partial_context;
+        }
+    }
+    if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("ignoreStandalone"))) ) {
+        if( Z_BVAL_P(entry) ) {
+            flags |= handlebars_compiler_flag_ignore_standalone;
+        }
+    }
+    if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("knownHelpers"))) ) {
+        compiler->known_helpers = php_handlebars_compiler_known_helpers_from_zval(compiler, entry TSRMLS_CC);
+    }
+    if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("knownHelpersOnly"))) ) {
+        if( Z_BVAL_P(entry) ) {
+            flags |= handlebars_compiler_flag_known_helpers_only;
+        }
+    }
+    if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("preventIndent"))) ) {
+        if( Z_BVAL_P(entry) ) {
+            flags |= handlebars_compiler_flag_prevent_indent;
+        }
+    }
+    if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("stringParams"))) ) {
+        if( Z_BVAL_P(entry) ) {
+            flags |= handlebars_compiler_flag_string_params;
+        }
+    }
+    if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("trackIds"))) ) {
+        if( Z_BVAL_P(entry) ) {
+            flags |= handlebars_compiler_flag_track_ids;
+        }
+    }
+
+    handlebars_compiler_set_flags(compiler, flags);
+
+}
+/* }}} php_handlebars_process_options_zval */
 
 /* {{{ proto mixed Handlebars\Compiler::compile(string tmpl[, long flags[, array knownHelpers]]) */
 static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short print)
 {
     char * tmpl;
     strsize_t tmpl_len;
-    long compile_flags = 0;
-    zval * known_helpers = NULL;
+    zval * options;
     void * mctx = NULL;
     struct handlebars_context * ctx;
     struct handlebars_compiler * compiler;
     struct handlebars_opcode_printer * printer;
-    int retval;
-    char * errmsg;
-    char ** known_helpers_arr;
     volatile struct {
         zend_class_entry * ce;
     } ex;
@@ -316,22 +398,21 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
     ex.ce = HandlebarsRuntimeException_ce_ptr;
 
 #ifndef FAST_ZPP
-    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|lz", &tmpl, &tmpl_len, &compile_flags, &known_helpers) == FAILURE ) {
+    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|z", &tmpl, &tmpl_len, &options) == FAILURE ) {
         return;
     }
 #else
     ZEND_PARSE_PARAMETERS_START(1, 3)
 	    Z_PARAM_STRING(tmpl, tmpl_len)
         Z_PARAM_OPTIONAL
-        Z_PARAM_LONG(compile_flags)
-        Z_PARAM_ZVAL(known_helpers)
+        Z_PARAM_ZVAL(options)
     ZEND_PARSE_PARAMETERS_END();
 #endif
 
 #if PHP_MAJOR_VERSION >= 7
     // Dereference zval
-    if (Z_TYPE_P(known_helpers) == IS_REFERENCE) {
-        ZVAL_DEREF(known_helpers);
+    if (Z_TYPE_P(options) == IS_REFERENCE) {
+        ZVAL_DEREF(options);
     }
 #endif
 
@@ -350,15 +431,16 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
         goto done;
     }
 
-    // Intialize compiler and opcode printer
+    // Intialize compiler
     compiler = handlebars_compiler_ctor(ctx);
-    printer = handlebars_opcode_printer_ctor(compiler);
-    handlebars_compiler_set_flags(compiler, compile_flags);
 
-    // Get known helpers
-    known_helpers_arr = php_handlebars_compiler_known_helpers_from_zval(compiler, known_helpers TSRMLS_CC);
-    if( known_helpers_arr ) {
-        compiler->known_helpers = (const char **) known_helpers_arr;
+    // Process options
+    if( options ) {
+        if( Z_TYPE_P(options) == IS_LONG ) {
+            handlebars_compiler_set_flags(compiler, Z_LVAL_P(options));
+        } else {
+            php_handlebars_process_options_zval(compiler, NULL, options TSRMLS_CC);
+        }
     }
 
     // Parse
@@ -373,6 +455,7 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
     // Print or convert to zval
     ex.ce = HandlebarsRuntimeException_ce_ptr;
     if( print ) {
+        printer = handlebars_opcode_printer_ctor(compiler);
         handlebars_opcode_printer_print(printer, compiler);
         PHP5TO7_RETVAL_STRING(printer->output);
     } else {
@@ -398,8 +481,7 @@ PHP_METHOD(HandlebarsCompiler, compilePrint)
 /* {{{ Argument Info */
 ZEND_BEGIN_ARG_INFO_EX(HandlebarsCompiler_compile_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
     ZEND_ARG_INFO(0, tmpl)
-    ZEND_ARG_INFO(0, flags)
-    ZEND_ARG_ARRAY_INFO(0, knownHelpers, 1)
+    ZEND_ARG_INFO(0, options)
 ZEND_END_ARG_INFO()
 /* }}} Argument Info */
 
