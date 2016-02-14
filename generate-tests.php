@@ -351,11 +351,17 @@ function hbs_generate_spec_test_body_generic(array $test) {
     $options = isset($test['options']) ? $test['options'] : array();
     $compileOptions = isset($test['compileOptions']) ? $test['compileOptions'] : array();
     $options += $compileOptions;
-    $helpers = array_merge((array)@$test['globalHelpers'], (array)@$test['helpers']);
-    $partials = array_merge((array)@$test['globalPartials'], (array)@$test['partials']);
+    $helpers = (array) @$test['helpers'];
+    $partials = (array) @$test['partials'];
     $context = isset($test['data']) ? $test['data'] : null;
     $expectHead = null;
     $message = null;
+    if( !empty($test['globalHelpers']) ) {
+        $helpers += $test['globalHelpers'];
+    }
+    if( !empty($test['globalPartials']) ) {
+        $partials += $test['globalPartials'];
+    }
     if( array_key_exists('expected', $test) ) {
         $expected = $test['expected'];
     } else if( !empty($test['exception']) ) {

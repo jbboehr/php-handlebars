@@ -66,6 +66,11 @@ long php_handlebars_process_options_zval(struct handlebars_compiler * compiler, 
             flags |= handlebars_compiler_flag_known_helpers_only;
         }
     }
+    if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("explicitPartialContext"))) ) {
+        if( Z_BVAL_P(entry) ) {
+            flags |= handlebars_compiler_flag_explicit_partial_context;
+        }
+    }
 
     handlebars_compiler_set_flags(compiler, flags);
 
