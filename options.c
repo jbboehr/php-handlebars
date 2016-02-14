@@ -80,6 +80,8 @@ static zend_object * php_handlebars_options_obj_create(zend_class_entry * ce TSR
     object_properties_init(&obj->std, ce);
     obj->std.handlers = &HandlebarsOptions_obj_handlers;
 
+    obj->vm = NULL;
+
     return &obj->std;
 }
 #else
@@ -99,6 +101,8 @@ zend_object_value php_handlebars_options_obj_create(zend_class_entry *ce TSRMLS_
 
     retval.handle = zend_objects_store_put(obj, (zend_objects_store_dtor_t)zend_objects_destroy_object, (zend_objects_free_object_storage_t)php_handlebars_options_obj_free, NULL TSRMLS_CC);
     retval.handlers = &HandlebarsOptions_obj_handlers;
+
+    obj->vm = NULL;
 
     return retval;
 }
@@ -211,6 +215,37 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
 
     intern = Z_HBS_OPTIONS_P(_this_zval);
     vm = intern->vm;
+
+    if( !vm ) {
+        // This was probably constructed in user land
+        zval * z_fn;
+        if( program ) {
+            //z_fn = php5to7_zend_hash_find(Z_ARRVAL_P(z_options), ZEND_STRL("data"))
+            z_fn = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("fn"), 0 TSRMLS_CC);
+        } else {
+            z_fn = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("inverse"), 0 TSRMLS_CC);
+        }
+
+        if( z_fn && Z_TYPE_P(z_fn) == IS_OBJECT ) {
+            zval * z_const;
+            zval * z_ret;
+            zval **z_const_args = emalloc(ZEND_NUM_ARGS() * sizeof(zval *));
+            if( ZEND_NUM_ARGS() >= 1 ) {
+                z_const_args[0] = z_context;
+            }
+            if( ZEND_NUM_ARGS() >= 2 ) {
+                z_const_args[1] = z_options;
+            }
+            MAKE_STD_ZVAL(z_ret);
+            ZVAL_STRING(&z_const, "__invoke", 0);
+            call_user_function(&Z_OBJCE_P(z_fn)->function_table, &z_fn, &z_const, z_ret, ZEND_NUM_ARGS(), z_const_args TSRMLS_CC);
+            efree(z_const_args);
+            RETVAL_ZVAL(z_ret, 1, 1);
+        } else {
+            zend_throw_exception(HandlebarsRuntimeException_ce_ptr, "fn is not set", 0 TSRMLS_CC);
+        }
+        return;
+    }
 
     if( program ) {
         programGuid = intern->program;
