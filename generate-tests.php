@@ -350,7 +350,7 @@ function hbs_generate_spec_test_body_generic(array $test) {
     } else if( !empty($test['exception']) ) {
     $expectHead = 'EXPECTF';
         // @todo improve this
-        $expected = '%AUncaught exception%A';
+        $expected = '%AUncaught%A';
         if( !empty($test['message']) ) {
             /*$expected =*/ $message = $test['message'];
         } else {

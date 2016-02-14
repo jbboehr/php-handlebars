@@ -71,12 +71,12 @@ static void php_handlebars_options_obj_free(void *object TSRMLS_DC)
 
 /* {{{ php_handlebars_options_obj_create */
 #ifdef ZEND_ENGINE_3
-static zend_object * php_handlebars_options_obj_create(zend_class_entry * ce TSRMLS_DC)
+static zend_object * php_handlebars_options_obj_create(zend_class_entry * ce)
 {
     struct php_handlebars_options_obj *obj;
 
-    obj = ecalloc(1, sizeof(*obj));
-    zend_object_std_init(&obj->std, ce TSRMLS_CC);
+    obj = ecalloc(1, sizeof(*obj) + zend_object_properties_size(ce));
+    zend_object_std_init(&obj->std, ce);
     object_properties_init(&obj->std, ce);
     obj->std.handlers = &HandlebarsOptions_obj_handlers;
 
@@ -161,12 +161,23 @@ PHP_METHOD(HandlebarsOptions, __construct)
 #else
     _this_zval = getThis();
     ZEND_PARSE_PARAMETERS_START(0, 1)
+        Z_PARAM_OPTIONAL
         Z_PARAM_ARRAY(props)
     ZEND_PARSE_PARAMETERS_END();
 #endif
 
     if( props && Z_TYPE_P(props) == IS_ARRAY ) {
-        HashTable * data_hash = NULL;
+        HashTable * ht = Z_ARRVAL_P(props);
+#ifdef ZEND_ENGINE_3
+        zend_string * key;
+        zend_ulong index;
+        zend_ulong idx = 0;
+        zval * entry;
+
+        ZEND_HASH_FOREACH_KEY_VAL(ht, index, key, entry) {
+            zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZSTR_VAL(key), ZSTR_LEN(key), entry);
+        } ZEND_HASH_FOREACH_END();
+#else
         HashPosition data_pointer = NULL;
         zval ** data_entry = NULL;
         char * key;
@@ -174,15 +185,14 @@ PHP_METHOD(HandlebarsOptions, __construct)
         long index;
         long idx = 0;
 
-        data_hash = Z_ARRVAL_P(props);
-
-        zend_hash_internal_pointer_reset_ex(data_hash, &data_pointer);
-        while( zend_hash_get_current_data_ex(data_hash, (void**) &data_entry, &data_pointer) == SUCCESS ) {
-            if (zend_hash_get_current_key_ex(data_hash, &key, &key_len, &index, 0, &data_pointer) == HASH_KEY_IS_STRING) {
+        zend_hash_internal_pointer_reset_ex(ht, &data_pointer);
+        while( zend_hash_get_current_data_ex(ht, (void**) &data_entry, &data_pointer) == SUCCESS ) {
+            if (zend_hash_get_current_key_ex(ht, &key, &key_len, &index, 0, &data_pointer) == HASH_KEY_IS_STRING) {
                 zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, key, key_len - 1, *data_entry TSRMLS_CC);
             }
-            zend_hash_move_forward_ex(data_hash, &data_pointer);
+            zend_hash_move_forward_ex(ht, &data_pointer);
         }
+#endif
     }
 }
 /* }}} Handlebars\Options::__construct */
@@ -208,6 +218,7 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
 #else
     _this_zval = getThis();
     ZEND_PARSE_PARAMETERS_START(0, 2)
+        Z_PARAM_OPTIONAL
         Z_PARAM_ZVAL(z_context)
         Z_PARAM_ZVAL(z_options)
     ZEND_PARSE_PARAMETERS_END();
@@ -221,13 +232,33 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
         zval * z_fn;
         if( program ) {
             //z_fn = php5to7_zend_hash_find(Z_ARRVAL_P(z_options), ZEND_STRL("data"))
-            z_fn = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("fn"), 0 TSRMLS_CC);
+            z_fn = php5to7_zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("fn"), 0 TSRMLS_CC);
         } else {
-            z_fn = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("inverse"), 0 TSRMLS_CC);
+            z_fn = php5to7_zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("inverse"), 0 TSRMLS_CC);
         }
 
         if( z_fn && Z_TYPE_P(z_fn) == IS_OBJECT ) {
-            zval * z_const;
+#ifdef ZEND_ENGINE_3
+            zval z_const;
+            zval z_ret;
+            zval * z_const_args = emalloc(ZEND_NUM_ARGS() * sizeof(zval));
+            if( ZEND_NUM_ARGS() >= 1 ) {
+                ZVAL_DUP(&z_const_args[0], z_context);
+                //z_const_args[0] = *z_context;
+            }
+            if( ZEND_NUM_ARGS() >= 2 ) {
+                ZVAL_DUP(&z_const_args[1], z_context);
+                //z_const_args[1] = *z_options;
+            }
+            ZVAL_UNDEF(&z_ret);
+            ZVAL_STRING(&z_const, "__invoke");
+
+            call_user_function(&Z_OBJCE_P(z_fn)->function_table, z_fn, &z_const, &z_ret, 2, z_const_args TSRMLS_CC);
+
+            zval_dtor(&z_const);
+            RETVAL_ZVAL(&z_ret, 1, 1);
+#else
+            zval z_const;
             zval * z_ret;
             zval **z_const_args = emalloc(ZEND_NUM_ARGS() * sizeof(zval *));
             if( ZEND_NUM_ARGS() >= 1 ) {
@@ -241,6 +272,7 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
             call_user_function(&Z_OBJCE_P(z_fn)->function_table, &z_fn, &z_const, z_ret, ZEND_NUM_ARGS(), z_const_args TSRMLS_CC);
             efree(z_const_args);
             RETVAL_ZVAL(z_ret, 1, 1);
+#endif
         } else {
             zend_throw_exception(HandlebarsRuntimeException_ce_ptr, "fn is not set", 0 TSRMLS_CC);
         }
@@ -278,7 +310,7 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
 
     // Execute
     char * ret = handlebars_vm_execute_program_ex(vm, programGuid, context, data, block_params);
-    RETVAL_STRINGL(ret, talloc_array_length(ret) - 1, 1);
+    PHP5TO7_RETVAL_STRINGL(ret, talloc_array_length(ret) - 1);
     talloc_free(ret);
 }
 

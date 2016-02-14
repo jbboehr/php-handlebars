@@ -259,7 +259,7 @@ static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval 
     }
 
     // Count builtins >.>
-    for( ptr2 = handlebars_builtins_names(); *ptr2; ++ptr2, ++count );
+    //for( ptr2 = handlebars_builtins_names(); *ptr2; ++ptr2, ++count );
 
     // Allocate array
     ptr = known_helpers = talloc_array(ctx, char *, count + 1);
@@ -286,19 +286,23 @@ static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval 
             zend_hash_move_forward_ex(data_hash, &data_pointer);
         }
 #else
-        zval * data_entry = NULL;
-        ZEND_HASH_FOREACH_VAL(data_hash, data_entry) {
-            if( Z_TYPE_P(data_entry) == IS_STRING ) {
-                *ptr++ = (char *) handlebars_talloc_strdup(ctx, Z_STRVAL_P(data_entry));
+        zend_string * key;
+        zend_ulong index;
+        zval * entry = NULL;
+        ZEND_HASH_FOREACH_KEY_VAL(data_hash, index, key, entry) {
+            if( Z_TYPE_P(entry) == IS_STRING ) {
+                *ptr++ = (char *) handlebars_talloc_strndup(ctx, Z_STRVAL_P(entry), Z_STRLEN_P(entry));
+            } else if( key ) {
+                *ptr++ = (char *) handlebars_talloc_strndup(ctx, ZSTR_VAL(key), ZSTR_LEN(key));
             }
         } ZEND_HASH_FOREACH_END();
 #endif
     } while(0);
 
     // Copy in builtins
-    for( ptr2 = handlebars_builtins_names(); *ptr2; ++ptr2 ) {
-        *ptr++ = (char *) handlebars_talloc_strdup(ctx, *ptr2);
-    }
+    //for( ptr2 = handlebars_builtins_names(); *ptr2; ++ptr2 ) {
+    //    *ptr++ = (char *) handlebars_talloc_strdup(ctx, *ptr2);
+    //}
 
     // Null terminate
     *ptr++ = NULL;
@@ -320,34 +324,33 @@ long php_handlebars_process_options_zval(struct handlebars_compiler * compiler, 
 
     ht = Z_ARRVAL_P(options);
     if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("alternateDecorators"))) ) {
-        if( Z_BVAL_P(entry) ) {
+        if( PHP5TO7_Z_IS_TRUE_P(entry) ) {
             flags |= handlebars_compiler_flag_alternate_decorators;
         }
     }
     if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("compat"))) ) {
-        if( Z_BVAL_P(entry) ) {
+        if( PHP5TO7_Z_IS_TRUE_P(entry) ) {
             flags |= handlebars_compiler_flag_compat;
         }
     }
     if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("data"))) ) {
         // @todo refine this
-        if( Z_TYPE_P(entry) != IS_BOOL ) {
+        if( !PHP5TO7_Z_IS_BOOL_P(entry) && Z_TYPE_P(entry) != IS_NULL ) {
             if( vm ) {
                 vm->data = handlebars_value_from_zval(vm->ctx, entry);
-            } else {
-                flags |= handlebars_compiler_flag_use_data;
             }
-        } else if( Z_BVAL_P(entry) ) {
+            flags |= handlebars_compiler_flag_use_data;
+        } else if( PHP5TO7_Z_IS_TRUE_P(entry) ) {
             flags |= handlebars_compiler_flag_use_data;
         }
     }
     if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("explicitPartialContext"))) ) {
-        if( Z_BVAL_P(entry) ) {
+        if( PHP5TO7_Z_IS_TRUE_P(entry) ) {
             flags |= handlebars_compiler_flag_explicit_partial_context;
         }
     }
     if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("ignoreStandalone"))) ) {
-        if( Z_BVAL_P(entry) ) {
+        if( PHP5TO7_Z_IS_TRUE_P(entry) ) {
             flags |= handlebars_compiler_flag_ignore_standalone;
         }
     }
@@ -355,22 +358,22 @@ long php_handlebars_process_options_zval(struct handlebars_compiler * compiler, 
         compiler->known_helpers = php_handlebars_compiler_known_helpers_from_zval(compiler, entry TSRMLS_CC);
     }
     if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("knownHelpersOnly"))) ) {
-        if( Z_BVAL_P(entry) ) {
+        if( PHP5TO7_Z_IS_TRUE_P(entry) ) {
             flags |= handlebars_compiler_flag_known_helpers_only;
         }
     }
     if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("preventIndent"))) ) {
-        if( Z_BVAL_P(entry) ) {
+        if( PHP5TO7_Z_IS_TRUE_P(entry) ) {
             flags |= handlebars_compiler_flag_prevent_indent;
         }
     }
     if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("stringParams"))) ) {
-        if( Z_BVAL_P(entry) ) {
+        if( PHP5TO7_Z_IS_TRUE_P(entry) ) {
             flags |= handlebars_compiler_flag_string_params;
         }
     }
     if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("trackIds"))) ) {
-        if( Z_BVAL_P(entry) ) {
+        if( PHP5TO7_Z_IS_TRUE_P(entry) ) {
             flags |= handlebars_compiler_flag_track_ids;
         }
     }

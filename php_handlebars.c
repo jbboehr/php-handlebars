@@ -38,7 +38,11 @@ ZEND_DECLARE_MODULE_GLOBALS(handlebars);
 /* {{{ PHP_INI_MH */
 static PHP_INI_MH(OnUpdatePoolSize)
 {
+#ifdef ZEND_ENGINE_3
+    zend_long s = zend_atol(ZSTR_VAL(new_value), ZSTR_LEN(new_value));
+#else
     zend_long s = zend_atol(new_value, strlen(new_value));
+#endif
     HANDLEBARS_G(pool_size) = s;
 
     return SUCCESS;
