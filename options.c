@@ -7,6 +7,7 @@
 
 #include "Zend/zend_API.h"
 #include "Zend/zend_constants.h"
+#include "Zend/zend_exceptions.h"
 #include "main/php.h"
 
 #include "php5to7.h"
@@ -63,7 +64,7 @@ static void php_handlebars_options_obj_free(void *object TSRMLS_DC)
 {
     struct php_handlebars_options_obj * payload = (struct php_handlebars_options_obj *) object;
 
-    zend_object_std_dtor((zend_object *)object TSRMLS_CC);
+    zend_object_std_dtor(&payload->std TSRMLS_CC);
     efree(object);
 }
 #endif
@@ -91,12 +92,12 @@ zend_object_value php_handlebars_options_obj_create(zend_class_entry *ce TSRMLS_
     struct php_handlebars_options_obj *obj;
     zval *tmp;
 
-    obj = ecalloc(1, sizeof(*obj));
+    obj = ecalloc(1, sizeof(struct php_handlebars_options_obj));
 	zend_object_std_init(&obj->std, ce TSRMLS_CC);
 #if PHP_VERSION_ID < 50399
-    zend_hash_copy(obj->std.properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref, (void *) &tmp, sizeof(zval *));
+    zend_hash_copy(obj->std.properties, &ce->default_properties, (copy_ctor_func_t) zval_property_ctor, (void *) &tmp, sizeof(zval *));
 #else
-	object_properties_init((zend_object *) obj, ce);
+	object_properties_init(&obj->std, ce);
 #endif
 
     retval.handle = zend_objects_store_put(obj, (zend_objects_store_dtor_t)zend_objects_destroy_object, (zend_objects_free_object_storage_t)php_handlebars_options_obj_free, NULL TSRMLS_CC);
@@ -118,6 +119,8 @@ PHPAPI void php_handlebars_options_ctor(struct handlebars_options * options, zva
 
     object_init_ex(z_options, HandlebarsOptions_ce_ptr);
 
+    ZVAL_NULL(&z_ret);
+
     do {
 #if PHP_MAJOR_VERSION < 7
 		ZVAL_STRING(&z_const, "__construct", 0);
@@ -125,6 +128,7 @@ PHPAPI void php_handlebars_options_ctor(struct handlebars_options * options, zva
 #else
         ZVAL_STRING(&z_const, "__construct");
         call_user_function(&HandlebarsOptions_ce_ptr->function_table, z_options, &z_const, &z_ret, 0, NULL TSRMLS_CC);
+        zval_ptr_dtor(&z_const);
 #endif
     } while(0);
 
@@ -144,6 +148,10 @@ PHPAPI void php_handlebars_options_ctor(struct handlebars_options * options, zva
     if( options->inverse >= 0 ) {
         zend_update_property_long(Z_OBJCE_P(z_options), z_options, ZEND_STRL("inverse"), options->inverse TSRMLS_CC);
     }
+
+#ifdef ZEND_ENGINE_3
+    zval_ptr_dtor(&z_ret);
+#endif
 }
 /* }}} */
 
@@ -241,22 +249,22 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
 #ifdef ZEND_ENGINE_3
             zval z_const;
             zval z_ret;
-            zval * z_const_args = emalloc(ZEND_NUM_ARGS() * sizeof(zval));
+            zval * z_const_args = ecalloc(ZEND_NUM_ARGS(), sizeof(zval));
             if( ZEND_NUM_ARGS() >= 1 ) {
-                ZVAL_DUP(&z_const_args[0], z_context);
-                //z_const_args[0] = *z_context;
+                //ZVAL_DUP(&z_const_args[0], z_context);
+                z_const_args[0] = *z_context;
             }
             if( ZEND_NUM_ARGS() >= 2 ) {
-                ZVAL_DUP(&z_const_args[1], z_context);
-                //z_const_args[1] = *z_options;
+                //ZVAL_DUP(&z_const_args[1], z_context);
+                z_const_args[1] = *z_options;
             }
-            ZVAL_UNDEF(&z_ret);
+            ZVAL_NULL(&z_ret);
             ZVAL_STRING(&z_const, "__invoke");
 
-            call_user_function(&Z_OBJCE_P(z_fn)->function_table, z_fn, &z_const, &z_ret, 2, z_const_args TSRMLS_CC);
+            call_user_function(&Z_OBJCE_P(z_fn)->function_table, z_fn, &z_const, &z_ret, ZEND_NUM_ARGS(), z_const_args TSRMLS_CC);
 
-            zval_dtor(&z_const);
             RETVAL_ZVAL(&z_ret, 1, 1);
+            zval_ptr_dtor(&z_const);
 #else
             zval z_const;
             zval * z_ret;
@@ -272,6 +280,7 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
             call_user_function(&Z_OBJCE_P(z_fn)->function_table, &z_fn, &z_const, z_ret, ZEND_NUM_ARGS(), z_const_args TSRMLS_CC);
             efree(z_const_args);
             RETVAL_ZVAL(z_ret, 1, 1);
+            zval_ptr_dtor(&z_ret);
 #endif
         } else {
             zend_throw_exception(HandlebarsRuntimeException_ce_ptr, "fn is not set", 0 TSRMLS_CC);

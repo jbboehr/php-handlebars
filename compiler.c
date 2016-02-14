@@ -113,7 +113,7 @@ static void php_handlebars_opcode_to_zval(struct handlebars_opcode * opcode, zva
 
 		call_user_function(&HandlebarsOpcode_ce_ptr->function_table, current, &z_const, &z_ret, 2, z_const_args TSRMLS_CC);
 
-		zval_dtor(&z_const);
+		zval_ptr_dtor(&z_const);
 #endif
 	} while(0);
 
@@ -199,7 +199,7 @@ static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compile
 
 		call_user_function(&HandlebarsCompileContext_ce_ptr->function_table, current, &z_const, &z_ret, 3, z_const_args TSRMLS_CC);
 
-		zval_dtor(&z_const);
+		zval_ptr_dtor(&z_const);
 #endif
 	} while(0);
 
@@ -388,7 +388,7 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
 {
     char * tmpl;
     strsize_t tmpl_len;
-    zval * options;
+    zval * options = NULL;
     void * mctx = NULL;
     struct handlebars_context * ctx;
     struct handlebars_compiler * compiler;

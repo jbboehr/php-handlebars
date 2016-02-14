@@ -92,7 +92,7 @@ static inline void php_handlebars_create_frame(zval * return_value, zval * value
     }
 
     // @todo is this necessary?
-    zval_copy_ctor(return_value);
+    //zval_copy_ctor(return_value);
 }
 #else
 static inline void php_handlebars_create_frame(zval * return_value, zval * value)

@@ -44,6 +44,7 @@ struct handlebars_zval {
 
 static handlebars_zval_intern_dtor(struct handlebars_zval * intern) {
 #ifdef ZEND_ENGINE_3
+    zval_ptr_dtor(&intern->intern);
 #else
     if( intern->intern ) {
         zval_ptr_dtor(&intern->intern);
@@ -149,7 +150,7 @@ static struct handlebars_value * handlebars_std_zval_map_find(struct handlebars_
             if( Z_OBJ_HT_P(intern)->has_dimension(intern, &prop, 0 TSRMLS_CC) ) {
                 entry = Z_OBJ_HT_P(intern)->read_dimension(intern, &prop, 0, entry TSRMLS_CC);
             }
-            zval_dtor(&prop);
+            zval_ptr_dtor(&prop);
 #else
             zval * prop;
             MAKE_STD_ZVAL(prop);
@@ -377,6 +378,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
         zval z_scope;
         handlebars_value_to_zval(options->scope, &z_scope);
         zend_update_property(Z_OBJCE(z_options), &z_options, ZEND_STRL("scope"), &z_scope);
+        zval_ptr_dtor(&z_scope);
     }
 
     // Add hash
@@ -384,6 +386,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
         zval z_hash;
         handlebars_value_to_zval(options->hash, &z_hash);
         zend_update_property(Z_OBJCE(z_options), &z_options, ZEND_STRL("hash"), &z_hash);
+        zval_ptr_dtor(&z_hash);
     }
 
     // Add data
@@ -391,6 +394,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
         zval z_data;
         handlebars_value_to_zval(options->data, &z_data);
         zend_update_property(Z_OBJCE(z_options), &z_options, ZEND_STRL("data"), &z_data TSRMLS_CC);
+        zval_ptr_dtor(&z_data);
     }
 
     // Convert params
@@ -411,7 +415,11 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     ZVAL_STRING(&z_const, "__invoke");
     call_user_function(&Z_OBJCE_P(intern)->function_table, intern, &z_const, z_ret, n_args, z_const_args TSRMLS_CC);
 
-    zval_dtor(&z_const);
+    for( i = 0; i < n_args; i++ ) {
+        zval_ptr_dtor(&z_const_args[i]);
+    }
+    zval_ptr_dtor(&z_const);
+    efree(z_const_args);
 #else
     // Construct options
     zval * z_options;
@@ -424,6 +432,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
         MAKE_STD_ZVAL(z_scope);
         handlebars_value_to_zval(options->scope, z_scope TSRMLS_CC);
         zend_update_property(Z_OBJCE_P(z_options), z_options, ZEND_STRL("scope"), z_scope TSRMLS_CC);
+        zval_ptr_dtor(&z_scope);
     }
 
     // Add hash
@@ -432,6 +441,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
         MAKE_STD_ZVAL(z_hash);
         handlebars_value_to_zval(options->hash, z_hash TSRMLS_CC);
         zend_update_property(Z_OBJCE_P(z_options), z_options, ZEND_STRL("hash"), z_hash TSRMLS_CC);
+        zval_ptr_dtor(&z_hash);
     }
 
     // Add data
@@ -440,6 +450,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
         MAKE_STD_ZVAL(z_data);
         handlebars_value_to_zval(options->data, z_data TSRMLS_CC);
         zend_update_property(Z_OBJCE_P(z_options), z_options, ZEND_STRL("data"), z_data TSRMLS_CC);
+        zval_ptr_dtor(&z_data);
     }
 
     // Convert params
@@ -494,8 +505,12 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
             break;
     }
 
+#ifdef ZEND_ENGINE_3
+    zval_ptr_dtor(z_ret);
+#else
     // @todo this seems to cause a problem
-    //zval_ptr_dtor(z_ret);
+    zval_ptr_dtor(&z_ret);
+#endif
 
     return retval;
 }
