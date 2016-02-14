@@ -129,65 +129,65 @@ function patch_tokens(array &$tokens) {
 }
 
 function patch_opcode(array $opcode) {
-	// @todo we could fix this by adding a distinct null operand type
-	if( $opcode['opcode'] === 'emptyHash' ) {
-		// Add null operand - currently only supports fixed number of operands
-		if( count($opcode['args']) === 0 ) {
-			$opcode['args'] = array(null);
-		}
-	} else if( $opcode['opcode'] === 'pushId' ) {
-		// Add null operand - currently only supports fixed number of operands
-		if( count($opcode['args']) === 2 ) {
-			$opcode['args'][] = null;
-		}
-		// Stringify - array operands only support strings
-		if( is_array($opcode['args'][1]) ) {
-			$opcode['args'][1][0] = (string) $opcode['args'][1][0];
-			$opcode['args'][1][1] = (string) $opcode['args'][1][1];
-		}
-	} else if( $opcode['opcode'] === 'lookupBlockParam' ) {
-		// Stringify - array operands only support strings
-		if( is_array($opcode['args'][0]) ) {
-			settype($opcode['args'][0][0], 'string');
-			settype($opcode['args'][0][1], 'string');
-		}
-	} else if( $opcode['opcode'] === 'pushLiteral' ) {
-		// Stringify - operands don't support floats/decimals
-		if( is_float($opcode['args'][0]) ) {
-			settype($opcode['args'][0], 'string');
-		}
-	}
-	unset($opcode['loc']);
-	return new Handlebars\Opcode($opcode['opcode'], $opcode['args']);
+    // @todo we could fix this by adding a distinct null operand type
+    if( $opcode['opcode'] === 'emptyHash' ) {
+        // Add null operand - currently only supports fixed number of operands
+        if( count($opcode['args']) === 0 ) {
+            $opcode['args'] = array(null);
+        }
+    } else if( $opcode['opcode'] === 'pushId' ) {
+        // Add null operand - currently only supports fixed number of operands
+        if( count($opcode['args']) === 2 ) {
+            $opcode['args'][] = null;
+        }
+        // Stringify - array operands only support strings
+        if( is_array($opcode['args'][1]) ) {
+            $opcode['args'][1][0] = (string) $opcode['args'][1][0];
+            $opcode['args'][1][1] = (string) $opcode['args'][1][1];
+        }
+    } else if( $opcode['opcode'] === 'lookupBlockParam' ) {
+        // Stringify - array operands only support strings
+        if( is_array($opcode['args'][0]) ) {
+            settype($opcode['args'][0][0], 'string');
+            settype($opcode['args'][0][1], 'string');
+        }
+    } else if( $opcode['opcode'] === 'pushLiteral' ) {
+        // Stringify - operands don't support floats/decimals
+        if( is_float($opcode['args'][0]) ) {
+            settype($opcode['args'][0], 'string');
+        }
+    }
+    unset($opcode['loc']);
+    return new Handlebars\Opcode($opcode['opcode'], $opcode['args']);
 }
 
 function patch_opcodes(array $opcodes) {
-	foreach( $opcodes as $k => $opcode ) {
-		$opcodes[$k] = patch_opcode($opcode);
-	}
-	return $opcodes;
+    foreach( $opcodes as $k => $opcode ) {
+        $opcodes[$k] = patch_opcode($opcode);
+    }
+    return $opcodes;
 }
 
 function patch_context(array $context) {
-	$opcodes = patch_opcodes($context['opcodes']);
-	$children = array();
-	foreach( $context['children'] as $k => $v ) {
-		$children[$k] = patch_context($v);
-	}
-	$blockParams = isset($context['blockParams']) ? $context['blockParams'] : null;
-	
-	$obj = new Handlebars\CompileContext($opcodes, $children, $blockParams);
-	
-	foreach( array('useDepths', 'usePartial', 'useDecorators') as $k ) {
-		if( !empty($context[$k]) ) {
-			$obj->$k = true;
-		}
-	}
-	foreach( array('stringParams', 'trackIds') as $k ) {
-			$obj->$k = !empty($context[$k]);
-	}
-	
-	return $obj;
+    $opcodes = patch_opcodes($context['opcodes']);
+    $children = array();
+    foreach( $context['children'] as $k => $v ) {
+        $children[$k] = patch_context($v);
+    }
+    $blockParams = isset($context['blockParams']) ? $context['blockParams'] : null;
+    
+    $obj = new Handlebars\CompileContext($opcodes, $children, $blockParams);
+    
+    foreach( array('useDepths', 'usePartial', 'useDecorators') as $k ) {
+        if( !empty($context[$k]) ) {
+            $obj->$k = true;
+        }
+    }
+    foreach( array('stringParams', 'trackIds') as $k ) {
+            $obj->$k = !empty($context[$k]);
+    }
+    
+    return $obj;
 }
 
 function makeCompilerFlags(array $options = null)
@@ -252,15 +252,28 @@ function hbs_generate_test_head(array &$test) {
     
     switch( $test['description'] . '-' . $test['it'] ) {
         case 'basic context-escaping':
-        if( $test['number'] != 3 ) {
-            break;
-        }
+            if( $test['number'] != 3 ) {
+                break;
+            }
         case 'helpers-helper for nested raw block gets raw content':
-        $skip = 'true';
-        $reason = 'skip for now'; 
-        break;
+            $skip = 'true';
+            $reason = 'skip for now'; 
+            break;
     }
     if( $test['suiteType'] == 'spec' ) {
+        if( $test['suiteName'] == 'string-params' ) {
+            $skip = 'true';
+            $reason = 'string params are not supported by the VM';
+        } else if( $test['suiteName'] == 'track-ids' ) {
+            $skip = 'true';
+            $reason = 'track ids are not supported by the VM';
+        } else if( $test['description'] == 'partial blocks' ) {
+            $skip = 'true';
+            $reason = 'partial blocks are not supported by the VM';
+        } else if( $test['description'] == 'inline partials' ) {
+            $skip = 'true';
+            $reason = 'inline partials are not supported by the VM';
+        }
         switch( $test['suiteName'] . '-' . $test['description'] . '-' . $test['it'] ) {
             case 'basic-basic context-compiling with a string context':
                 $skip = 'true';
@@ -272,12 +285,28 @@ function hbs_generate_test_head(array &$test) {
             case 'blocks-decorators-should support nested decorators':
             case 'blocks-decorators-should apply multiple decorators':
             case 'blocks-decorators-should access parent variables':
+            case 'blocks-decorators-should work with root program':
+            case 'blocks-decorators-should fail when accessing variables from root':
                 $skip = 'true';
                 $reason = 'decorators are not currently supported';
                 break;
             case 'helpers-block params-should take presednece over parent block params':
-		$test['expected'] = '15foo';
-		break;
+                $test['expected'] = '15foo';
+                break;
+            case 'subexpressions-subexpressions-in string params mode,':
+                $skip = 'true';
+                $reason = 'string params are not supported by the VM';
+                break;
+            case 'subexpressions-subexpressions-subexpressions can\'t just be property lookups':
+                $skip = 'true';
+                $reason = 'skip for now'; 
+                break;
+            case 'regressions-Regressions-should support multiple levels of inline partials':
+            case 'regressions-Regressions-GH-1089: should support failover content in multiple levels of inline partials':
+            case 'regressions-Regressions-GH-1099: should support greater than 3 nested levels of inline partials':
+                $skip = 'true';
+                $reason = 'inline partials are not supported by the VM';
+                break;
         }
     }
 
@@ -365,7 +394,7 @@ function hbs_generate_spec_test_body_generic(array $test) {
     if( array_key_exists('expected', $test) ) {
         $expected = $test['expected'];
     } else if( !empty($test['exception']) ) {
-	$expectHead = 'EXPECTF';
+    $expectHead = 'EXPECTF';
         // @todo improve this
         $expected = '%AUncaught exception%A';
         if( !empty($test['message']) ) {
@@ -392,7 +421,7 @@ function hbs_generate_spec_test_body_generic(array $test) {
         $helpers ? '$vm->setHelpers($helpers);' : null,
         $partials ? '$vm->setPartials($partials);' : null,
         'echo $vm->render($tmpl, $context, $options);',
-	$message ? '/* Error message: ' . addcslashes($message, "\r\n") . ' */' : null,
+    $message ? '/* Error message: ' . addcslashes($message, "\r\n") . ' */' : null,
         '--'. ($expectHead ?: 'EXPECT') . '--',
         $expected
     )));
@@ -431,11 +460,11 @@ try {
     $output .= 'echo PHP_EOL;' . PHP_EOL;
     $output .= '' . PHP_EOL;
     if( empty($test['exception']) ) {
-    	$output .= '--EXPECT--' . PHP_EOL;
+        $output .= '--EXPECT--' . PHP_EOL;
         $output .= var_export($expected, true);
         $output .= var_export('array', true);
     } else {
-    	$output .= '--EXPECTF--' . PHP_EOL;
+        $output .= '--EXPECTF--' . PHP_EOL;
         $output .= 'exception%s'; 
         //$output .= $test['message'];
     }

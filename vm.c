@@ -71,6 +71,11 @@ long php_handlebars_process_options_zval(struct handlebars_compiler * compiler, 
             flags |= handlebars_compiler_flag_explicit_partial_context;
         }
     }
+    if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("preventIndent"))) ) {
+        if( Z_BVAL_P(entry) ) {
+            flags |= handlebars_compiler_flag_prevent_indent;
+        }
+    }
 
     handlebars_compiler_set_flags(compiler, flags);
 
@@ -355,34 +360,29 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     call_user_function(&Z_OBJCE_P(intern)->function_table, &intern, &z_const, z_ret, n_args, z_const_args TSRMLS_CC);
     efree(z_const_args);
 
+
     struct handlebars_value * retval = NULL;
     bool is_safe_string = false;
 
     switch( Z_TYPE_P(z_ret) ) {
         case IS_OBJECT:
             if( instanceof_function(Z_OBJCE_P(z_ret), HandlebarsSafeString_ce_ptr TSRMLS_CC) ) {
-                is_safe_string = true;
-                goto scalar;
+                convert_to_string(z_ret);
+                retval = handlebars_value_from_zval(options->vm->ctx, z_ret);
+                retval->flags |= HANDLEBARS_VALUE_FLAG_SAFE_STRING;
+                break;
             }
             // fall-through
         case IS_ARRAY:
-            retval = handlebars_value_from_zval(options->vm->ctx, z_ret);
-            break;
-
-        default: // not ideal?
         case IS_NULL:
         case IS_BOOL:
         case IS_LONG:
         case IS_DOUBLE:
-        case IS_STRING: scalar:
-            retval = handlebars_value_ctor(value->ctx);
-            convert_to_string(z_ret);
-            handlebars_value_stringl(retval, Z_STRVAL_P(z_ret), Z_STRLEN_P(z_ret));
+        case IS_STRING:
+            retval = handlebars_value_from_zval(options->vm->ctx, z_ret);
             break;
-    }
-
-    if( is_safe_string ) {
-        retval->flags |= HANDLEBARS_VALUE_FLAG_SAFE_STRING;
+        default:
+            break;
     }
 
     // @todo this seems to cause a problem
