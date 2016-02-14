@@ -9,7 +9,10 @@
 
 #include "Zend/zend_API.h"
 #include "Zend/zend_constants.h"
+#include "Zend/zend_ini.h"
+#include "Zend/zend_operators.h"
 #include "main/php.h"
+#include "main/php_ini.h"
 #include "ext/standard/info.h"
 
 #include "php5to7.h"
@@ -28,7 +31,25 @@ extern PHP_MINIT_FUNCTION(handlebars_token);
 extern PHP_MINIT_FUNCTION(handlebars_tokenizer);
 extern PHP_MINIT_FUNCTION(handlebars_utils);
 extern PHP_MINIT_FUNCTION(handlebars_vm);
+
+ZEND_DECLARE_MODULE_GLOBALS(handlebars);
 /* }}} Prototypes */
+
+/* {{{ PHP_INI_MH */
+static PHP_INI_MH(OnUpdatePoolSize)
+{
+    zend_long s = zend_atol(new_value, strlen(new_value));
+    HANDLEBARS_G(pool_size) = s;
+
+    return SUCCESS;
+}
+/* }}} */
+
+/* {{{ php.ini directive registration */
+PHP_INI_BEGIN()
+    STD_PHP_INI_ENTRY("handlebars.pool_size", "-1", PHP_INI_ALL, OnUpdatePoolSize, pool_size, zend_handlebars_globals, handlebars_globals)
+PHP_INI_END()
+/* }}} */
 
 /* {{{ PHP_MINIT_FUNCTION */
 static PHP_MINIT_FUNCTION(handlebars)
@@ -36,6 +57,8 @@ static PHP_MINIT_FUNCTION(handlebars)
     zend_class_entry ce;
     int flags = CONST_CS | CONST_PERSISTENT;
     const char * version = handlebars_version_string();
+
+    REGISTER_INI_ENTRIES();
 
     REGISTER_STRING_CONSTANT("Handlebars\\VERSION", (char *) PHP_HANDLEBARS_VERSION, flags);
     REGISTER_STRING_CONSTANT("Handlebars\\LIBVERSION", (char *) version, flags);
@@ -57,6 +80,15 @@ static PHP_MINIT_FUNCTION(handlebars)
 }
 /* }}} */
 
+/* {{{ PHP_MSHUTDOWN_FUNCTION */
+static PHP_MSHUTDOWN_FUNCTION(handlebars)
+{
+    UNREGISTER_INI_ENTRIES();
+
+    return SUCCESS;
+}
+/* }}} */
+
 /* {{{ PHP_MINFO_FUNCTION */
 static PHP_MINFO_FUNCTION(handlebars)
 {
@@ -71,6 +103,14 @@ static PHP_MINFO_FUNCTION(handlebars)
     php_info_print_table_row(2, "libhandlebars Mustache Spec Version", handlebars_mustache_spec_version_string());
     php_info_print_table_end();
 
+    DISPLAY_INI_ENTRIES();
+}
+/* }}} */
+
+/* {{{ PHP_GINIT_FUNCTION */
+static PHP_GINIT_FUNCTION(handlebars)
+{
+    handlebars_globals->pool_size = -1;
 }
 /* }}} */
 
@@ -80,12 +120,16 @@ zend_module_entry handlebars_module_entry = {
     PHP_HANDLEBARS_NAME,                /* Name */
     NULL,                               /* Functions */
     PHP_MINIT(handlebars),              /* MINIT */
-    NULL,                               /* MSHUTDOWN */
+    PHP_MSHUTDOWN(handlebars),          /* MSHUTDOWN */
     NULL,                               /* RINIT */
     NULL,          						/* RSHUTDOWN */
     PHP_MINFO(handlebars),              /* MINFO */
     PHP_HANDLEBARS_VERSION,             /* Version */
-    STANDARD_MODULE_PROPERTIES
+    PHP_MODULE_GLOBALS(handlebars),     /* Globals */
+    PHP_GINIT(handlebars),              /* GINIT */
+    NULL,
+    NULL,
+    STANDARD_MODULE_PROPERTIES_EX
 };
 #ifdef COMPILE_DL_HANDLEBARS 
     ZEND_GET_MODULE(handlebars)      // Common for all PHP extensions which are build as shared modules  

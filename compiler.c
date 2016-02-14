@@ -301,6 +301,7 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
     strsize_t tmpl_len;
     long compile_flags = 0;
     zval * known_helpers = NULL;
+    void * mctx = NULL;
     struct handlebars_context * ctx;
     struct handlebars_compiler * compiler;
     struct handlebars_opcode_printer * printer;
@@ -310,6 +311,8 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
     volatile struct {
         zend_class_entry * ce;
     } ex;
+    zend_long pool_size = HANDLEBARS_G(pool_size);
+
     ex.ce = HandlebarsRuntimeException_ce_ptr;
 
 #ifndef FAST_ZPP
@@ -333,7 +336,12 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
 #endif
 
     // Initialize
-    ctx = handlebars_context_ctor();
+    if( pool_size <= 0 ) {
+        ctx = handlebars_context_ctor();
+    } else {
+        mctx = talloc_pool(NULL, pool_size);
+        ctx = handlebars_context_ctor_ex(mctx);
+    }
 
     // Save jump buffer
     ctx->e.ok = true;
@@ -373,6 +381,7 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
 
 done:
     handlebars_context_dtor(ctx);
+    talloc_free(mctx);
 }
 
 PHP_METHOD(HandlebarsCompiler, compile)

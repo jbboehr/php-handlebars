@@ -543,6 +543,7 @@ PHPAPI struct handlebars_value * handlebars_value_from_zval(struct handlebars_co
 }
 /* }}} handlebars_value_from_zval */
 
+/* {{{ php_handlebars_fetch_known_helpers */
 void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, zval * helpers)
 {
     HashTable * data_hash = NULL;
@@ -577,9 +578,7 @@ void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, z
     known_helpers[idx++] = 0;
     compiler->known_helpers = known_helpers;
 }
-
-
-
+/* }}} handlebars_value_from_zval */
 
 PHP_METHOD(HandlebarsVM, setHelpers)
 {
@@ -628,6 +627,7 @@ PHP_METHOD(HandlebarsVM, render)
     zval * z_options;
     zval * z_helpers;
     zval * z_partials;
+    void * mctx = NULL;
     struct handlebars_context * ctx;
     struct handlebars_compiler * compiler;
     struct handlebars_vm * vm;
@@ -636,6 +636,8 @@ PHP_METHOD(HandlebarsVM, render)
     volatile struct {
         zend_class_entry * ce;
     } ex;
+    zend_long pool_size = HANDLEBARS_G(pool_size);
+
     ex.ce = HandlebarsRuntimeException_ce_ptr;
 
 #ifndef FAST_ZPP
@@ -660,7 +662,12 @@ PHP_METHOD(HandlebarsVM, render)
 #endif
 
     // Initialize
-    ctx = handlebars_context_ctor();
+    if( pool_size <= 0 ) {
+        ctx = handlebars_context_ctor();
+    } else {
+        mctx = talloc_pool(NULL, pool_size);
+        ctx = handlebars_context_ctor_ex(mctx);
+    }
 
     // Save jump buffer
     ctx->e.ok = true;
@@ -712,6 +719,7 @@ PHP_METHOD(HandlebarsVM, render)
 
 done:
     handlebars_context_dtor(ctx);
+    talloc_free(mctx);
 }
 
 /* {{{ Argument Info */

@@ -45,6 +45,12 @@ extern zend_class_entry * HandlebarsTokenizer_ce_ptr;
 extern zend_class_entry * HandlebarsUtils_ce_ptr;
 extern zend_class_entry * HandlebarsVM_ce_ptr;
 
+ZEND_BEGIN_MODULE_GLOBALS(handlebars)
+    zend_long  pool_size;
+ZEND_END_MODULE_GLOBALS(handlebars)
+
+ZEND_EXTERN_MODULE_GLOBALS(handlebars);
+
 zend_bool inline php_handlebars_is_callable(zval * var TSRMLS_DC);
 zend_bool inline php_handlebars_is_int_array(zval * arr TSRMLS_DC);
 
