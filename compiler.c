@@ -312,7 +312,7 @@ static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval 
 /* }}} php_handlebars_compiler_known_helpers_from_zval */
 
 /* {{{ php_handlebars_process_options_zval */
-long php_handlebars_process_options_zval(struct handlebars_compiler * compiler, struct handlebars_vm * vm, zval * options)
+long php_handlebars_process_options_zval(struct handlebars_compiler * compiler, struct handlebars_vm * vm, zval * options TSRMLS_DC)
 {
     zval * entry;
     HashTable * ht;
@@ -337,7 +337,7 @@ long php_handlebars_process_options_zval(struct handlebars_compiler * compiler, 
         // @todo refine this
         if( !PHP5TO7_Z_IS_BOOL_P(entry) && Z_TYPE_P(entry) != IS_NULL ) {
             if( vm ) {
-                vm->data = handlebars_value_from_zval(vm->ctx, entry);
+                vm->data = handlebars_value_from_zval(vm->ctx, entry TSRMLS_CC);
             }
             flags |= handlebars_compiler_flag_use_data;
         } else if( PHP5TO7_Z_IS_TRUE_P(entry) ) {

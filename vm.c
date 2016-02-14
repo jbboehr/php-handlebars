@@ -54,17 +54,19 @@ static void handlebars_std_zval_convert(struct handlebars_value * value, bool re
 
 static enum handlebars_value_type handlebars_std_zval_type(struct handlebars_value * value)
 {
+    TSRMLS_FETCH();
+
     zval * intern = (zval *) value->v.usr;
     if( Z_TYPE_P(intern) == IS_ARRAY ) {
         // @todo cache?
-        if( php_handlebars_is_int_array(intern) ) {
+        if( php_handlebars_is_int_array(intern TSRMLS_CC) ) {
             return HANDLEBARS_VALUE_TYPE_ARRAY;
         } else {
             return HANDLEBARS_VALUE_TYPE_MAP;
         }
     } else if( Z_TYPE_P(intern) == IS_OBJECT ) {
         // @todo cache?
-        if( php_handlebars_is_callable(intern) ) {
+        if( php_handlebars_is_callable(intern TSRMLS_CC) ) {
             return HANDLEBARS_VALUE_TYPE_HELPER;
         } else {
             return HANDLEBARS_VALUE_TYPE_MAP;
@@ -371,7 +373,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     if( options->scope ) {
         zval *z_scope;
         MAKE_STD_ZVAL(z_scope);
-        handlebars_value_to_zval(options->scope, z_scope);
+        handlebars_value_to_zval(options->scope, z_scope TSRMLS_CC);
         zend_update_property(Z_OBJCE_P(z_options), z_options, ZEND_STRL("scope"), z_scope TSRMLS_CC);
     }
 
@@ -379,7 +381,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     if( options->hash ) {
         zval *z_hash;
         MAKE_STD_ZVAL(z_hash);
-        handlebars_value_to_zval(options->hash, z_hash);
+        handlebars_value_to_zval(options->hash, z_hash TSRMLS_CC);
         zend_update_property(Z_OBJCE_P(z_options), z_options, ZEND_STRL("hash"), z_hash TSRMLS_CC);
     }
 
@@ -387,7 +389,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     if( options->data ) {
         zval *z_data;
         MAKE_STD_ZVAL(z_data);
-        handlebars_value_to_zval(options->data, z_data);
+        handlebars_value_to_zval(options->data, z_data TSRMLS_CC);
         zend_update_property(Z_OBJCE_P(z_options), z_options, ZEND_STRL("data"), z_data TSRMLS_CC);
     }
 
@@ -399,7 +401,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     for( i = 0; i < n_args - 1; i++ ) {
         struct handlebars_value * val = handlebars_stack_get(options->params, i);
         MAKE_STD_ZVAL(z_const_args[i]);
-        handlebars_value_to_zval(val, z_const_args[i]);
+        handlebars_value_to_zval(val, z_const_args[i] TSRMLS_CC);
     }
 
     z_const_args[n_args - 1] = z_options;
@@ -418,7 +420,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
         case IS_OBJECT:
             if( instanceof_function(Z_OBJCE_P(z_ret), HandlebarsSafeString_ce_ptr TSRMLS_CC) ) {
                 convert_to_string(z_ret);
-                retval = handlebars_value_from_zval(options->vm->ctx, z_ret);
+                retval = handlebars_value_from_zval(options->vm->ctx, z_ret TSRMLS_CC);
                 retval->flags |= HANDLEBARS_VALUE_FLAG_SAFE_STRING;
                 break;
             }
@@ -434,7 +436,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
         case IS_LONG:
         case IS_DOUBLE:
         case IS_STRING:
-            retval = handlebars_value_from_zval(options->vm->ctx, z_ret);
+            retval = handlebars_value_from_zval(options->vm->ctx, z_ret TSRMLS_CC);
             break;
         default:
             break;
@@ -474,7 +476,7 @@ static inline handlebars_value_array_to_zval(struct handlebars_value * value, zv
         zval * tmp;
         MAKE_STD_ZVAL(tmp);
 #endif
-        handlebars_value_to_zval(it->current, tmp);
+        handlebars_value_to_zval(it->current, tmp TSRMLS_CC);
         add_next_index_zval(val, tmp);
     }
 }
@@ -493,7 +495,7 @@ static inline handlebars_value_map_to_zval(struct handlebars_value * value, zval
 #else
         zval * tmp;
         MAKE_STD_ZVAL(tmp);
-        handlebars_value_to_zval(it->current, tmp);
+        handlebars_value_to_zval(it->current, tmp TSRMLS_CC);
         add_assoc_zval_ex(val, it->key, talloc_array_length(it->key), tmp);
 #endif
     }
@@ -616,7 +618,7 @@ PHPAPI struct handlebars_value * handlebars_value_from_zval(struct handlebars_co
 /* }}} handlebars_value_from_zval */
 
 /* {{{ php_handlebars_fetch_known_helpers */
-void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, zval * helpers)
+void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, zval * helpers TSRMLS_DC)
 {
     HashTable * data_hash = NULL;
     HashPosition data_pointer = NULL;
@@ -664,7 +666,7 @@ void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, z
     known_helpers[idx++] = 0;
     compiler->known_helpers = known_helpers;
 }
-/* }}} handlebars_value_from_zval */
+/* }}} php_handlebars_fetch_known_helpers */
 
 PHP_METHOD(HandlebarsVM, setHelpers)
 {
@@ -786,7 +788,7 @@ PHP_METHOD(HandlebarsVM, render)
 
     // Process known helpers
     if( z_helpers ) {
-        php_handlebars_fetch_known_helpers(compiler, z_helpers);
+        php_handlebars_fetch_known_helpers(compiler, z_helpers TSRMLS_CC);
     }
 
     // Parse

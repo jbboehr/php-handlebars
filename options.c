@@ -232,9 +232,9 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
         zval * z_fn;
         if( program ) {
             //z_fn = php5to7_zend_hash_find(Z_ARRVAL_P(z_options), ZEND_STRL("data"))
-            z_fn = php5to7_zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("fn"), 0 TSRMLS_CC);
+            z_fn = php5to7_zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("fn"), 0);
         } else {
-            z_fn = php5to7_zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("inverse"), 0 TSRMLS_CC);
+            z_fn = php5to7_zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("inverse"), 0);
         }
 
         if( z_fn && Z_TYPE_P(z_fn) == IS_OBJECT ) {
@@ -292,7 +292,7 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
 
     // Context
     if( z_context ) {
-        context = handlebars_value_from_zval(vm->ctx, z_context);
+        context = handlebars_value_from_zval(vm->ctx, z_context TSRMLS_CC);
     } else {
         context = handlebars_value_ctor(vm->ctx);
     }
@@ -300,10 +300,10 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
     // Options
     if( z_options && Z_TYPE_P(z_options) == IS_ARRAY ) {
         if( NULL != (z_entry = php5to7_zend_hash_find(Z_ARRVAL_P(z_options), ZEND_STRL("data"))) ) {
-            data = handlebars_value_from_zval(vm->ctx, z_entry);
+            data = handlebars_value_from_zval(vm->ctx, z_entry TSRMLS_CC);
         }
         if( NULL != (z_entry = php5to7_zend_hash_find(Z_ARRVAL_P(z_options), ZEND_STRL("blockParams"))) ) {
-            block_params = handlebars_value_from_zval(vm->ctx, z_entry);
+            block_params = handlebars_value_from_zval(vm->ctx, z_entry TSRMLS_CC);
         }
         // @todo block params?
     }
