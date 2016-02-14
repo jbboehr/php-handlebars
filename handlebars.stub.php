@@ -318,8 +318,7 @@ class CompileContext
 }
 
 interface Registry extends ArrayAccess, IteratorAggregate {}
-class HelperRegistry extends ArrayObject implements Registry {}
-class PartialRegistry extends ArrayObject implements Registry {}
+class DefaultRegistry extends ArrayObject implements Registry {}
 
 class VM
 {

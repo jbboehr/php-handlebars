@@ -408,13 +408,12 @@ function hbs_generate_spec_test_body_generic(array $test) {
     }
     
     return PHP_EOL . join(PHP_EOL, array_filter(array(
-        'use Handlebars\HelperRegistry;',
-        'use Handlebars\PartialRegistry;',
+        'use Handlebars\DefaultRegistry;',
         'use Handlebars\SafeString;',
         '$tmpl = ' . var_export($test['template'], true) . ';',
         '$context = ' . varExport($context, true) . ';',
-        $helpers ? '$helpers = new HelperRegistry(' . varExport($helpers, true) . ');' : null,
-        $partials ? '$partials = new PartialRegistry(' . varExport($partials, true) . ');' : null,
+        $helpers ? '$helpers = new DefaultRegistry(' . varExport($helpers, true) . ');' : null,
+        $partials ? '$partials = new DefaultRegistry(' . varExport($partials, true) . ');' : null,
         '$options = ' . varExport($options, true) . ';',
         //'$knownHelpers = ' . var_export($knownHelpers, true) . ';',
         '$vm = new VM();',
