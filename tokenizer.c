@@ -34,7 +34,10 @@ static inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
     struct handlebars_token_list_item * tmp = NULL;
     char * output;
     char * errmsg;
-    struct zend_class_entry * volatile exception_ce = HandlebarsRuntimeException_ce_ptr;
+    volatile struct {
+        zend_class_entry * ce;
+    } ex;
+    ex.ce = HandlebarsRuntimeException_ce_ptr;
     _DECLARE_ZVAL(child);
 
 #ifndef FAST_ZPP
@@ -52,18 +55,17 @@ static inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
     // Save jump buffer
     ctx->e.ok = true;
     if( setjmp(ctx->e.jmp) ) {
-        errmsg = handlebars_context_get_errmsg(ctx);
-        zend_throw_exception(exception_ce, errmsg, ctx->e.num TSRMLS_CC);
+        zend_throw_exception(ex.ce, handlebars_context_get_errmsg(ctx), ctx->e.num TSRMLS_CC);
         goto done;
     }
 
     // Lex
-    exception_ce = HandlebarsLexException_ce_ptr;
+    ex.ce = HandlebarsParseException_ce_ptr;
     ctx->tmpl = tmpl;
     list = handlebars_lex(ctx);
 
     // Print or convert to zval
-    exception_ce = HandlebarsRuntimeException_ce_ptr;
+    ex.ce = HandlebarsRuntimeException_ce_ptr;
     if( print ) {
         output = handlebars_token_list_print(list, 0);
         PHP5TO7_RETVAL_STRING(output);
@@ -101,7 +103,7 @@ ZEND_END_ARG_INFO()
 static zend_function_entry HandlebarsTokenizer_methods[] = {
     PHP_ME(HandlebarsTokenizer, lex, HandlebarsTokenizer_lex_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(HandlebarsTokenizer, lexPrint, HandlebarsTokenizer_lex_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-  { NULL, NULL, NULL }
+    { NULL, NULL, NULL }
 };
 /* }}} HandlebarsTokenizer methods */
 

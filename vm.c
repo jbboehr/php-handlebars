@@ -633,7 +633,10 @@ PHP_METHOD(HandlebarsVM, render)
     struct handlebars_vm * vm;
     struct handlebars_value * context;
     char * errmsg;
-    struct zend_class_entry * volatile exception_ce = HandlebarsRuntimeException_ce_ptr;
+    volatile struct {
+        zend_class_entry * ce;
+    } ex;
+    ex.ce = HandlebarsRuntimeException_ce_ptr;
 
 #ifndef FAST_ZPP
     if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), (char *) "Os|zz",
@@ -662,15 +665,13 @@ PHP_METHOD(HandlebarsVM, render)
     // Save jump buffer
     ctx->e.ok = true;
     if( setjmp(ctx->e.jmp) ) {
-        errmsg = handlebars_context_get_errmsg(ctx);
-        zend_throw_exception(exception_ce, errmsg, ctx->e.num TSRMLS_CC);
+        zend_throw_exception(ex.ce, handlebars_context_get_errmsg(ctx), ctx->e.num TSRMLS_CC);
         goto done;
     }
 
     // Initialize
     compiler = handlebars_compiler_ctor(ctx);
     vm = handlebars_vm_ctor(ctx);
-
 
     // Make context
     context = handlebars_value_from_zval(ctx, z_context TSRMLS_CC);
@@ -693,15 +694,16 @@ PHP_METHOD(HandlebarsVM, render)
     }
 
     // Parse
-    exception_ce = HandlebarsParseException_ce_ptr;
+    ex.ce = HandlebarsParseException_ce_ptr;
     ctx->tmpl = tmpl;
     handlebars_parse(ctx);
 
     // Compile
-    exception_ce = HandlebarsCompileException_ce_ptr;
+    ex.ce = HandlebarsCompileException_ce_ptr;
     handlebars_compiler_compile(compiler, ctx->program);
 
     // Execute
+    ex.ce = HandlebarsRuntimeException_ce_ptr;
     handlebars_vm_execute(vm, compiler, context);
 
     if( vm->buffer ) { // @todo this probably shouldn't be null?

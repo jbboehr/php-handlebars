@@ -17,7 +17,6 @@ const VERSION = "x.y.z";
 const LIBVERSION = "x.y.z";
 
 interface Exception {}
-class LexException extends \Exception implements Exception {}
 class ParseException extends \Exception implements Exception {}
 class CompileException extends \Exception implements Exception {}
 class InvalidArgumentException extends \InvalidArgumentException implements Exception {}

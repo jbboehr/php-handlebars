@@ -307,7 +307,10 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
     int retval;
     char * errmsg;
     char ** known_helpers_arr;
-    struct zend_class_entry * volatile exception_ce = HandlebarsRuntimeException_ce_ptr;
+    volatile struct {
+        zend_class_entry * ce;
+    } ex;
+    ex.ce = HandlebarsRuntimeException_ce_ptr;
 
 #ifndef FAST_ZPP
     if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|lz", &tmpl, &tmpl_len, &compile_flags, &known_helpers) == FAILURE ) {
@@ -335,8 +338,7 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
     // Save jump buffer
     ctx->e.ok = true;
     if( setjmp(ctx->e.jmp) ) {
-        errmsg = handlebars_context_get_errmsg(ctx);
-        zend_throw_exception(exception_ce, errmsg, ctx->e.num TSRMLS_CC);
+        zend_throw_exception(ex.ce, handlebars_context_get_errmsg(ctx), ctx->e.num TSRMLS_CC);
         goto done;
     }
 
@@ -352,16 +354,16 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
     }
 
     // Parse
-    exception_ce = HandlebarsParseException_ce_ptr;
+    ex.ce = HandlebarsParseException_ce_ptr;
     ctx->tmpl = tmpl;
     handlebars_parse(ctx);
 
     // Compile
-    exception_ce = HandlebarsCompileException_ce_ptr;
+    ex.ce = HandlebarsCompileException_ce_ptr;
     handlebars_compiler_compile(compiler, ctx->program);
 
     // Print or convert to zval
-    exception_ce = HandlebarsRuntimeException_ce_ptr;
+    ex.ce = HandlebarsRuntimeException_ce_ptr;
     if( print ) {
         handlebars_opcode_printer_print(printer, compiler);
         PHP5TO7_RETVAL_STRING(printer->output);
