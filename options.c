@@ -8,6 +8,7 @@
 #include "Zend/zend_API.h"
 #include "Zend/zend_constants.h"
 #include "Zend/zend_exceptions.h"
+#include "Zend/zend_interfaces.h"
 #include "main/php.h"
 
 #include "php5to7.h"
@@ -36,8 +37,17 @@ struct php_handlebars_options_obj {
 };
 
 /* {{{ Argument Info */
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsOptions_construct_args, ZEND_SEND_BY_VAL, 0, 2)
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsOptions_construct_args, ZEND_SEND_BY_VAL, 0, 1)
     ZEND_ARG_ARRAY_INFO(0, props, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsOptions_offsetExists_args, ZEND_SEND_BY_VAL, 0, 1)
+    ZEND_ARG_INFO(0, prop)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsOptions_offsetSet_args, ZEND_SEND_BY_VAL, 0, 2)
+    ZEND_ARG_INFO(0, prop)
+    ZEND_ARG_INFO(0, value)
 ZEND_END_ARG_INFO()
 /* }}} Argument Info */
 
@@ -333,11 +343,71 @@ PHP_METHOD(HandlebarsOptions, inverse)
     php_handlebars_options_call(INTERNAL_FUNCTION_PARAM_PASSTHRU, 0);
 }
 
+PHP_METHOD(HandlebarsOptions, offsetExists)
+{
+    zval * _this_zval;
+    char * offset;
+    strsize_t offset_len;
+    zval * prop;
+
+#ifndef FAST_ZPP
+    if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), (char *) "Os",
+            &_this_zval, HandlebarsOptions_ce_ptr, &offset, &offset_len) == FAILURE ) {
+        return;
+    }
+#else
+    _this_zval = getThis();
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+            Z_PARAM_STRING(offset, offset_len)
+    ZEND_PARSE_PARAMETERS_END();
+#endif
+
+    prop = php5to7_zend_read_property2(Z_OBJCE_P(_this_zval), _this_zval, offset, offset_len, 1);
+    RETURN_BOOL(prop != NULL);
+}
+
+PHP_METHOD(HandlebarsOptions, offsetGet)
+{
+    zval * _this_zval;
+    char * offset;
+    strsize_t offset_len;
+    zval * prop;
+
+#ifndef FAST_ZPP
+    if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), (char *) "Os",
+            &_this_zval, HandlebarsOptions_ce_ptr, &offset, &offset_len) == FAILURE ) {
+        return;
+    }
+#else
+    _this_zval = getThis();
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+            Z_PARAM_STRING(offset, offset_len)
+    ZEND_PARSE_PARAMETERS_END();
+#endif
+
+    prop = php5to7_zend_read_property2(Z_OBJCE_P(_this_zval), _this_zval, offset, offset_len, 1);
+    RETURN_ZVAL(prop, 1, 0);
+}
+
+PHP_METHOD(HandlebarsOptions, offsetSet)
+{
+    zend_throw_exception(HandlebarsRuntimeException_ce_ptr, "offsetSet is not implemented", 0);
+}
+
+PHP_METHOD(HandlebarsOptions, offsetUnset)
+{
+    zend_throw_exception(HandlebarsRuntimeException_ce_ptr, "offsetUnset is not implemented", 0);
+}
+
 /* {{{ Handlebars\Options methods */
 static zend_function_entry HandlebarsOptions_methods[] = {
     PHP_ME(HandlebarsOptions, __construct, HandlebarsOptions_construct_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsOptions, fn, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsOptions, inverse, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsOptions, offsetExists, HandlebarsOptions_offsetExists_args, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsOptions, offsetGet, HandlebarsOptions_offsetExists_args, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsOptions, offsetSet, HandlebarsOptions_offsetSet_args, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsOptions, offsetUnset, HandlebarsOptions_offsetExists_args, ZEND_ACC_PUBLIC)
     { NULL, NULL, NULL }
 };
 /* }}} Handlebars\Options methods */
@@ -358,6 +428,7 @@ PHP_MINIT_FUNCTION(handlebars_options)
     INIT_CLASS_ENTRY(ce, "Handlebars\\Options", HandlebarsOptions_methods);
     HandlebarsOptions_ce_ptr = zend_register_internal_class(&ce TSRMLS_CC);
     HandlebarsOptions_ce_ptr->create_object = php_handlebars_options_obj_create;
+    zend_class_implements(HandlebarsOptions_ce_ptr TSRMLS_CC, 1, zend_ce_arrayaccess);
 
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("name"), ZEND_ACC_PUBLIC TSRMLS_CC);
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("hash"), ZEND_ACC_PUBLIC TSRMLS_CC);
