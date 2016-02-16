@@ -2,6 +2,7 @@
 #ifdef HAVE_CONFIG_H
 
 #include <handlebars_value.h>
+#include <handlebars_context.h>
 #include "config.h"
 #endif
 
@@ -193,7 +194,7 @@ static struct handlebars_value * handlebars_std_zval_array_find(struct handlebar
 struct handlebars_value_iterator * handlebars_std_zval_iterator_ctor(struct handlebars_value * value)
 {
     zval * intern = get_intern_zval(value);
-    struct handlebars_value_iterator * it = handlebars_talloc(value, struct handlebars_value_iterator);
+    struct handlebars_value_iterator * it = handlebars_talloc_zero(value, struct handlebars_value_iterator);
     zval ** data_entry = NULL;
     HashPosition * data_pointer = handlebars_talloc_zero(value->ctx, HashPosition);
     HashTable * ht;
