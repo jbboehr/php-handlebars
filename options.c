@@ -289,7 +289,7 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
             ZVAL_STRING(&z_const, "__invoke", 0);
             call_user_function(&Z_OBJCE_P(z_fn)->function_table, &z_fn, &z_const, z_ret, ZEND_NUM_ARGS(), z_const_args TSRMLS_CC);
             efree(z_const_args);
-            RETVAL_ZVAL(z_ret, 1, 1);
+            RETVAL_ZVAL(z_ret, 1, 0);
             zval_ptr_dtor(&z_ret);
 #endif
         } else {
