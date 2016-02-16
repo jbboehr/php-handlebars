@@ -391,12 +391,12 @@ PHP_METHOD(HandlebarsOptions, offsetGet)
 
 PHP_METHOD(HandlebarsOptions, offsetSet)
 {
-    zend_throw_exception(HandlebarsRuntimeException_ce_ptr, "offsetSet is not implemented", 0);
+    zend_throw_exception(HandlebarsRuntimeException_ce_ptr, "offsetSet is not implemented", 0 TSRMLS_CC);
 }
 
 PHP_METHOD(HandlebarsOptions, offsetUnset)
 {
-    zend_throw_exception(HandlebarsRuntimeException_ce_ptr, "offsetUnset is not implemented", 0);
+    zend_throw_exception(HandlebarsRuntimeException_ce_ptr, "offsetUnset is not implemented", 0 TSRMLS_CC);
 }
 
 /* {{{ Handlebars\Options methods */
