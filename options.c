@@ -4,6 +4,7 @@
 #endif
 
 #include <talloc.h>
+#include <handlebars_context.h>
 
 #include "Zend/zend_API.h"
 #include "Zend/zend_constants.h"
@@ -228,6 +229,8 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
     struct handlebars_value * context;
     struct handlebars_value * data = NULL;
     struct handlebars_value * block_params = NULL;
+    jmp_buf buf;
+    jmp_buf * prev;
 
 #ifndef FAST_ZPP
     if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "O|zz",
@@ -330,10 +333,23 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
         // @todo block params?
     }
 
+    // Save jump buffer;
+    prev = vm->ctx->e.jmp;
+    vm->ctx->e.jmp = &buf;
+
+    if( setjmp(buf) ) {
+        zend_throw_exception(HandlebarsRuntimeException_ce_ptr, vm->ctx->e.msg, vm->ctx->e.num TSRMLS_CC);
+        vm->ctx->e.jmp = prev;
+        return;
+    }
+
     // Execute
     char * ret = handlebars_vm_execute_program_ex(vm, programGuid, context, data, block_params);
     PHP5TO7_RETVAL_STRINGL(ret, talloc_array_length(ret) - 1);
     talloc_free(ret);
+
+    vm->ctx->e.jmp = prev;
+
 }
 
 PHP_METHOD(HandlebarsOptions, fn)
