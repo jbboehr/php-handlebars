@@ -286,6 +286,7 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
             if( ZEND_NUM_ARGS() >= 2 ) {
                 z_const_args[1] = z_options;
             }
+            MAKE_STD_ZVAL(z_const);
             MAKE_STD_ZVAL(z_ret);
             ZVAL_STRING(z_const, "__invoke", 1);
             call_user_function(&Z_OBJCE_P(z_fn)->function_table, &z_fn, z_const, z_ret, ZEND_NUM_ARGS(), z_const_args TSRMLS_CC);
