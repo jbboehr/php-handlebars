@@ -350,7 +350,6 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     zend_bool is_callable = 0;
     int check_flags = 0; //IS_CALLABLE_CHECK_SYNTAX_ONLY;
     char * error;
-    zval z_const = {0};
     zval * z_ret;
     TSRMLS_FETCH();
 
@@ -370,6 +369,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     }
 
 #ifdef ZEND_ENGINE_3
+    zval z_const;
     zval z_options;
     php_handlebars_options_ctor(options, &z_options TSRMLS_CC);
 
@@ -467,13 +467,16 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     z_const_args[n_args - 1] = z_options;
 
     // Call
+    zval * z_const;
+    MAKE_STD_ZVAL(z_const);
     MAKE_STD_ZVAL(z_ret);
-    ZVAL_STRING(&z_const, "__invoke", 0);
-    call_user_function(&Z_OBJCE_P(intern)->function_table, &intern, &z_const, z_ret, n_args, z_const_args TSRMLS_CC);
+    ZVAL_STRING(z_const, "__invoke", 1);
+    call_user_function(&Z_OBJCE_P(intern)->function_table, &intern, z_const, z_ret, n_args, z_const_args TSRMLS_CC);
     for( i = 0; i < n_args; i++ ) {
         zval_ptr_dtor(&z_const_args[i]);
     }
     efree(z_const_args);
+    zval_ptr_dtor(&z_const);
 #endif
 
     struct handlebars_value * retval = NULL;
