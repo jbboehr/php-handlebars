@@ -273,6 +273,7 @@ function hbs_generate_test_head(array &$test) {
                 $test['expected'] = '15foo';
                 break;
             case 'subexpressions-subexpressions-in string params mode,':
+            case 'subexpressions-subexpressions-as hashes in string params mode':
                 $skip = 'true';
                 $reason = 'string params are not supported by the VM';
                 break;
