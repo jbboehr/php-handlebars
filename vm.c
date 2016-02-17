@@ -69,7 +69,6 @@ static inline void set_intern_zval(struct handlebars_value * value, zval * val) 
         value->v.usr = obj = talloc(value->ctx, struct handlebars_zval);
 #ifndef ZEND_ENGINE_3
         MAKE_STD_ZVAL(obj->intern);
-        ZVAL_NULL(obj->intern);
 #endif
         talloc_set_destructor(obj, handlebars_zval_intern_dtor);
     } else {
@@ -610,7 +609,6 @@ PHPAPI zval * handlebars_value_to_zval(struct handlebars_value * value, zval * v
 PHPAPI struct handlebars_value * handlebars_value_from_zval(struct handlebars_context * context, zval * val TSRMLS_DC)
 {
     struct handlebars_value * value = handlebars_value_ctor(context);
-    zval * nzv;
 
     switch( Z_TYPE_P(val) ) {
 #ifdef ZEND_ENGINE_3
@@ -788,7 +786,7 @@ PHP_METHOD(HandlebarsVM, render)
     ex.ce = HandlebarsRuntimeException_ce_ptr;
 
 #ifndef FAST_ZPP
-    if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), (char *) "Os|zz",
+    if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Os|zz",
             &_this_zval, HandlebarsVM_ce_ptr, &tmpl, &tmpl_len, &z_context, &z_options) == FAILURE ) {
         return;
     }

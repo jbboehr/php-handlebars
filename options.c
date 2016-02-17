@@ -123,22 +123,27 @@ zend_object_value php_handlebars_options_obj_create(zend_class_entry *ce TSRMLS_
 /* {{{ php_handlebars_options_ctor */
 PHPAPI void php_handlebars_options_ctor(struct handlebars_options * options, zval * z_options/*, long program, long inverse */TSRMLS_DC)
 {
-    zval z_const;
-    zval z_ret;
     struct php_handlebars_options_obj * intern;
 
     object_init_ex(z_options, HandlebarsOptions_ce_ptr);
 
-    ZVAL_NULL(&z_ret);
-
     do {
 #if PHP_MAJOR_VERSION < 7
-		ZVAL_STRING(&z_const, "__construct", 0);
-	    call_user_function(&HandlebarsOptions_ce_ptr->function_table, &z_options, &z_const, &z_ret, 0, NULL TSRMLS_CC);
+        zval * z_const;
+        zval * z_ret;
+        MAKE_STD_ZVAL(z_const);
+        MAKE_STD_ZVAL(z_ret);
+        ZVAL_STRING(z_const, "__construct", 1);
+        call_user_function(&HandlebarsOptions_ce_ptr->function_table, &z_options, z_const, z_ret, 0, NULL TSRMLS_CC);
+        zval_ptr_dtor(&z_const);
+        zval_ptr_dtor(&z_ret);
 #else
+        zval z_const;
+        zval z_ret;
         ZVAL_STRING(&z_const, "__construct");
         call_user_function(&HandlebarsOptions_ce_ptr->function_table, z_options, &z_const, &z_ret, 0, NULL TSRMLS_CC);
         zval_ptr_dtor(&z_const);
+        zval_ptr_dtor(&z_ret);
 #endif
     } while(0);
 
@@ -158,10 +163,6 @@ PHPAPI void php_handlebars_options_ctor(struct handlebars_options * options, zva
     if( options->inverse >= 0 ) {
         zend_update_property_long(Z_OBJCE_P(z_options), z_options, ZEND_STRL("inverse"), options->inverse TSRMLS_CC);
     }
-
-#ifdef ZEND_ENGINE_3
-    zval_ptr_dtor(&z_ret);
-#endif
 }
 /* }}} */
 
@@ -276,7 +277,7 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
             RETVAL_ZVAL(&z_ret, 1, 1);
             zval_ptr_dtor(&z_const);
 #else
-            zval z_const;
+            zval * z_const;
             zval * z_ret;
             zval **z_const_args = emalloc(ZEND_NUM_ARGS() * sizeof(zval *));
             if( ZEND_NUM_ARGS() >= 1 ) {
@@ -286,11 +287,12 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
                 z_const_args[1] = z_options;
             }
             MAKE_STD_ZVAL(z_ret);
-            ZVAL_STRING(&z_const, "__invoke", 0);
-            call_user_function(&Z_OBJCE_P(z_fn)->function_table, &z_fn, &z_const, z_ret, ZEND_NUM_ARGS(), z_const_args TSRMLS_CC);
+            ZVAL_STRING(z_const, "__invoke", 1);
+            call_user_function(&Z_OBJCE_P(z_fn)->function_table, &z_fn, z_const, z_ret, ZEND_NUM_ARGS(), z_const_args TSRMLS_CC);
             efree(z_const_args);
             RETVAL_ZVAL(z_ret, 1, 0);
             zval_ptr_dtor(&z_ret);
+            zval_ptr_dtor(&z_const);
 #endif
         } else {
             zend_throw_exception(HandlebarsRuntimeException_ce_ptr, "fn is not set", 0 TSRMLS_CC);
