@@ -12,7 +12,14 @@ sudo: required
 
 dist: trusty
 
-env: LIBHANDLEBARS_VERSION=vm
+env:
+  global:
+    - LIBHANDLEBARS_VERSION=vm
+    - PREFIX="$HOME/build"
+    - PATH="$PREFIX/bin:$PATH"
+    - CFLAGS="-L$PREFIX/lib"
+    - CPPFLAGS="-I$PREFIX/include"
+    - PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
 
 branches:
   only:
@@ -46,10 +53,6 @@ before_install:
   - travis_retry gem install coveralls-lcov
 
 install:
-  - export PATH="$HOME/build/bin:$PATH"
-  - export CFLAGS="-L$HOME/build/lib"
-  - export CPPFLAGS="-I$HOME/build/include"
-  - export PKG_CONFIG_PATH="$HOME/build/lib/pkgconfig"
   - ./.travis.sh
   - phpize
   - ./configure --enable-handlebars CFLAGS="--coverage -fprofile-arcs -ftest-coverage $CFLAGS" LDFLAGS="--coverage"
