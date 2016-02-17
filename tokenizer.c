@@ -37,8 +37,10 @@ static inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
     volatile struct {
         zend_class_entry * ce;
     } ex;
-    ex.ce = HandlebarsRuntimeException_ce_ptr;
+    jmp_buf buf;
     _DECLARE_ZVAL(child);
+
+    ex.ce = HandlebarsRuntimeException_ce_ptr;
 
 #ifndef FAST_ZPP
     if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &tmpl, &tmpl_len) == FAILURE ) {
@@ -53,8 +55,8 @@ static inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
     ctx = handlebars_context_ctor();
 
     // Save jump buffer
-    ctx->e.ok = true;
-    if( setjmp(ctx->e.jmp) ) {
+    ctx->e.jmp = &buf;
+    if( setjmp(buf) ) {
         zend_throw_exception(ex.ce, handlebars_context_get_errmsg(ctx), ctx->e.num TSRMLS_CC);
         goto done;
     }

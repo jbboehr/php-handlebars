@@ -315,6 +315,8 @@ static void php_handlebars_parse(INTERNAL_FUNCTION_PARAMETERS, short print)
     volatile struct {
         zend_class_entry * ce;
     } ex;
+    jmp_buf buf;
+
     ex.ce = HandlebarsRuntimeException_ce_ptr;
 
 #ifndef FAST_ZPP
@@ -330,8 +332,8 @@ static void php_handlebars_parse(INTERNAL_FUNCTION_PARAMETERS, short print)
     ctx = handlebars_context_ctor();
 
     // Save jump buffer
-    ctx->e.ok = true;
-    if( setjmp(ctx->e.jmp) ) {
+    ctx->e.jmp = &buf;
+    if( setjmp(buf) ) {
         zend_throw_exception(ex.ce, handlebars_context_get_errmsg(ctx), ctx->e.num TSRMLS_CC);
         goto done;
     }

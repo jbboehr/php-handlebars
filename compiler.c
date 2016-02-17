@@ -397,6 +397,7 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
         zend_class_entry * ce;
     } ex;
     zend_long pool_size = HANDLEBARS_G(pool_size);
+    jmp_buf buf;
 
     ex.ce = HandlebarsRuntimeException_ce_ptr;
 
@@ -428,8 +429,8 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
     }
 
     // Save jump buffer
-    ctx->e.ok = true;
-    if( setjmp(ctx->e.jmp) ) {
+    ctx->e.jmp = &buf;
+    if( setjmp(buf) ) {
         zend_throw_exception(ex.ce, handlebars_context_get_errmsg(ctx), ctx->e.num TSRMLS_CC);
         goto done;
     }
