@@ -772,7 +772,7 @@ PHP_METHOD(HandlebarsVM, render)
     char * tmpl;
     strsize_t tmpl_len;
     zval * z_context;
-    zval * z_options;
+    zval * z_options = NULL;
     zval * z_helpers;
     zval * z_partials;
     void * mctx = NULL;
@@ -826,12 +826,9 @@ PHP_METHOD(HandlebarsVM, render)
         goto done;
     }
 
-    // Initialize
-    compiler = handlebars_compiler_ctor(ctx);
-    vm = handlebars_vm_ctor(ctx);
-
-    // Make context
+    // Make context and VM
     context = handlebars_value_from_zval(ctx, z_context TSRMLS_CC);
+    vm = handlebars_vm_ctor(ctx);
 
     // Make helpers
     z_helpers = php5to7_zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("helpers"), 0);
@@ -841,30 +838,52 @@ PHP_METHOD(HandlebarsVM, render)
     z_partials = php5to7_zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("partials"), 0);
     vm->partials = handlebars_value_from_zval(ctx, z_partials TSRMLS_CC);
 
-    // Process options
-    php_handlebars_process_options_zval(compiler, vm, z_options);
-    vm->flags = compiler->flags;
+    // Lookup cache entry
+    struct php_handlebars_cache_entry * cache_entry = NULL;
+    if( SUCCESS == zend_hash_find(&HANDLEBARS_G(cache), tmpl, tmpl_len, &cache_entry) ) {
+        // Use compiled
+        compiler = cache_entry->compiler;
+        compiler->ctx = ctx;
+        //php_handlebars_process_options_zval(compiler, vm, z_options);
+        vm->flags = compiler->flags;
+        // @todo setjmp
+    } else {
+        // Compile
+        compiler = handlebars_compiler_ctor(ctx);
+        php_handlebars_process_options_zval(compiler, vm, z_options);
 
-    // Process known helpers
-    if( z_helpers ) {
-        php_handlebars_fetch_known_helpers(compiler, z_helpers TSRMLS_CC);
+        // Process known helpers
+        if( z_helpers ) {
+            php_handlebars_fetch_known_helpers(compiler, z_helpers TSRMLS_CC);
+        }
+
+        // Parse
+        ex.ce = HandlebarsParseException_ce_ptr;
+        ctx->tmpl = tmpl;
+        handlebars_parse(ctx);
+
+        // Compile
+        ex.ce = HandlebarsCompileException_ce_ptr;
+        handlebars_compiler_compile(compiler, ctx->program);
     }
 
-    // Parse
-    ex.ce = HandlebarsParseException_ce_ptr;
-    ctx->tmpl = tmpl;
-    handlebars_parse(ctx);
-
-    // Compile
-    ex.ce = HandlebarsCompileException_ce_ptr;
-    handlebars_compiler_compile(compiler, ctx->program);
-
     // Execute
+    vm->flags = compiler->flags;
     ex.ce = HandlebarsRuntimeException_ce_ptr;
     handlebars_vm_execute(vm, compiler, context);
 
     if( vm->buffer ) { // @todo this probably shouldn't be null?
         PHP5TO7_RETVAL_STRING(vm->buffer);
+    }
+
+    // Save cache entry
+    if( !cache_entry ) {
+        cache_entry = handlebars_talloc(NULL, struct php_handlebars_cache_entry);
+        cache_entry->ctx = handlebars_context_ctor_ex(cache_entry);
+        cache_entry->compiler = talloc_steal(cache_entry->ctx, compiler);
+        cache_entry->compiler->ctx = cache_entry->ctx;
+        zend_hash_update(&HANDLEBARS_G(cache), tmpl, tmpl_len, (void *) cache_entry,
+                         sizeof(struct php_handlebars_cache_entry), NULL);
     }
 
 done:

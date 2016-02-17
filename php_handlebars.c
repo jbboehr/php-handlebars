@@ -56,6 +56,11 @@ PHP_INI_END()
 /* }}} */
 
 /* {{{ PHP_MINIT_FUNCTION */
+static void php_handlebars_cache_entry_destroy(struct php_handlebars_cache_entry *entry)
+{
+    // @todo
+}
+
 static PHP_MINIT_FUNCTION(handlebars)
 {
     zend_class_entry ce;
@@ -66,6 +71,9 @@ static PHP_MINIT_FUNCTION(handlebars)
 
     REGISTER_STRING_CONSTANT("Handlebars\\VERSION", (char *) PHP_HANDLEBARS_VERSION, flags);
     REGISTER_STRING_CONSTANT("Handlebars\\LIBVERSION", (char *) version, flags);
+
+    // @todo ZTS
+    zend_hash_init_ex(&HANDLEBARS_G(cache), 5, NULL, (dtor_func_t)php_handlebars_cache_entry_destroy, 1, 0);
 
     PHP_MINIT(handlebars_compile_context)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_compiler)(INIT_FUNC_ARGS_PASSTHRU);
@@ -115,6 +123,7 @@ static PHP_MINFO_FUNCTION(handlebars)
 static PHP_GINIT_FUNCTION(handlebars)
 {
     handlebars_globals->pool_size = -1;
+    memset(&handlebars_globals->cache, 0, sizeof(handlebars_globals->cache));
 }
 /* }}} */
 
