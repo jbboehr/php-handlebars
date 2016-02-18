@@ -12,7 +12,6 @@
 #include "handlebars_ast_list.h"
 #include "handlebars_ast_printer.h"
 #include "handlebars_compiler.h"
-#include "handlebars_context.h"
 #include "handlebars_memory.h"
 #include "handlebars.tab.h"
 #include "handlebars.lex.h"
@@ -311,13 +310,9 @@ static void php_handlebars_parse(INTERNAL_FUNCTION_PARAMETERS, short print)
     char * tmpl;
     strsize_t tmpl_len;
     struct handlebars_context * ctx;
+    struct handlebars_parser * parser;
     char * output;
-    volatile struct {
-        zend_class_entry * ce;
-    } ex;
     jmp_buf buf;
-
-    ex.ce = HandlebarsRuntimeException_ce_ptr;
 
 #ifndef FAST_ZPP
     if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &tmpl, &tmpl_len) == FAILURE ) {
@@ -331,25 +326,21 @@ static void php_handlebars_parse(INTERNAL_FUNCTION_PARAMETERS, short print)
 
     ctx = handlebars_context_ctor();
 
-    // Save jump buffer
-    ctx->e.jmp = &buf;
-    if( setjmp(buf) ) {
-        zend_throw_exception(ex.ce, handlebars_context_get_errmsg(ctx), ctx->e.num TSRMLS_CC);
-        goto done;
-    }
+    php_handlebars_try(HandlebarsRuntimeException_ce_ptr, ctx, &buf);
+    parser = handlebars_parser_ctor(ctx);
 
     // Parse
-    ex.ce = HandlebarsParseException_ce_ptr;
-    ctx->tmpl = tmpl;
-    handlebars_parse(ctx);
+    parser->tmpl = tmpl;
+    php_handlebars_try(HandlebarsParseException_ce_ptr, parser, &buf);
+    handlebars_parse(parser);
 
     // Print or convert to zval
-    ex.ce = HandlebarsRuntimeException_ce_ptr;
+    php_handlebars_try(HandlebarsRuntimeException_ce_ptr, parser, &buf);
     if( print ) {
-        output = handlebars_ast_print(ctx, ctx->program, 0);
+        output = handlebars_ast_print(parser, parser->program, 0);
         PHP5TO7_RETVAL_STRING(output);
     } else {
-        php_handlebars_ast_node_to_zval(ctx->program, return_value TSRMLS_CC);
+        php_handlebars_ast_node_to_zval(parser->program, return_value TSRMLS_CC);
     }
 
 done:

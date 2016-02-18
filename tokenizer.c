@@ -8,7 +8,6 @@
 #include "main/php.h"
 
 #include "handlebars.h"
-#include "handlebars_context.h"
 #include "handlebars_memory.h"
 #include "handlebars_token.h"
 #include "handlebars_token_list.h"
@@ -29,6 +28,7 @@ static inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
     char * tmpl;
     strsize_t tmpl_len;
     struct handlebars_context * ctx;
+    struct handlebars_parser * parser;
     struct handlebars_token_list * list;
     struct handlebars_token_list_item * el = NULL;
     struct handlebars_token_list_item * tmp = NULL;
@@ -54,20 +54,17 @@ static inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
 
     ctx = handlebars_context_ctor();
 
-    // Save jump buffer
-    ctx->e.jmp = &buf;
-    if( setjmp(buf) ) {
-        zend_throw_exception(ex.ce, handlebars_context_get_errmsg(ctx), ctx->e.num TSRMLS_CC);
-        goto done;
-    }
+    php_handlebars_try(HandlebarsRuntimeException_ce_ptr, ctx, &buf);
+    parser = handlebars_parser_ctor(ctx);
 
     // Lex
     ex.ce = HandlebarsParseException_ce_ptr;
-    ctx->tmpl = tmpl;
-    list = handlebars_lex(ctx);
+    parser->tmpl = tmpl;
+    php_handlebars_try(HandlebarsParseException_ce_ptr, parser, &buf);
+    list = handlebars_lex(parser);
 
     // Print or convert to zval
-    ex.ce = HandlebarsRuntimeException_ce_ptr;
+    php_handlebars_try(HandlebarsRuntimeException_ce_ptr, parser, &buf);
     if( print ) {
         output = handlebars_token_list_print(list, 0);
         PHP5TO7_RETVAL_STRING(output);

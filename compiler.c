@@ -13,7 +13,6 @@
 
 #include "handlebars.h"
 #include "handlebars_compiler.h"
-#include "handlebars_context.h"
 #include "handlebars_helpers.h"
 #include "handlebars_memory.h"
 #include "handlebars_opcode_printer.h"
@@ -337,7 +336,7 @@ long php_handlebars_process_options_zval(struct handlebars_compiler * compiler, 
         // @todo refine this
         if( !PHP5TO7_Z_IS_BOOL_P(entry) && Z_TYPE_P(entry) != IS_NULL ) {
             if( vm ) {
-                vm->data = handlebars_value_from_zval(vm->ctx, entry TSRMLS_CC);
+                vm->data = handlebars_value_from_zval(HBSCTX(vm), entry TSRMLS_CC);
             }
             flags |= handlebars_compiler_flag_use_data;
         } else if( PHP5TO7_Z_IS_TRUE_P(entry) ) {
@@ -389,17 +388,13 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
     char * tmpl;
     strsize_t tmpl_len;
     zval * options = NULL;
-    void * mctx = NULL;
+    TALLOC_CTX * mctx = NULL;
     struct handlebars_context * ctx;
+    struct handlebars_parser * parser;
     struct handlebars_compiler * compiler;
     struct handlebars_opcode_printer * printer;
-    volatile struct {
-        zend_class_entry * ce;
-    } ex;
     zend_long pool_size = HANDLEBARS_G(pool_size);
     jmp_buf buf;
-
-    ex.ce = HandlebarsRuntimeException_ce_ptr;
 
 #ifndef FAST_ZPP
     if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|z", &tmpl, &tmpl_len, &options) == FAILURE ) {
@@ -420,25 +415,27 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
     }
 #endif
 
-    // Initialize
+    // Initialize context
     if( pool_size <= 0 ) {
-        ctx = handlebars_context_ctor();
+        ctx = handlebars_context_ctor_ex(HANDLEBARS_G(root));
     } else {
-        mctx = talloc_pool(NULL, pool_size);
+        mctx = talloc_pool(HANDLEBARS_G(root), pool_size);
         ctx = handlebars_context_ctor_ex(mctx);
     }
 
-    // Save jump buffer
-    ctx->e.jmp = &buf;
-    if( setjmp(buf) ) {
-        zend_throw_exception(ex.ce, handlebars_context_get_errmsg(ctx), ctx->e.num TSRMLS_CC);
-        goto done;
-    }
-
-    // Intialize compiler
+    // Initialize parser and compiler
+    php_handlebars_try(HandlebarsRuntimeException_ce_ptr, ctx, &buf);
+    parser = handlebars_parser_ctor(ctx);
     compiler = handlebars_compiler_ctor(ctx);
 
-    // Process options
+    // Parse
+    php_handlebars_try(HandlebarsParseException_ce_ptr, parser, &buf);
+    parser->tmpl = tmpl;
+    handlebars_parse(parser);
+
+    // Compile
+    php_handlebars_try(HandlebarsCompileException_ce_ptr, compiler, &buf);
+
     if( options ) {
         if( Z_TYPE_P(options) == IS_LONG ) {
             handlebars_compiler_set_flags(compiler, Z_LVAL_P(options));
@@ -447,17 +444,9 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
         }
     }
 
-    // Parse
-    ex.ce = HandlebarsParseException_ce_ptr;
-    ctx->tmpl = tmpl;
-    handlebars_parse(ctx);
-
-    // Compile
-    ex.ce = HandlebarsCompileException_ce_ptr;
-    handlebars_compiler_compile(compiler, ctx->program);
+    handlebars_compiler_compile(compiler, parser->program);
 
     // Print or convert to zval
-    ex.ce = HandlebarsRuntimeException_ce_ptr;
     if( print ) {
         printer = handlebars_opcode_printer_ctor(compiler);
         handlebars_opcode_printer_print(printer, compiler);

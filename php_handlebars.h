@@ -51,6 +51,7 @@ struct php_handlebars_cache_entry {
 };
 
 ZEND_BEGIN_MODULE_GLOBALS(handlebars)
+    void * root;
     zend_long  pool_size;
     HashTable cache;
 ZEND_END_MODULE_GLOBALS(handlebars)
@@ -65,6 +66,22 @@ PHPAPI void php_handlebars_token_ctor(struct handlebars_token * token, zval * z_
 
 PHPAPI struct handlebars_value * handlebars_value_from_zval(struct handlebars_context * context, zval * val TSRMLS_DC);
 PHPAPI zval * handlebars_value_to_zval(struct handlebars_value * value, zval * val TSRMLS_DC);
+
+#define php_handlebars_throw(ce, ctx) zend_throw_exception(ce, handlebars_error_message(HBSCTX(ctx)), HBSCTX(ctx)->num TSRMLS_CC)
+#define php_handlebars_try(ce, ctx, buf) \
+    do { \
+        if( handlebars_setjmp_ex(ctx, (buf)) ) { \
+            php_handlebars_throw(ce, ctx); \
+            goto done; \
+        } \
+    } while(0)
+#define php_handlebars_try_rethrow(ce, ctx1, ctx2, buf) \
+    do { \
+        if( handlebars_setjmp_ex(ctx2, (buf)) ) { \
+            php_handlebars_throw(ce, ctx1); \
+            goto done; \
+        } \
+    } while(0)
 
 #endif	/* PHP_HANDLEBARS_H */
 

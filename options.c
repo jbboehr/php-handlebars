@@ -4,7 +4,6 @@
 #endif
 
 #include <talloc.h>
-#include <handlebars_context.h>
 
 #include "Zend/zend_API.h"
 #include "Zend/zend_constants.h"
@@ -15,7 +14,6 @@
 #include "php5to7.h"
 #include "php_handlebars.h"
 
-#include "handlebars_context.h"
 #include "handlebars_helpers.h"
 #include "handlebars_value.h"
 #include "handlebars_vm.h"
@@ -317,39 +315,33 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
 
     // Context
     if( z_context ) {
-        context = handlebars_value_from_zval(vm->ctx, z_context TSRMLS_CC);
+        context = handlebars_value_from_zval(HBSCTX(vm), z_context TSRMLS_CC);
     } else {
-        context = handlebars_value_ctor(vm->ctx);
+        context = handlebars_value_ctor(HBSCTX(vm));
     }
 
     // Options
     if( z_options && Z_TYPE_P(z_options) == IS_ARRAY ) {
         if( NULL != (z_entry = php5to7_zend_hash_find(Z_ARRVAL_P(z_options), ZEND_STRL("data"))) ) {
-            data = handlebars_value_from_zval(vm->ctx, z_entry TSRMLS_CC);
+            data = handlebars_value_from_zval(HBSCTX(vm), z_entry TSRMLS_CC);
         }
         if( NULL != (z_entry = php5to7_zend_hash_find(Z_ARRVAL_P(z_options), ZEND_STRL("blockParams"))) ) {
-            block_params = handlebars_value_from_zval(vm->ctx, z_entry TSRMLS_CC);
+            block_params = handlebars_value_from_zval(HBSCTX(vm), z_entry TSRMLS_CC);
         }
         // @todo block params?
     }
 
     // Save jump buffer;
-    prev = vm->ctx->e.jmp;
-    vm->ctx->e.jmp = &buf;
-
-    if( setjmp(buf) ) {
-        zend_throw_exception(HandlebarsRuntimeException_ce_ptr, vm->ctx->e.msg, vm->ctx->e.num TSRMLS_CC);
-        vm->ctx->e.jmp = prev;
-        return;
-    }
+    prev = HBSCTX(vm)->jmp;
+    php_handlebars_try(HandlebarsRuntimeException_ce_ptr, vm, &buf);
 
     // Execute
     char * ret = handlebars_vm_execute_program_ex(vm, programGuid, context, data, block_params);
     PHP5TO7_RETVAL_STRINGL(ret, talloc_array_length(ret) - 1);
     talloc_free(ret);
 
-    vm->ctx->e.jmp = prev;
-
+done:
+    HBSCTX(vm)->jmp = prev;
 }
 
 PHP_METHOD(HandlebarsOptions, fn)

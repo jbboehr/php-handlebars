@@ -72,6 +72,8 @@ static PHP_MINIT_FUNCTION(handlebars)
     REGISTER_STRING_CONSTANT("Handlebars\\VERSION", (char *) PHP_HANDLEBARS_VERSION, flags);
     REGISTER_STRING_CONSTANT("Handlebars\\LIBVERSION", (char *) version, flags);
 
+    HANDLEBARS_G(root) = talloc_new(NULL);
+
     // @todo ZTS
     zend_hash_init_ex(&HANDLEBARS_G(cache), 5, NULL, (dtor_func_t)php_handlebars_cache_entry_destroy, 1, 0);
 
@@ -122,6 +124,7 @@ static PHP_MINFO_FUNCTION(handlebars)
 /* {{{ PHP_GINIT_FUNCTION */
 static PHP_GINIT_FUNCTION(handlebars)
 {
+    handlebars_globals->root = NULL;
     handlebars_globals->pool_size = -1;
     memset(&handlebars_globals->cache, 0, sizeof(handlebars_globals->cache));
 }
