@@ -931,8 +931,8 @@ PHP_METHOD(HandlebarsVM, render)
     vm = handlebars_vm_ctor(ctx);
 
     // Lookup cache entry
-    struct php_handlebars_cache_entry * cache_entry = NULL;
-    if( SUCCESS == zend_hash_find(&HANDLEBARS_G(cache), tmpl, tmpl_len, (void **)&cache_entry) ) {
+    struct php_handlebars_cache_entry * cache_entry = php5to7_zend_hash_find_ptr(&HANDLEBARS_G(cache), tmpl, tmpl_len);
+    if( cache_entry ) {
         // Use compiled
         compiler = cache_entry->compiler;
         //php_handlebars_process_options_zval(compiler, vm, z_options);
@@ -975,8 +975,8 @@ PHP_METHOD(HandlebarsVM, render)
     if( !cache_entry ) {
         cache_entry = handlebars_talloc(NULL, struct php_handlebars_cache_entry);
         cache_entry->compiler = talloc_steal(cache_entry, compiler);
-        zend_hash_update(&HANDLEBARS_G(cache), tmpl, tmpl_len, (void *) cache_entry,
-                         sizeof(struct php_handlebars_cache_entry), NULL);
+        php5to7_zend_hash_update_mem(&HANDLEBARS_G(cache), tmpl, tmpl_len, (void *) cache_entry,
+                                     sizeof(struct php_handlebars_cache_entry));
     }
 
 done:

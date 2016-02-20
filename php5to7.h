@@ -39,6 +39,22 @@ static inline zval * php5to7_zend_hash_index_find(const HashTable *ht, ulong h) 
 		return NULL;
 	}
 }
+static inline void * php5to7_zend_hash_find_ptr(const HashTable *ht, const char * str, strsize_t len) {
+	void * entry;
+	if( zend_hash_find(ht, str, len, (void **) &entry) == SUCCESS ) {
+		return entry;
+	} else {
+		return NULL;
+	}
+}
+static inline void * php5to7_zend_hash_update_mem(HashTable *ht, const char *str, strsize_t len, void *pData, size_t size) {
+	void * pDest;
+	if( zend_hash_update(ht, str, len, pData, size, &pDest) == SUCCESS ) {
+		return pDest;
+	} else {
+		return NULL;
+	}
+}
 
 #define _DECLARE_ZVAL(name) zval * name
 #define _INIT_ZVAL INIT_ZVAL
@@ -70,6 +86,8 @@ typedef size_t strsize_t;
 
 #define php5to7_zend_hash_find zend_hash_str_find
 #define php5to7_zend_hash_index_find zend_hash_index_find
+#define php5to7_zend_hash_find_ptr zend_hash_str_find_ptr
+#define php5to7_zend_hash_update_mem zend_hash_str_update_mem
 
 #define _DECLARE_ZVAL(name) zval name ## _v; zval * name = &name ## _v
 #define _INIT_ZVAL ZVAL_NULL
