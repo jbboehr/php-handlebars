@@ -672,12 +672,12 @@ static inline handlebars_value_map_to_zval(struct handlebars_value * value, zval
         zval _tmp;
         zval * tmp = &_tmp;
         handlebars_value_to_zval(it->current, tmp);
-        add_assoc_zval_ex(val, it->key, talloc_array_length(it->key) - 1, tmp);
+        add_assoc_zval_ex(val, it->key, strlen(it->key), tmp); // @todo does this need + 1
 #else
         zval * tmp;
         MAKE_STD_ZVAL(tmp);
         handlebars_value_to_zval(it->current, tmp TSRMLS_CC);
-        add_assoc_zval_ex(val, it->key, talloc_array_length(it->key), tmp);
+        add_assoc_zval_ex(val, it->key, strlen(it->key) + 1, tmp);
 #endif
     }
 }
