@@ -700,7 +700,7 @@ PHPAPI zval * handlebars_value_to_zval(struct handlebars_value * value, zval * v
             ZVAL_LONG(val, value->v.lval);
             break;
         case HANDLEBARS_VALUE_TYPE_STRING:
-            PHP5TO7_ZVAL_STRINGL(val, value->v.strval, talloc_array_length(value->v.strval) - 1);
+            PHP5TO7_ZVAL_STRINGL(val, handlebars_value_get_strval(value), handlebars_value_get_strlen(value));
             break;
         case HANDLEBARS_VALUE_TYPE_ARRAY:
             handlebars_value_array_to_zval(value, val TSRMLS_CC);
@@ -757,19 +757,10 @@ PHPAPI struct handlebars_value * handlebars_value_from_zval(struct handlebars_co
             break;
         case IS_STRING:
             value->type = HANDLEBARS_VALUE_TYPE_STRING;
-            value->v.strval = MC(handlebars_talloc_strndup(value, Z_STRVAL_P(val), Z_STRLEN_P(val)));
+            handlebars_value_stringl(value, Z_STRVAL_P(val), Z_STRLEN_P(val));
             break;
 
         case IS_OBJECT:
-            /*
-            if( instanceof_function(Z_OBJCE_P(val), HandlebarsSafeString_ce_ptr) ) {
-                convert_to_string(val);
-                value->type = HANDLEBARS_VALUE_TYPE_STRING;
-                value->v.strval = MC(handlebars_talloc_strndup(value, Z_STRVAL_P(val), Z_STRLEN_P(val)));
-                value->flags |= HANDLEBARS_VALUE_FLAG_SAFE_STRING;
-                break;
-            }
-            */
             // fall-through
         case IS_ARRAY:
             value->type = HANDLEBARS_VALUE_TYPE_USER;
