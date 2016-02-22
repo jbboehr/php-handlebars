@@ -9,6 +9,7 @@
 
 #include "handlebars.h"
 #include "handlebars_memory.h"
+#include "handlebars_string.h"
 #include "handlebars_token.h"
 #include "handlebars_token_list.h"
 #include "handlebars_token_printer.h"
@@ -59,7 +60,7 @@ static inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
 
     // Lex
     ex.ce = HandlebarsParseException_ce_ptr;
-    parser->tmpl = tmpl;
+    parser->tmpl = handlebars_string_ctor(HBSCTX(parser), tmpl, tmpl_len);
     php_handlebars_try(HandlebarsParseException_ce_ptr, parser, &buf);
     list = handlebars_lex(parser);
 

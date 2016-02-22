@@ -17,6 +17,7 @@
 #include "handlebars_memory.h"
 #include "handlebars_opcode_printer.h"
 #include "handlebars_opcodes.h"
+#include "handlebars_string.h"
 #include "handlebars_vm.h"
 #include "handlebars.tab.h"
 #include "handlebars.lex.h"
@@ -45,17 +46,17 @@ static void php_handlebars_operand_append_zval(struct handlebars_operand * opera
             add_next_index_long(arr, operand->data.longval);
             break;
         case handlebars_operand_type_string:
-        	php5to7_add_next_index_string(arr, operand->data.stringval);
+        	php5to7_add_next_index_stringl(arr, operand->data.string->val, operand->data.string->len);
             break;
         case handlebars_operand_type_array: {
             _DECLARE_ZVAL(current);
-            char ** tmp = operand->data.arrayval;
+            struct handlebars_string ** tmp = operand->data.array;
 
             _ALLOC_INIT_ZVAL(current);
             array_init(current);
 
             for( ; *tmp; ++tmp ) {
-            	php5to7_add_next_index_string(current, *tmp);
+                php5to7_add_next_index_stringl(current, (*tmp)->val, (*tmp)->len);
             }
 
             add_next_index_zval(arr, current);
@@ -416,6 +417,7 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
 #endif
 
     // Initialize context
+    // Initialize context
     if( pool_size <= 0 ) {
         ctx = handlebars_context_ctor_ex(HANDLEBARS_G(root));
     } else {
@@ -430,7 +432,7 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
 
     // Parse
     php_handlebars_try(HandlebarsParseException_ce_ptr, parser, &buf);
-    parser->tmpl = tmpl;
+    parser->tmpl = handlebars_string_ctor(HBSCTX(parser), tmpl, tmpl_len);
     handlebars_parse(parser);
 
     // Compile

@@ -16,6 +16,7 @@
 #include "handlebars_helpers.h"
 #include "handlebars_memory.h"
 #include "handlebars_opcodes.h"
+#include "handlebars_string.h"
 #include "handlebars_value.h"
 #include "handlebars_value_handlers.h"
 #include "handlebars_vm.h"
@@ -237,7 +238,7 @@ static enum handlebars_value_type handlebars_std_zval_type(struct handlebars_val
     return HANDLEBARS_VALUE_TYPE_NULL;
 }
 
-static struct handlebars_value * handlebars_std_zval_map_find(struct handlebars_value * value, const char * key)
+static struct handlebars_value * handlebars_std_zval_map_find(struct handlebars_value * value, struct handlebars_string * key)
 {
     zval * intern = get_intern_zval(value);
     zval * entry = NULL;
@@ -245,10 +246,10 @@ static struct handlebars_value * handlebars_std_zval_map_find(struct handlebars_
     TSRMLS_FETCH();
 
     if( Z_TYPE_P(intern) == IS_ARRAY ) {
-        entry = php5to7_zend_hash_find(Z_ARRVAL_P(intern), key, strlen(key));
+        entry = php5to7_zend_hash_find(Z_ARRVAL_P(intern), key->val, key->len);
         if( !entry ) {
             char * end;
-            long index = strtod(key, &end);
+            long index = strtod(key->val, &end);
             if( !*end ) {
                 entry = php5to7_zend_hash_index_find(Z_ARRVAL_P(intern), index);
             }
@@ -265,14 +266,14 @@ static struct handlebars_value * handlebars_std_zval_map_find(struct handlebars_
 #else
             zval * prop;
             MAKE_STD_ZVAL(prop);
-            ZVAL_STRINGL(prop, key, strlen(key), 1);
+            ZVAL_STRINGL(prop, key->val, key->len, 1);
             if( Z_OBJ_HT_P(intern)->has_dimension(intern, prop, 0 TSRMLS_CC) ) {
                 entry = Z_OBJ_HT_P(intern)->read_dimension(intern, prop, 0 TSRMLS_CC);
             }
             zval_ptr_dtor(&prop);
 #endif
         } else {
-            entry = php5to7_zend_read_property2(Z_OBJCE_P(intern), intern, key, strlen(key), 1);
+            entry = php5to7_zend_read_property2(Z_OBJCE_P(intern), intern, key->val, key->len, 1);
         }
     }
 
@@ -947,7 +948,7 @@ PHP_METHOD(HandlebarsVM, render)
 
         // Parse
         php_handlebars_try(HandlebarsParseException_ce_ptr, parser, &buf);
-        parser->tmpl = tmpl;
+        parser->tmpl = handlebars_string_ctor(HBSCTX(parser), tmpl, tmpl_len);
         handlebars_parse(parser);
 
         // Compile

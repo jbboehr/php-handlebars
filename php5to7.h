@@ -14,6 +14,7 @@ typedef long zend_long;
 #define PHP5TO7_Z_IS_BOOL_P(a) (Z_TYPE_P(a) == IS_BOOL)
 
 #define php5to7_add_next_index_string(...) add_next_index_string(__VA_ARGS__, 1)
+#define php5to7_add_next_index_stringl(...) add_next_index_stringl(__VA_ARGS__, 1)
 #define php5to7_add_assoc_string(...) add_assoc_string(__VA_ARGS__, 1)
 #define php5to7_add_assoc_string_ex(...) add_assoc_string_ex(__VA_ARGS__, 1)
 #define php5to7_add_assoc_stringl_ex(...) add_assoc_stringl_ex(__VA_ARGS__, 1)
@@ -75,6 +76,7 @@ typedef size_t strsize_t;
 #define PHP5TO7_Z_IS_BOOL_P(a) (Z_TYPE_P(a) == IS_TRUE || Z_TYPE_P(a) == IS_FALSE)
 
 #define php5to7_add_next_index_string add_next_index_string
+#define php5to7_add_next_index_stringl add_next_index_stringl
 #define php5to7_add_assoc_string(z, k, s) add_assoc_string_ex(z, k, strlen(k)+1, s)
 #define php5to7_add_assoc_string_ex add_assoc_string_ex
 #define php5to7_add_assoc_stringl_ex add_assoc_stringl_ex

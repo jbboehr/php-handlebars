@@ -13,6 +13,7 @@
 #include "handlebars_ast_printer.h"
 #include "handlebars_compiler.h"
 #include "handlebars_memory.h"
+#include "handlebars_string.h"
 #include "handlebars.tab.h"
 #include "handlebars.lex.h"
 
@@ -330,7 +331,7 @@ static void php_handlebars_parse(INTERNAL_FUNCTION_PARAMETERS, short print)
     parser = handlebars_parser_ctor(ctx);
 
     // Parse
-    parser->tmpl = tmpl;
+    parser->tmpl = handlebars_string_ctor(HBSCTX(parser), tmpl, tmpl_len);
     php_handlebars_try(HandlebarsParseException_ce_ptr, parser, &buf);
     handlebars_parse(parser);
 
