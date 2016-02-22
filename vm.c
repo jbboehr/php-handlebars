@@ -34,6 +34,7 @@ static zend_object_handlers HandlebarsVM_obj_handlers;
 struct handlebars_zval {
     short callable;
     short int_array;
+    zend_fcall_info_cache fcc;
 #ifdef ZEND_ENGINE_3
     zval intern;
 #else
@@ -185,7 +186,7 @@ static inline zval * get_intern_zval(struct handlebars_value * value) {
 static inline void set_intern_zval(struct handlebars_value * value, zval * val) {
     struct handlebars_zval * obj;
     if( !value->v.usr ) {
-        value->v.usr = obj = talloc(value->ctx, struct handlebars_zval);
+        value->v.usr = obj = talloc_zero(value->ctx, struct handlebars_zval);
 #ifndef ZEND_ENGINE_3
         MAKE_STD_ZVAL(obj->intern);
 #endif
@@ -276,7 +277,7 @@ static struct handlebars_value * handlebars_std_zval_map_find(struct handlebars_
             if( instanceof_function(Z_OBJCE_P(intern), zend_ce_arrayaccess TSRMLS_CC) ) {
 #ifdef ZEND_ENGINE_3
                 zval prop;
-                ZVAL_STRINGL(&prop, key, strlen(key));
+                ZVAL_STRINGL(&prop, key->val, key->len);
                 if( Z_OBJ_HT_P(intern)->has_dimension(intern, &prop, 0 TSRMLS_CC) ) {
                     entry = Z_OBJ_HT_P(intern)->read_dimension(intern, &prop, 0, entry TSRMLS_CC);
                 }
@@ -495,7 +496,6 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     }
 
 #ifdef ZEND_ENGINE_3
-    zval z_const;
     zval z_options;
     php_handlebars_options_ctor(options, &z_options TSRMLS_CC);
 
@@ -535,17 +535,32 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
 
     z_const_args[n_args - 1] = z_options;
 
+    // Make ret
     zval _z_ret;
     z_ret = &_z_ret;
-    ZVAL_UNDEF(z_ret);
-    ZVAL_STRING(&z_const, "__invoke");
-    call_user_function(&Z_OBJCE_P(intern)->function_table, intern, &z_const, z_ret, n_args, z_const_args TSRMLS_CC);
+
+    zend_fcall_info fci;
+    fci.size = sizeof(fci);
+    fci.function_table = &Z_OBJCE_P(intern)->function_table;
+    fci.symbol_table = NULL;
+    fci.object = Z_OBJ_P(intern);
+    fci.retval = &_z_ret;
+    fci.params = z_const_args;
+    fci.param_count = n_args;
+    fci.no_separation = 1;
+
+    ZVAL_STRING(&fci.function_name, "__invoke");
+
+    if( zend_call_function(&fci, &obj->fcc) == FAILURE ) {
+        zend_throw_exception_ex(zend_ce_exception, 0, "Could not execute %s::%s()", Z_OBJCE_P(intern)->name, Z_OBJCE_P(intern)->constructor->common.function_name);
+    }
 
     for( i = 0; i < n_args; i++ ) {
         zval_ptr_dtor(&z_const_args[i]);
     }
-    zval_ptr_dtor(&z_const);
+    zval_ptr_dtor(&fci.function_name);
     efree(z_const_args);
+
 #else
     // Construct options
     zval * z_options;
@@ -927,7 +942,7 @@ PHP_METHOD(HandlebarsVM, render)
 #else
     _this_zval = getThis();
     ZEND_PARSE_PARAMETERS_START(1, 3)
-        Z_PARAM_STRING(tmpl, tmpl_len)
+        Z_PARAM_STRING(tmpl_str, tmpl_len)
         Z_PARAM_OPTIONAL
         Z_PARAM_ZVAL(z_context)
         Z_PARAM_ZVAL(z_options)
