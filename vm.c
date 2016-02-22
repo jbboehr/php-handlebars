@@ -32,6 +32,8 @@ zend_class_entry * HandlebarsVM_ce_ptr;
 static zend_object_handlers HandlebarsVM_obj_handlers;
 
 struct handlebars_zval {
+    short callable;
+    short int_array;
 #ifdef ZEND_ENGINE_3
     zval intern;
 #else
@@ -191,6 +193,8 @@ static inline void set_intern_zval(struct handlebars_value * value, zval * val) 
     } else {
         obj = talloc_get_type(value->v.usr, struct handlebars_zval);
     }
+    obj->int_array = -1;
+    obj->callable = -1;
 #ifdef ZEND_ENGINE_3
     ZVAL_ZVAL(&obj->intern, val, 1, 0);
 #else
@@ -211,6 +215,7 @@ static struct handlebars_value * handlebars_std_zval_copy(struct handlebars_valu
 static void handlebars_std_zval_dtor(struct handlebars_value * value)
 {
     zval * intern = get_intern_zval(value);
+    //Z_DELREF_P(intern);
     //zval_ptr_dtor(&intern);
 }
 
@@ -221,25 +226,31 @@ static void handlebars_std_zval_convert(struct handlebars_value * value, bool re
 
 static enum handlebars_value_type handlebars_std_zval_type(struct handlebars_value * value)
 {
+    struct handlebars_zval * obj = talloc_get_type(value->v.usr, struct handlebars_zval);
     zval * intern = get_intern_zval(value);
     TSRMLS_FETCH();
 
-    if( Z_TYPE_P(intern) == IS_ARRAY ) {
-        // @todo cache?
-        if( php_handlebars_is_int_array(intern TSRMLS_CC) ) {
-            return HANDLEBARS_VALUE_TYPE_ARRAY;
-        } else {
+    switch( Z_TYPE_P(intern) ) {
+        case IS_ARRAY:
+            if( obj->int_array == -1 ) {
+                obj->int_array = php_handlebars_is_int_array(intern TSRMLS_CC);
+            }
+            if( obj->int_array ) {
+                return HANDLEBARS_VALUE_TYPE_ARRAY;
+            }
             return HANDLEBARS_VALUE_TYPE_MAP;
-        }
-    } else if( Z_TYPE_P(intern) == IS_OBJECT ) {
-        // @todo cache?
-        if( php_handlebars_is_callable(intern TSRMLS_CC) ) {
-            return HANDLEBARS_VALUE_TYPE_HELPER;
-        } else {
+        case IS_OBJECT:
+            if( obj->callable == -1 ) {
+                obj->callable = php_handlebars_is_callable(intern TSRMLS_CC);
+            }
+            if( obj->callable ) {
+                return HANDLEBARS_VALUE_TYPE_HELPER;
+            }
             return HANDLEBARS_VALUE_TYPE_MAP;
-        }
+        default:
+            assert(0);
+            break;
     }
-    assert(0);
     return HANDLEBARS_VALUE_TYPE_NULL;
 }
 
@@ -250,36 +261,39 @@ static struct handlebars_value * handlebars_std_zval_map_find(struct handlebars_
     struct handlebars_value * ret = NULL;
     TSRMLS_FETCH();
 
-    if( Z_TYPE_P(intern) == IS_ARRAY ) {
-        entry = php5to7_zend_hash_find(Z_ARRVAL_P(intern), key->val, key->len);
-        if( !entry ) {
-            char * end;
-            long index = strtod(key->val, &end);
-            if( !*end ) {
-                entry = php5to7_zend_hash_index_find(Z_ARRVAL_P(intern), index);
+    switch( Z_TYPE_P(intern) ) {
+        case IS_ARRAY:
+            entry = php5to7_zend_hash_find(Z_ARRVAL_P(intern), key->val, key->len);
+            if( !entry ) {
+                char * end;
+                long index = strtod(key->val, &end);
+                if( !*end ) {
+                    entry = php5to7_zend_hash_index_find(Z_ARRVAL_P(intern), index);
+                }
             }
-        }
-    } else if( Z_TYPE_P(intern) == IS_OBJECT ) {
-        if( instanceof_function(Z_OBJCE_P(intern), zend_ce_arrayaccess TSRMLS_CC) ) {
+            break;
+        case IS_OBJECT:
+            if( instanceof_function(Z_OBJCE_P(intern), zend_ce_arrayaccess TSRMLS_CC) ) {
 #ifdef ZEND_ENGINE_3
-            zval prop;
-            ZVAL_STRINGL(&prop, key, strlen(key));
-            if( Z_OBJ_HT_P(intern)->has_dimension(intern, &prop, 0 TSRMLS_CC) ) {
-                entry = Z_OBJ_HT_P(intern)->read_dimension(intern, &prop, 0, entry TSRMLS_CC);
-            }
-            zval_ptr_dtor(&prop);
+                zval prop;
+                ZVAL_STRINGL(&prop, key, strlen(key));
+                if( Z_OBJ_HT_P(intern)->has_dimension(intern, &prop, 0 TSRMLS_CC) ) {
+                    entry = Z_OBJ_HT_P(intern)->read_dimension(intern, &prop, 0, entry TSRMLS_CC);
+                }
+                zval_ptr_dtor(&prop);
 #else
-            zval * prop;
-            MAKE_STD_ZVAL(prop);
-            ZVAL_STRINGL(prop, key->val, key->len, 1);
-            if( Z_OBJ_HT_P(intern)->has_dimension(intern, prop, 0 TSRMLS_CC) ) {
-                entry = Z_OBJ_HT_P(intern)->read_dimension(intern, prop, 0 TSRMLS_CC);
-            }
-            zval_ptr_dtor(&prop);
+                zval * prop;
+                MAKE_STD_ZVAL(prop);
+                ZVAL_STRINGL(prop, key->val, key->len, 1);
+                if( Z_OBJ_HT_P(intern)->has_dimension(intern, prop, 0 TSRMLS_CC) ) {
+                    entry = Z_OBJ_HT_P(intern)->read_dimension(intern, prop, 0 TSRMLS_CC);
+                }
+                zval_ptr_dtor(&prop);
 #endif
-        } else {
-            entry = php5to7_zend_read_property2(Z_OBJCE_P(intern), intern, key->val, key->len, 1);
-        }
+            } else {
+                entry = php5to7_zend_read_property2(Z_OBJCE_P(intern), intern, key->val, key->len, 1);
+            }
+            break;
     }
 
     if( entry != NULL ) {
@@ -454,7 +468,6 @@ long handlebars_std_zval_count(struct handlebars_value * value)
             return zend_hash_num_elements(Z_ARRVAL_P(intern));
         case IS_OBJECT:
             return -1; // @todo
-
     }
 
     return -1;
@@ -463,25 +476,21 @@ long handlebars_std_zval_count(struct handlebars_value * value)
 
 struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * value, struct handlebars_options * options)
 {
+    struct handlebars_zval * obj = value->v.ptr;
     zval * intern = get_intern_zval(value);
-    zend_bool is_callable = 0;
-    int check_flags = 0; //IS_CALLABLE_CHECK_SYNTAX_ONLY;
-    char * error;
     zval * z_ret;
     TSRMLS_FETCH();
 
     // Check if is callable object (closure or __invoke)
-    if( Z_TYPE_P(intern) != IS_OBJECT ) {
+    if( !intern || Z_TYPE_P(intern) != IS_OBJECT ) {
         return NULL;
     }
 
-#if PHP_MAJOR_VERSION < 7
-    is_callable = zend_is_callable_ex(intern, NULL, check_flags, NULL, NULL, NULL, &error TSRMLS_CC);
-#else
-    is_callable = zend_is_callable_ex(intern, NULL, check_flags, NULL, NULL, &error);
-#endif
+    if( obj->callable == -1 ) {
+        obj->callable = php_handlebars_is_callable(intern TSRMLS_CC);
+    }
 
-    if( !is_callable ) {
+    if( !obj->callable ) {
         return NULL;
     }
 
