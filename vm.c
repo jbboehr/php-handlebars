@@ -108,7 +108,7 @@ static void php_handlebars_vm_obj_free(void *object TSRMLS_DC)
 /* }}} */
 
 /* {{{ php_handlebars_vm_obj_create */
-static inline void php_handlebars_vm_obj_create_common(struct php_handlebars_vm_obj *obj)
+static inline void php_handlebars_vm_obj_create_common(struct php_handlebars_vm_obj *obj TSRMLS_DC)
 {
     zend_long pool_size = HANDLEBARS_G(pool_size);
 
@@ -134,7 +134,7 @@ static zend_object * php_handlebars_vm_obj_create(zend_class_entry * ce)
     zend_object_std_init(&obj->std, ce);
     object_properties_init(&obj->std, ce);
     obj->std.handlers = &HandlebarsVM_obj_handlers;
-    php_handlebars_vm_obj_create_common(obj);
+    php_handlebars_vm_obj_create_common(obj TSRMLS_CC);
 
     return &obj->std;
 }
@@ -155,7 +155,7 @@ zend_object_value php_handlebars_vm_obj_create(zend_class_entry *ce TSRMLS_DC)
 
     retval.handle = zend_objects_store_put(obj, (zend_objects_store_dtor_t)zend_objects_destroy_object, (zend_objects_free_object_storage_t)php_handlebars_vm_obj_free, NULL TSRMLS_CC);
     retval.handlers = &HandlebarsVM_obj_handlers;
-    php_handlebars_vm_obj_create_common(obj);
+    php_handlebars_vm_obj_create_common(obj TSRMLS_CC);
 
     return retval;
 }
