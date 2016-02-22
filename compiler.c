@@ -417,7 +417,6 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
 #endif
 
     // Initialize context
-    // Initialize context
     if( pool_size <= 0 ) {
         ctx = handlebars_context_ctor_ex(HANDLEBARS_G(root));
     } else {

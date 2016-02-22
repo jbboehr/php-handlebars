@@ -18,6 +18,8 @@
 #include "php5to7.h"
 #include "php_handlebars.h"
 
+#include "handlebars_cache.h"
+
 /* {{{ Prototypes */
 extern PHP_MINIT_FUNCTION(handlebars_compile_context);
 extern PHP_MINIT_FUNCTION(handlebars_compiler);
@@ -56,16 +58,12 @@ PHP_INI_END()
 /* }}} */
 
 /* {{{ PHP_MINIT_FUNCTION */
-static void php_handlebars_cache_entry_destroy(struct php_handlebars_cache_entry *entry)
-{
-    // @todo
-}
-
 static PHP_MINIT_FUNCTION(handlebars)
 {
     zend_class_entry ce;
     int flags = CONST_CS | CONST_PERSISTENT;
     const char * version = handlebars_version_string();
+    jmp_buf buf;
 
     REGISTER_INI_ENTRIES();
 
@@ -73,9 +71,13 @@ static PHP_MINIT_FUNCTION(handlebars)
     REGISTER_STRING_CONSTANT("Handlebars\\LIBVERSION", (char *) version, flags);
 
     HANDLEBARS_G(root) = talloc_new(NULL);
+    HANDLEBARS_G(context) = handlebars_context_ctor_ex(HANDLEBARS_G(root));
 
-    // @todo ZTS
-    zend_hash_init_ex(&HANDLEBARS_G(cache), 5, NULL, (dtor_func_t)php_handlebars_cache_entry_destroy, 1, 0);
+    if( handlebars_setjmp_ex(HANDLEBARS_G(context), &buf) ) {
+        // @todo log?
+        return FAILURE;
+    }
+    HANDLEBARS_G(cache) = handlebars_cache_ctor(HANDLEBARS_G(context));
 
     PHP_MINIT(handlebars_compile_context)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_compiler)(INIT_FUNC_ARGS_PASSTHRU);
@@ -106,6 +108,7 @@ static PHP_MSHUTDOWN_FUNCTION(handlebars)
 /* {{{ PHP_MINFO_FUNCTION */
 static PHP_MINFO_FUNCTION(handlebars)
 {
+    char buf[64];
     php_info_print_table_start();
     php_info_print_table_row(2, "Version", PHP_HANDLEBARS_VERSION);
     php_info_print_table_row(2, "Released", PHP_HANDLEBARS_RELEASE);
@@ -115,6 +118,12 @@ static PHP_MINFO_FUNCTION(handlebars)
     php_info_print_table_row(2, "libhandlebars Version", handlebars_version_string());
     php_info_print_table_row(2, "libhandlebars Handlebars Spec Version", handlebars_spec_version_string());
     php_info_print_table_row(2, "libhandlebars Mustache Spec Version", handlebars_mustache_spec_version_string());
+    snprintf(buf, sizeof(buf), "%ld", HANDLEBARS_G(cache)->current_entries);
+    php_info_print_table_row(2, "Cache entries", buf);
+    snprintf(buf, sizeof(buf), "%ld", HANDLEBARS_G(cache)->current_size);
+    php_info_print_table_row(2, "Cache size", buf);
+    snprintf(buf, sizeof(buf), "%ld", talloc_total_size(HANDLEBARS_G(root)));
+    php_info_print_table_row(2, "Memory usage", buf);
     php_info_print_table_end();
 
     DISPLAY_INI_ENTRIES();

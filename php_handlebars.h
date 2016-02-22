@@ -10,6 +10,7 @@
 #define PHP_HANDLEBARS_AUTHORS "John Boehr <jbboehr@gmail.com> (lead)"
 #define PHP_HANDLEBARS_SPEC "4.0.4"
 
+struct handlebars_cache;
 struct handlebars_context;
 struct handlebars_options;
 struct handlebars_token;
@@ -51,9 +52,11 @@ struct php_handlebars_cache_entry {
 };
 
 ZEND_BEGIN_MODULE_GLOBALS(handlebars)
-    void * root;
     zend_long  pool_size;
-    HashTable cache;
+
+    void * root;
+    struct handlebars_context * context;
+    struct handlebars_cache * cache;
 ZEND_END_MODULE_GLOBALS(handlebars)
 
 ZEND_EXTERN_MODULE_GLOBALS(handlebars);
