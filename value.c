@@ -217,7 +217,7 @@ struct handlebars_value_iterator * handlebars_std_zval_iterator_ctor(struct hand
                 entry = zend_hash_get_current_data_ex(ht, data_pointer);
                 if( entry ) {
                     if( HASH_KEY_IS_STRING == zend_hash_get_current_key_ex(ht, &string_key, &num_key, data_pointer) ) {
-                        it->key = handlebars_talloc_strndup(it, ZSTR_VAL(string_key), ZSTR_LEN(string_key));
+                        it->key = talloc_steal(it, handlebars_string_ctor(value->ctx, ZSTR_VAL(string_key), ZSTR_LEN(string_key));
                         it->index = 0;
                     } else {
                         it->key = NULL;
@@ -236,7 +236,7 @@ struct handlebars_value_iterator * handlebars_std_zval_iterator_ctor(struct hand
                 if( SUCCESS == zend_hash_get_current_data_ex(ht, (void**) &data_entry, data_pointer) ) {
                     key_type = zend_hash_get_current_key_ex(ht, &key_str, &key_len, &key_nindex, false, data_pointer);
                     if( key_type == HASH_KEY_IS_STRING ) {
-                        it->key = key_str;
+                        it->key = talloc_steal(it, handlebars_string_ctor(value->ctx, key_str, key_len - 1));
                         it->index = 0;
                     } else {
                         it->key = NULL;
@@ -282,7 +282,7 @@ bool handlebars_std_zval_iterator_next(struct handlebars_value_iterator * it)
                 if( entry ) {
                     ret = true;
                     if( HASH_KEY_IS_STRING == zend_hash_get_current_key_ex(ht, &string_key, &num_key, data_pointer) ) {
-                        it->key = handlebars_talloc_strndup(it, ZSTR_VAL(string_key), ZSTR_LEN(string_key));
+                        it->key = talloc_steal(it, handlebars_string_ctor(value->ctx, ZSTR_VAL(string_key), ZSTR_LEN(string_key));
                         it->index = 0;
                     } else {
                         it->key = NULL;
@@ -303,7 +303,7 @@ bool handlebars_std_zval_iterator_next(struct handlebars_value_iterator * it)
 
                     ret = true;
                     if( key_type == HASH_KEY_IS_STRING ) {
-                        it->key = key_str;
+                        it->key = talloc_steal(it, handlebars_string_ctor(value->ctx, key_str, key_len - 1));
                         it->index = 0;
                     } else {
                         it->key = NULL;
@@ -519,12 +519,12 @@ static inline handlebars_value_map_to_zval(struct handlebars_value * value, zval
         zval _tmp;
         zval * tmp = &_tmp;
         handlebars_value_to_zval(it->current, tmp);
-        add_assoc_zval_ex(val, it->key, strlen(it->key), tmp); // @todo does this need + 1
+        add_assoc_zval_ex(val, it->key->val, it->key->len, tmp); // @todo does this need + 1
 #else
         zval * tmp;
         MAKE_STD_ZVAL(tmp);
         handlebars_value_to_zval(it->current, tmp TSRMLS_CC);
-        add_assoc_zval_ex(val, it->key, strlen(it->key) + 1, tmp);
+        add_assoc_zval_ex(val, it->key->val, it->key->len + 1, tmp);
 #endif
     }
 }
