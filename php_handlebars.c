@@ -32,6 +32,7 @@ extern PHP_MINIT_FUNCTION(handlebars_safe_string);
 extern PHP_MINIT_FUNCTION(handlebars_token);
 extern PHP_MINIT_FUNCTION(handlebars_tokenizer);
 extern PHP_MINIT_FUNCTION(handlebars_utils);
+extern PHP_MINIT_FUNCTION(handlebars_value);
 extern PHP_MINIT_FUNCTION(handlebars_vm);
 
 ZEND_DECLARE_MODULE_GLOBALS(handlebars);
@@ -90,6 +91,7 @@ static PHP_MINIT_FUNCTION(handlebars)
     PHP_MINIT(handlebars_token)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_tokenizer)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_utils)(INIT_FUNC_ARGS_PASSTHRU);
+    PHP_MINIT(handlebars_value)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_vm)(INIT_FUNC_ARGS_PASSTHRU);
 
     return SUCCESS;
