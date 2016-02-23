@@ -4,6 +4,7 @@
 #endif
 
 #include "Zend/zend_API.h"
+#include "Zend/zend_exceptions.h"
 #include "Zend/zend_interfaces.h"
 #include "main/php.h"
 
@@ -366,30 +367,6 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     zval z_options;
     php_handlebars_options_ctor(options, &z_options TSRMLS_CC);
 
-    // Add scope
-    if( options->scope ) {
-        zval z_scope;
-        handlebars_value_to_zval(options->scope, &z_scope);
-        zend_update_property(Z_OBJCE(z_options), &z_options, ZEND_STRL("scope"), &z_scope);
-        zval_ptr_dtor(&z_scope);
-    }
-
-    // Add hash
-    if( options->hash ) {
-        zval z_hash;
-        handlebars_value_to_zval(options->hash, &z_hash);
-        zend_update_property(Z_OBJCE(z_options), &z_options, ZEND_STRL("hash"), &z_hash);
-        zval_ptr_dtor(&z_hash);
-    }
-
-    // Add data
-    if( options->data ) {
-        zval z_data;
-        handlebars_value_to_zval(options->data, &z_data);
-        zend_update_property(Z_OBJCE(z_options), &z_options, ZEND_STRL("data"), &z_data TSRMLS_CC);
-        zval_ptr_dtor(&z_data);
-    }
-
     // Convert params
     size_t n_args = handlebars_stack_length(options->params) + 1;
     zval *z_const_args = emalloc(n_args * sizeof(zval));
@@ -433,33 +410,6 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     zval * z_options;
     MAKE_STD_ZVAL(z_options);
     php_handlebars_options_ctor(options, z_options TSRMLS_CC);
-
-    // Add scope
-    if( options->scope ) {
-        zval *z_scope;
-        MAKE_STD_ZVAL(z_scope);
-        handlebars_value_to_zval(options->scope, z_scope TSRMLS_CC);
-        zend_update_property(Z_OBJCE_P(z_options), z_options, ZEND_STRL("scope"), z_scope TSRMLS_CC);
-        zval_ptr_dtor(&z_scope);
-    }
-
-    // Add hash
-    if( options->hash ) {
-        zval *z_hash;
-        MAKE_STD_ZVAL(z_hash);
-        handlebars_value_to_zval(options->hash, z_hash TSRMLS_CC);
-        zend_update_property(Z_OBJCE_P(z_options), z_options, ZEND_STRL("hash"), z_hash TSRMLS_CC);
-        zval_ptr_dtor(&z_hash);
-    }
-
-    // Add data
-    if( options->data ) {
-        zval *z_data;
-        MAKE_STD_ZVAL(z_data);
-        handlebars_value_to_zval(options->data, z_data TSRMLS_CC);
-        zend_update_property(Z_OBJCE_P(z_options), z_options, ZEND_STRL("data"), z_data TSRMLS_CC);
-        zval_ptr_dtor(&z_data);
-    }
 
     // Convert params
     size_t n_args = handlebars_stack_length(options->params) + 1;
