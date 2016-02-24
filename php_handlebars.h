@@ -53,6 +53,10 @@ struct php_handlebars_cache_entry {
 
 ZEND_BEGIN_MODULE_GLOBALS(handlebars)
     zend_long  pool_size;
+    zend_bool cache_enabled;
+    zend_long cache_max_size;
+    zend_long cache_max_entries;
+    zend_long cache_max_age;
 
     void * root;
     struct handlebars_context * context;

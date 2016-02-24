@@ -55,6 +55,10 @@ static PHP_INI_MH(OnUpdatePoolSize)
 /* {{{ php.ini directive registration */
 PHP_INI_BEGIN()
     STD_PHP_INI_ENTRY("handlebars.pool_size", "-1", PHP_INI_ALL, OnUpdatePoolSize, pool_size, zend_handlebars_globals, handlebars_globals)
+    STD_PHP_INI_BOOLEAN("handlebars.cache.enabled", "1", PHP_INI_SYSTEM, OnUpdateBool, cache_enabled, zend_handlebars_globals, handlebars_globals)
+    STD_PHP_INI_ENTRY("handlebars.cache.max_size", "52428800", PHP_INI_SYSTEM, OnUpdateLong, cache_max_size, zend_handlebars_globals, handlebars_globals)
+    STD_PHP_INI_ENTRY("handlebars.cache.max_entries", "100", PHP_INI_SYSTEM, OnUpdateLong, cache_max_entries, zend_handlebars_globals, handlebars_globals)
+    STD_PHP_INI_ENTRY("handlebars.cache.max_age", "3600", PHP_INI_SYSTEM, OnUpdateLong, cache_max_age, zend_handlebars_globals, handlebars_globals)
 PHP_INI_END()
 /* }}} */
 
@@ -65,6 +69,7 @@ static PHP_MINIT_FUNCTION(handlebars)
     int flags = CONST_CS | CONST_PERSISTENT;
     const char * version = handlebars_version_string();
     jmp_buf buf;
+    struct handlebars_cache * cache;
 
     REGISTER_INI_ENTRIES();
 
@@ -74,11 +79,16 @@ static PHP_MINIT_FUNCTION(handlebars)
     HANDLEBARS_G(root) = talloc_new(NULL);
     HANDLEBARS_G(context) = handlebars_context_ctor_ex(HANDLEBARS_G(root));
 
-    if( handlebars_setjmp_ex(HANDLEBARS_G(context), &buf) ) {
-        // @todo log?
-        return FAILURE;
+    if( HANDLEBARS_G(cache_enabled) ) {
+        if (handlebars_setjmp_ex(HANDLEBARS_G(context), &buf)) {
+            // @todo log?
+            return FAILURE;
+        }
+        cache = handlebars_cache_ctor(HANDLEBARS_G(context));
+        cache->max_entries = HANDLEBARS_G(cache_max_entries);
+        cache->max_size = HANDLEBARS_G(cache_max_size);
+        HANDLEBARS_G(cache) = cache;
     }
-    HANDLEBARS_G(cache) = handlebars_cache_ctor(HANDLEBARS_G(context));
 
     PHP_MINIT(handlebars_compile_context)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_compiler)(INIT_FUNC_ARGS_PASSTHRU);
@@ -137,6 +147,10 @@ static PHP_GINIT_FUNCTION(handlebars)
 {
     handlebars_globals->root = NULL;
     handlebars_globals->pool_size = -1;
+    handlebars_globals->cache_enabled = 1;
+    handlebars_globals->cache_max_age = 3600;
+    handlebars_globals->cache_max_entries = 100;
+    handlebars_globals->cache_max_size = 52428800;
     memset(&handlebars_globals->cache, 0, sizeof(handlebars_globals->cache));
 }
 /* }}} */
