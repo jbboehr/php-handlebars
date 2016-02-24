@@ -8,6 +8,8 @@
 #include "Zend/zend_interfaces.h"
 #include "main/php.h"
 
+#include <talloc.h>
+
 #include "handlebars.h"
 #include "handlebars_private.h"
 #include "handlebars_memory.h"
@@ -217,7 +219,7 @@ struct handlebars_value_iterator * handlebars_std_zval_iterator_ctor(struct hand
                 entry = zend_hash_get_current_data_ex(ht, data_pointer);
                 if( entry ) {
                     if( HASH_KEY_IS_STRING == zend_hash_get_current_key_ex(ht, &string_key, &num_key, data_pointer) ) {
-                        it->key = talloc_steal(it, handlebars_string_ctor(value->ctx, ZSTR_VAL(string_key), ZSTR_LEN(string_key));
+                        it->key = talloc_steal(it, handlebars_string_ctor(value->ctx, ZSTR_VAL(string_key), ZSTR_LEN(string_key)));
                         it->index = 0;
                     } else {
                         it->key = NULL;
@@ -282,7 +284,7 @@ bool handlebars_std_zval_iterator_next(struct handlebars_value_iterator * it)
                 if( entry ) {
                     ret = true;
                     if( HASH_KEY_IS_STRING == zend_hash_get_current_key_ex(ht, &string_key, &num_key, data_pointer) ) {
-                        it->key = talloc_steal(it, handlebars_string_ctor(value->ctx, ZSTR_VAL(string_key), ZSTR_LEN(string_key));
+                        it->key = talloc_steal(it, handlebars_string_ctor(value->ctx, ZSTR_VAL(string_key), ZSTR_LEN(string_key)));
                         it->index = 0;
                     } else {
                         it->key = NULL;
