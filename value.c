@@ -146,12 +146,18 @@ static struct handlebars_value * handlebars_std_zval_map_find(struct handlebars_
         case IS_OBJECT:
             if( instanceof_function(Z_OBJCE_P(intern), zend_ce_arrayaccess TSRMLS_CC) ) {
 #ifdef ZEND_ENGINE_3
+                zval rv = {0};
                 zval prop;
                 ZVAL_STRINGL(&prop, key->val, key->len);
                 if( Z_OBJ_HT_P(intern)->has_dimension(intern, &prop, 0 TSRMLS_CC) ) {
-                    entry = Z_OBJ_HT_P(intern)->read_dimension(intern, &prop, 0, entry TSRMLS_CC);
+                    entry = Z_OBJ_HT_P(intern)->read_dimension(intern, &prop, 0, &rv TSRMLS_CC);
                 }
                 zval_ptr_dtor(&prop);
+                if( entry ) {
+                    ret = handlebars_value_from_zval(value->ctx, entry TSRMLS_CC);
+                    zval_ptr_dtor(&rv);
+                    return ret;
+                }
 #else
                 zval * prop;
                 MAKE_STD_ZVAL(prop);
