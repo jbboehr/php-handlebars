@@ -18,6 +18,7 @@
 #include "php5to7.h"
 #include "php_handlebars.h"
 
+#include "handlebars.h"
 #include "handlebars_cache.h"
 
 /* {{{ Prototypes */

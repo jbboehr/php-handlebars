@@ -537,7 +537,7 @@ static inline handlebars_value_map_to_zval(struct handlebars_value * value, zval
 #else
         zval * tmp;
         MAKE_STD_ZVAL(tmp);
-        handlebars_value_to_zval(it->current, tmp TSRMLS_CC);
+        handlebars_value_to_zval(it.current, tmp TSRMLS_CC);
         add_assoc_zval_ex(val, it.key->val, it.key->len + 1, tmp);
 #endif
     }
