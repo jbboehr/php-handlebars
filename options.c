@@ -164,7 +164,7 @@ PHPAPI void php_handlebars_options_ctor(
     intern->inverse = options->inverse;
 
     if( options->name ) {
-        zend_update_property_stringl(Z_OBJCE_P(z_options), z_options, ZEND_STRL("name"), options->name, talloc_array_length(options->name) - 1 TSRMLS_CC);
+        zend_update_property_stringl(Z_OBJCE_P(z_options), z_options, ZEND_STRL("name"), options->name->val, options->name->len TSRMLS_CC);
     }
 
     // @todo we should use closures

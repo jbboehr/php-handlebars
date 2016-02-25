@@ -198,10 +198,9 @@ static struct handlebars_value * handlebars_std_zval_array_find(struct handlebar
     return ret;
 }
 
-struct handlebars_value_iterator * handlebars_std_zval_iterator_ctor(struct handlebars_value * value)
+bool handlebars_std_zval_iterator_init(struct handlebars_value_iterator * it, struct handlebars_value * value)
 {
     zval * intern = get_intern_zval(value);
-    struct handlebars_value_iterator * it = handlebars_talloc_zero(value, struct handlebars_value_iterator);
     zval ** data_entry = NULL;
     HashPosition * data_pointer = handlebars_talloc_zero(value->ctx, HashPosition);
     HashTable * ht;
@@ -225,7 +224,7 @@ struct handlebars_value_iterator * handlebars_std_zval_iterator_ctor(struct hand
                 entry = zend_hash_get_current_data_ex(ht, data_pointer);
                 if( entry ) {
                     if( HASH_KEY_IS_STRING == zend_hash_get_current_key_ex(ht, &string_key, &num_key, data_pointer) ) {
-                        it->key = talloc_steal(it, handlebars_string_ctor(value->ctx, ZSTR_VAL(string_key), ZSTR_LEN(string_key)));
+                        it->key = handlebars_string_ctor(value->ctx, ZSTR_VAL(string_key), ZSTR_LEN(string_key));
                         it->index = 0;
                     } else {
                         it->key = NULL;
@@ -244,7 +243,7 @@ struct handlebars_value_iterator * handlebars_std_zval_iterator_ctor(struct hand
                 if( SUCCESS == zend_hash_get_current_data_ex(ht, (void**) &data_entry, data_pointer) ) {
                     key_type = zend_hash_get_current_key_ex(ht, &key_str, &key_len, &key_nindex, false, data_pointer);
                     if( key_type == HASH_KEY_IS_STRING ) {
-                        it->key = talloc_steal(it, handlebars_string_ctor(value->ctx, key_str, key_len - 1));
+                        it->key = handlebars_string_ctor(value->ctx, key_str, key_len - 1);
                         it->index = 0;
                     } else {
                         it->key = NULL;
@@ -278,6 +277,11 @@ bool handlebars_std_zval_iterator_next(struct handlebars_value_iterator * it)
     HashPosition * data_pointer;
     TSRMLS_FETCH();
 
+    if( it->key ) {
+        handlebars_talloc_free(it->key);
+        it->key = NULL;
+    }
+
     switch( Z_TYPE_P(intern) ) {
         case IS_ARRAY:
             ht = Z_ARRVAL_P(intern);
@@ -290,7 +294,7 @@ bool handlebars_std_zval_iterator_next(struct handlebars_value_iterator * it)
                 if( entry ) {
                     ret = true;
                     if( HASH_KEY_IS_STRING == zend_hash_get_current_key_ex(ht, &string_key, &num_key, data_pointer) ) {
-                        it->key = talloc_steal(it, handlebars_string_ctor(value->ctx, ZSTR_VAL(string_key), ZSTR_LEN(string_key)));
+                        it->key = handlebars_string_ctor(value->ctx, ZSTR_VAL(string_key), ZSTR_LEN(string_key));
                         it->index = 0;
                     } else {
                         it->key = NULL;
@@ -311,7 +315,7 @@ bool handlebars_std_zval_iterator_next(struct handlebars_value_iterator * it)
 
                     ret = true;
                     if( key_type == HASH_KEY_IS_STRING ) {
-                        it->key = talloc_steal(it, handlebars_string_ctor(value->ctx, key_str, key_len - 1));
+                        it->key = handlebars_string_ctor(value->ctx, key_str, key_len - 1);
                         it->index = 0;
                     } else {
                         it->key = NULL;
@@ -325,10 +329,10 @@ bool handlebars_std_zval_iterator_next(struct handlebars_value_iterator * it)
             } while(0);
             break;
         case IS_OBJECT:
+            // @todo
             break;
         default:
-            handlebars_talloc_free(it);
-            it = NULL;
+            // Do nothing
             break;
 
     }
@@ -491,7 +495,7 @@ static struct handlebars_value_handlers handlebars_value_std_zval_handlers = {
         &handlebars_std_zval_type,
         &handlebars_std_zval_map_find,
         &handlebars_std_zval_array_find,
-        &handlebars_std_zval_iterator_ctor,
+        &handlebars_std_zval_iterator_init,
         &handlebars_std_zval_iterator_next,
         &handlebars_std_zval_call,
         &handlebars_std_zval_count
@@ -501,10 +505,11 @@ static struct handlebars_value_handlers handlebars_value_std_zval_handlers = {
 /* {{{ handlebars_value_to_zval */
 static inline handlebars_value_array_to_zval(struct handlebars_value * value, zval * val TSRMLS_DC)
 {
-    struct handlebars_value_iterator * it = handlebars_value_iterator_ctor(value);
+    struct handlebars_value_iterator it;
+    handlebars_value_iterator_init(&it, value);
     array_init(val);
 
-    for( ; it->current != NULL; handlebars_value_iterator_next(it) ) {
+    for( ; it.current != NULL; handlebars_value_iterator_next(&it) ) {
 #ifdef ZEND_ENGINE_3
         zval _tmp;
         zval * tmp = &_tmp;
@@ -512,27 +517,28 @@ static inline handlebars_value_array_to_zval(struct handlebars_value * value, zv
         zval * tmp;
         MAKE_STD_ZVAL(tmp);
 #endif
-        handlebars_value_to_zval(it->current, tmp TSRMLS_CC);
+        handlebars_value_to_zval(it.current, tmp TSRMLS_CC);
         add_next_index_zval(val, tmp);
     }
 }
 
 static inline handlebars_value_map_to_zval(struct handlebars_value * value, zval * val TSRMLS_DC)
 {
-    struct handlebars_value_iterator * it = handlebars_value_iterator_ctor(value);
+    struct handlebars_value_iterator it;
+    handlebars_value_iterator_init(&it, value);
     array_init(val);
 
-    for( ; it->current != NULL; handlebars_value_iterator_next(it) ) {
+    for( ; it.current != NULL; handlebars_value_iterator_next(&it) ) {
 #ifdef ZEND_ENGINE_3
         zval _tmp;
         zval * tmp = &_tmp;
-        handlebars_value_to_zval(it->current, tmp);
-        add_assoc_zval_ex(val, it->key->val, it->key->len, tmp); // @todo does this need + 1
+        handlebars_value_to_zval(it.current, tmp);
+        add_assoc_zval_ex(val, it.key->val, it.key->len, tmp); // @todo does this need + 1
 #else
         zval * tmp;
         MAKE_STD_ZVAL(tmp);
         handlebars_value_to_zval(it->current, tmp TSRMLS_CC);
-        add_assoc_zval_ex(val, it->key->val, it->key->len + 1, tmp);
+        add_assoc_zval_ex(val, it.key->val, it.key->len + 1, tmp);
 #endif
     }
 }
