@@ -45,7 +45,7 @@ static handlebars_zval_intern_dtor(struct handlebars_zval * intern) {
 #endif
 }
 static inline zval * get_intern_zval(struct handlebars_value * value) {
-    struct handlebars_zval * obj = talloc_get_type(value->v.usr, struct handlebars_zval);
+    struct handlebars_zval * obj = talloc_get_type(value->v.usr.ptr, struct handlebars_zval);
     if( !obj ) {
         return NULL;
     }
@@ -57,14 +57,14 @@ static inline zval * get_intern_zval(struct handlebars_value * value) {
 }
 static inline void set_intern_zval(struct handlebars_value * value, zval * val) {
     struct handlebars_zval * obj;
-    if( !value->v.usr ) {
-        value->v.usr = obj = talloc_zero(value->ctx, struct handlebars_zval);
+    if( !value->v.usr.ptr ) {
+        value->v.usr.ptr = obj = talloc_zero(value->ctx, struct handlebars_zval);
 #ifndef ZEND_ENGINE_3
         MAKE_STD_ZVAL(obj->intern);
 #endif
         talloc_set_destructor(obj, handlebars_zval_intern_dtor);
     } else {
-        obj = talloc_get_type(value->v.usr, struct handlebars_zval);
+        obj = talloc_get_type(value->v.usr.ptr, struct handlebars_zval);
     }
     obj->int_array = -1;
     obj->callable = -1;
@@ -97,7 +97,7 @@ static void handlebars_std_zval_convert(struct handlebars_value * value, bool re
 
 static enum handlebars_value_type handlebars_std_zval_type(struct handlebars_value * value)
 {
-    struct handlebars_zval * obj = talloc_get_type(value->v.usr, struct handlebars_zval);
+    struct handlebars_zval * obj = talloc_get_type(value->v.usr.ptr, struct handlebars_zval);
     zval * intern = get_intern_zval(value);
     TSRMLS_FETCH();
 
@@ -625,7 +625,7 @@ PHPAPI struct handlebars_value * handlebars_value_from_zval(struct handlebars_co
             // fall-through
         case IS_ARRAY:
             value->type = HANDLEBARS_VALUE_TYPE_USER;
-            value->handlers = &handlebars_value_std_zval_handlers;
+            value->v.usr.handlers = &handlebars_value_std_zval_handlers;
             set_intern_zval(value, val);
             break;
         default:
