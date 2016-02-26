@@ -56,11 +56,21 @@ static inline void * php5to7_zend_hash_update_mem(HashTable *ht, const char *str
 		return NULL;
 	}
 }
+static inline void * php5to7_zend_hash_str_add_ptr(HashTable *ht, const char *str, strsize_t len, void *pData) {
+	void * pDest;
+	if( zend_hash_update(ht, str, len + 1, pData, 0, &pDest) == SUCCESS ) {
+		return pDest;
+	} else {
+		return NULL;
+	}
+}
 
 #define _DECLARE_ZVAL(name) zval * name
 #define _INIT_ZVAL INIT_ZVAL
 #define _ALLOC_INIT_ZVAL(name) ALLOC_INIT_ZVAL(name)
 #define php5to7_zval_ptr_dtor(z) zval_ptr_dtor((&z))
+
+#define PHP5TO7_MAKE_STD_ZVAL MAKE_STD_ZVAL
 
 #else /* PHP_MAJOR_VERSION >= 7 */
 
@@ -90,11 +100,14 @@ typedef size_t strsize_t;
 #define php5to7_zend_hash_index_find zend_hash_index_find
 #define php5to7_zend_hash_find_ptr zend_hash_str_find_ptr
 #define php5to7_zend_hash_update_mem zend_hash_str_update_mem
+#define php5to7_zend_hash_str_add_ptr zend_hash_str_add_ptr
 
 #define _DECLARE_ZVAL(name) zval name ## _v; zval * name = &name ## _v
 #define _INIT_ZVAL ZVAL_NULL
 #define _ALLOC_INIT_ZVAL(name) ZVAL_NULL(name)
 #define php5to7_zval_ptr_dtor(z) zval_ptr_dtor(z)
+
+#define PHP5TO7_MAKE_STD_ZVAL(name) zval name ## _v = {0}; name = &name ## _v;
 
 #endif
 

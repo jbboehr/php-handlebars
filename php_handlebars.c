@@ -35,6 +35,7 @@ extern PHP_MINIT_FUNCTION(handlebars_tokenizer);
 extern PHP_MINIT_FUNCTION(handlebars_utils);
 extern PHP_MINIT_FUNCTION(handlebars_value);
 extern PHP_MINIT_FUNCTION(handlebars_vm);
+extern PHP_MSHUTDOWN_FUNCTION(handlebars_options);
 
 ZEND_DECLARE_MODULE_GLOBALS(handlebars);
 /* }}} Prototypes */
@@ -113,6 +114,8 @@ static PHP_MINIT_FUNCTION(handlebars)
 static PHP_MSHUTDOWN_FUNCTION(handlebars)
 {
     UNREGISTER_INI_ENTRIES();
+
+    PHP_MSHUTDOWN(handlebars_options)(SHUTDOWN_FUNC_ARGS_PASSTHRU);
 
     return SUCCESS;
 }
