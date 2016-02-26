@@ -355,9 +355,9 @@ long handlebars_std_zval_count(struct handlebars_value * value)
 
 }
 
-struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * value, struct handlebars_options * options)
+struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * value, HANDLEBARS_HELPER_ARGS)
 {
-    struct handlebars_zval * obj = value->v.ptr;
+    struct handlebars_zval * obj = value->v.usr.ptr;
     zval * intern = get_intern_zval(value);
     zval * z_ret;
     TSRMLS_FETCH();
@@ -379,14 +379,14 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     zval z_options;
     php_handlebars_options_ctor(options, &z_options TSRMLS_CC);
 
-    // Convert params
-    size_t n_args = handlebars_stack_length(options->params) + 1;
-    zval *z_const_args = emalloc(n_args * sizeof(zval));
+    // Convert paramsma
+    int n_args = argc + 1;
+    zval z_const_args[argc + 1];
+    memset(z_const_args, 0, sizeof(z_const_args));
 
     int i;
-    for( i = 0; i < n_args - 1; i++ ) {
-        struct handlebars_value * val = handlebars_stack_get(options->params, i);
-        handlebars_value_to_zval(val, &z_const_args[i]);
+    for( i = 0; i < argc; i++ ) {
+        handlebars_value_to_zval(argv[i], &z_const_args[i]);
     }
 
     z_const_args[n_args - 1] = z_options;
@@ -415,7 +415,6 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
         zval_ptr_dtor(&z_const_args[i]);
     }
     zval_ptr_dtor(&fci.function_name);
-    efree(z_const_args);
 
 #else
     // Construct options
@@ -424,14 +423,14 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     php_handlebars_options_ctor(options, z_options TSRMLS_CC);
 
     // Convert params
-    size_t n_args = handlebars_stack_length(options->params) + 1;
-    zval **z_const_args = emalloc(n_args * sizeof(zval *));
+    int n_args = argc + 1;
+    zval * z_const_args[n_args];
+    memset(z_const_args, 0, sizeof(z_const_args));
 
     int i;
-    for( i = 0; i < n_args - 1; i++ ) {
-        struct handlebars_value * val = handlebars_stack_get(options->params, i);
+    for( i = 0; i < argc; i++ ) {
         MAKE_STD_ZVAL(z_const_args[i]);
-        handlebars_value_to_zval(val, z_const_args[i] TSRMLS_CC);
+        handlebars_value_to_zval(argv[i], z_const_args[i] TSRMLS_CC);
     }
 
     z_const_args[n_args - 1] = z_options;
@@ -445,7 +444,6 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     for( i = 0; i < n_args; i++ ) {
         zval_ptr_dtor(&z_const_args[i]);
     }
-    efree(z_const_args);
     zval_ptr_dtor(&z_const);
 #endif
 
