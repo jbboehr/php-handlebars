@@ -320,6 +320,9 @@ PHP_METHOD(HandlebarsOptions, __construct)
     ZEND_PARSE_PARAMETERS_END();
 #endif
 
+    zend_update_property_null(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("fn") TSRMLS_CC);
+    zend_update_property_null(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("inverse") TSRMLS_CC);
+
     if( props && Z_TYPE_P(props) == IS_ARRAY ) {
         HashTable * ht = Z_ARRVAL_P(props);
 #ifdef ZEND_ENGINE_3

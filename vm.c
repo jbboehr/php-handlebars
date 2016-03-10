@@ -258,6 +258,12 @@ done:
     intern->context->jmp = NULL;
 }
 
+
+
+static void php_handlebars_vm_render_internal() {
+
+}
+
 PHP_METHOD(HandlebarsVM, render)
 {
     zval * _this_zval;
@@ -354,6 +360,120 @@ done:
     intern->context->jmp = NULL;
 }
 
+PHP_METHOD(HandlebarsVM, renderFile)
+{
+    zval * _this_zval;
+    char * filename_str;
+    strsize_t filename_len;
+    char * tmpl_str;
+    strsize_t tmpl_len;
+    zval * z_context = NULL;
+    zval * z_options = NULL;
+    zval * z_partials;
+    void * mctx = NULL;
+    struct handlebars_context * ctx = NULL;
+    struct handlebars_parser * parser;
+    struct handlebars_compiler * compiler;
+    struct handlebars_vm * vm;
+    struct handlebars_value * context;
+    zend_long pool_size = HANDLEBARS_G(pool_size);
+    jmp_buf buf;
+    jmp_buf buf2;
+
+#ifndef FAST_ZPP
+    if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Os|zz",
+            &_this_zval, HandlebarsVM_ce_ptr, &filename_str, &filename_len, &z_context, &z_options) == FAILURE ) {
+        return;
+    }
+#else
+    _this_zval = getThis();
+    ZEND_PARSE_PARAMETERS_START(1, 3)
+            Z_PARAM_STRING(filename_str, filename_len)
+            Z_PARAM_OPTIONAL
+            Z_PARAM_ZVAL(z_context)
+            Z_PARAM_ZVAL(z_options)
+    ZEND_PARSE_PARAMETERS_END();
+#endif
+
+#if PHP_MAJOR_VERSION >= 7
+    // Dereference zval
+    if( Z_TYPE_P(z_context) == IS_REFERENCE ) {
+        ZVAL_DEREF(z_context);
+    }
+#endif
+
+    struct php_handlebars_vm_obj * intern = Z_HANDLEBARS_VM_P(_this_zval);
+    vm = intern->vm;
+
+    struct handlebars_string * filename = handlebars_string_ctor(HBSCTX(vm), filename_str, filename_len);
+
+    // Lookup cache entry
+    struct handlebars_cache_entry * cache_entry = handlebars_cache_find(HANDLEBARS_G(cache), filename);
+    if( cache_entry ) {
+        compiler = cache_entry->compiler;
+    } else {
+        // Read file
+        php_stream *stream;
+        zend_string *contents;
+        struct handlebars_string * tmpl;
+
+        stream = php_stream_open_wrapper_ex(filename_str, "rb", REPORT_ERRORS, NULL, NULL);
+        if( !stream ) {
+            RETURN_FALSE;
+        }
+
+        if ((contents = php_stream_copy_to_mem(stream, PHP_STREAM_COPY_ALL, 0)) != NULL) {
+            tmpl = handlebars_string_ctor(HBSCTX(vm), contents->val, contents->len);
+        } else {
+            RETURN_FALSE;
+        }
+
+        ctx = handlebars_context_ctor_ex(HANDLEBARS_G(root));
+        php_handlebars_try(HandlebarsRuntimeException_ce_ptr, ctx, &buf);
+        parser = handlebars_parser_ctor(ctx);
+        compiler = handlebars_compiler_ctor(ctx);
+
+        // Parse
+        php_handlebars_try(HandlebarsParseException_ce_ptr, parser, &buf);
+        parser->tmpl = tmpl;
+        handlebars_parse(parser);
+
+        // Compile
+        php_handlebars_try(HandlebarsCompileException_ce_ptr, compiler, &buf);
+        php_handlebars_process_options_zval(compiler, vm, z_options);
+        /*if( z_helpers ) {
+            php_handlebars_fetch_known_helpers(compiler, z_helpers TSRMLS_CC);
+        }*/
+        handlebars_compiler_compile(compiler, parser->program);
+
+        // Save cache entry
+        handlebars_cache_add(HANDLEBARS_G(cache), filename, compiler);
+    }
+
+    // Make context
+    php_handlebars_try(HandlebarsRuntimeException_ce_ptr, intern->context, &buf2);
+    php_handlebars_try(HandlebarsRuntimeException_ce_ptr, vm, &buf);
+    context = handlebars_value_from_zval(HBSCTX(vm), z_context TSRMLS_CC);
+
+    // Execute
+    vm->flags = compiler->flags;
+    handlebars_vm_execute(vm, compiler, context);
+
+    if( vm->buffer ) { // @todo this probably shouldn't be null?
+                PHP5TO7_RETVAL_STRING(vm->buffer);
+    }
+
+    done:
+    if( ctx ) {
+        handlebars_context_dtor(ctx);
+    }
+    talloc_free(mctx);
+
+    talloc_free_children(intern->vm); // potentially dangerous
+    vm->ctx.jmp = NULL;
+    intern->context->jmp = NULL;
+}
+
 /* {{{ Argument Info */
 ZEND_BEGIN_ARG_INFO_EX(HandlebarsVM_setHelpers_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
     ZEND_ARG_OBJ_INFO(0, helpers, Handlebars\\Registry, 0)
@@ -368,6 +488,12 @@ ZEND_BEGIN_ARG_INFO_EX(HandlebarsVM_render_args, ZEND_SEND_BY_VAL, ZEND_RETURN_V
     ZEND_ARG_INFO(0, context)
     ZEND_ARG_ARRAY_INFO(0, options, 1)
 ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsVM_renderFile_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_INFO(0, filename)
+    ZEND_ARG_INFO(0, context)
+    ZEND_ARG_ARRAY_INFO(0, options, 1)
+ZEND_END_ARG_INFO()
 /* }}} Argument Info */
 
 /* {{{ HandlebarsVM methods */
@@ -375,6 +501,7 @@ static zend_function_entry HandlebarsCompiler_methods[] = {
     PHP_ME(HandlebarsVM, setHelpers, HandlebarsVM_setHelpers_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsVM, setPartials, HandlebarsVM_setPartials_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsVM, render, HandlebarsVM_render_args, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsVM, renderFile, HandlebarsVM_renderFile_args, ZEND_ACC_PUBLIC)
     { NULL, NULL, NULL }
 };
 /* }}} HandlebarsVM methods */
