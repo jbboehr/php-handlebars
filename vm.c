@@ -258,12 +258,6 @@ done:
     intern->context->jmp = NULL;
 }
 
-
-
-static void php_handlebars_vm_render_internal() {
-
-}
-
 PHP_METHOD(HandlebarsVM, render)
 {
     zval * _this_zval;
@@ -460,7 +454,7 @@ PHP_METHOD(HandlebarsVM, renderFile)
     handlebars_vm_execute(vm, compiler, context);
 
     if( vm->buffer ) { // @todo this probably shouldn't be null?
-                PHP5TO7_RETVAL_STRING(vm->buffer);
+        PHP5TO7_RETVAL_STRING(vm->buffer);
     }
 
     done:
@@ -474,35 +468,13 @@ PHP_METHOD(HandlebarsVM, renderFile)
     intern->context->jmp = NULL;
 }
 
-/* {{{ Argument Info */
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsVM_setHelpers_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
-    ZEND_ARG_OBJ_INFO(0, helpers, Handlebars\\Registry, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsVM_setPartials_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
-    ZEND_ARG_OBJ_INFO(0, partials, Handlebars\\Registry, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsVM_render_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
-    ZEND_ARG_INFO(0, tmpl)
-    ZEND_ARG_INFO(0, context)
-    ZEND_ARG_ARRAY_INFO(0, options, 1)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsVM_renderFile_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
-    ZEND_ARG_INFO(0, filename)
-    ZEND_ARG_INFO(0, context)
-    ZEND_ARG_ARRAY_INFO(0, options, 1)
-ZEND_END_ARG_INFO()
-/* }}} Argument Info */
-
 /* {{{ HandlebarsVM methods */
 static zend_function_entry HandlebarsCompiler_methods[] = {
-    PHP_ME(HandlebarsVM, setHelpers, HandlebarsVM_setHelpers_args, ZEND_ACC_PUBLIC)
-    PHP_ME(HandlebarsVM, setPartials, HandlebarsVM_setPartials_args, ZEND_ACC_PUBLIC)
-    PHP_ME(HandlebarsVM, render, HandlebarsVM_render_args, ZEND_ACC_PUBLIC)
-    PHP_ME(HandlebarsVM, renderFile, HandlebarsVM_renderFile_args, ZEND_ACC_PUBLIC)
-    { NULL, NULL, NULL }
+    PHP_ME(HandlebarsVM, setHelpers, HandlebarsImpl_setHelpers_args, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsVM, setPartials, HandlebarsImpl_setPartials_args, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsVM, render, HandlebarsImpl_render_args, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsVM, renderFile, HandlebarsImpl_renderFile_args, ZEND_ACC_PUBLIC)
+    PHP_FE_END
 };
 /* }}} HandlebarsVM methods */
 
@@ -520,11 +492,8 @@ PHP_MINIT_FUNCTION(handlebars_vm)
     HandlebarsVM_obj_handlers.clone_obj = NULL;
 
     INIT_CLASS_ENTRY(ce, "Handlebars\\VM", HandlebarsCompiler_methods);
-    HandlebarsVM_ce_ptr = zend_register_internal_class(&ce TSRMLS_CC);
+    HandlebarsVM_ce_ptr = php5to7_register_internal_class_ex(&ce, HandlebarsBaseImpl_ce_ptr);
     HandlebarsVM_ce_ptr ->create_object = php_handlebars_vm_obj_create;
-
-    zend_declare_property_null(HandlebarsVM_ce_ptr, ZEND_STRL("helpers"), ZEND_ACC_PROTECTED TSRMLS_CC);
-    zend_declare_property_null(HandlebarsVM_ce_ptr, ZEND_STRL("partials"), ZEND_ACC_PROTECTED TSRMLS_CC);
 
     return SUCCESS;
 }

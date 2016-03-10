@@ -28,6 +28,8 @@ extern zend_module_entry handlebars_module_entry;
 #define HANDLEBARS_G(v) (handlebars_globals.v)
 #endif
 
+extern zend_class_entry * HandlebarsImpl_ce_ptr;
+extern zend_class_entry * HandlebarsBaseImpl_ce_ptr;
 extern zend_class_entry * HandlebarsCompileContext_ce_ptr;
 extern zend_class_entry * HandlebarsCompiler_ce_ptr;
 extern zend_class_entry * HandlebarsException_ce_ptr;
@@ -89,6 +91,33 @@ PHPAPI zval * handlebars_value_to_zval(struct handlebars_value * value, zval * v
             goto done; \
         } \
     } while(0)
+
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_getHelpers_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_setHelpers_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_OBJ_INFO(0, helpers, Handlebars\\Registry, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_setPartials_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_OBJ_INFO(0, partials, Handlebars\\Registry, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_setDecorators_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_OBJ_INFO(0, partials, Handlebars\\Registry, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_render_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_INFO(0, tmpl)
+    ZEND_ARG_INFO(0, context)
+    ZEND_ARG_ARRAY_INFO(0, options, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_renderFile_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_INFO(0, filename)
+    ZEND_ARG_INFO(0, context)
+    ZEND_ARG_ARRAY_INFO(0, options, 1)
+ZEND_END_ARG_INFO()
 
 #endif	/* PHP_HANDLEBARS_H */
 

@@ -25,6 +25,7 @@
 extern PHP_MINIT_FUNCTION(handlebars_compile_context);
 extern PHP_MINIT_FUNCTION(handlebars_compiler);
 extern PHP_MINIT_FUNCTION(handlebars_exceptions);
+extern PHP_MINIT_FUNCTION(handlebars_impl);
 extern PHP_MINIT_FUNCTION(handlebars_parser);
 extern PHP_MINIT_FUNCTION(handlebars_opcode);
 extern PHP_MINIT_FUNCTION(handlebars_options);
@@ -91,6 +92,8 @@ static PHP_MINIT_FUNCTION(handlebars)
         cache->max_size = HANDLEBARS_G(cache_max_size);
         HANDLEBARS_G(cache) = cache;
     }
+
+    PHP_MINIT(handlebars_impl)(INIT_FUNC_ARGS_PASSTHRU);
 
     PHP_MINIT(handlebars_compile_context)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_compiler)(INIT_FUNC_ARGS_PASSTHRU);

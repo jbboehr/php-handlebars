@@ -14,6 +14,7 @@ AC_DEFUN([PHP_HANDLEBARS_ADD_SOURCES], [
 if test "$PHP_HANDLEBARS" != "no"; then
 	PHP_HANDLEBARS_ADD_SOURCES([
 		php_handlebars.c
+		impl.c
 		compile_context.c
 		compiler.c
 		exceptions.c
