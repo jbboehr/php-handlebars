@@ -320,6 +320,10 @@ interface Registry extends ArrayAccess, IteratorAggregate {}
 class DefaultRegistry extends ArrayObject implements Registry {}
 
 interface Impl {
+    const MODE_COMPILER = 'compiler';
+    const MODE_VM = 'vm';
+    const MODE_CVM = 'cvm';
+
     public function getHelpers();
     public function getPartials();
     public function getDecorators();

@@ -590,6 +590,7 @@ PHP_MINIT_FUNCTION(handlebars_options)
     register_prop_handler("hash", hbs_read_hash);
     register_prop_handler("data", hbs_read_data);
 
+    // Note: declaring these prevents dynamic initialization
     /*
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("name"), ZEND_ACC_PUBLIC TSRMLS_CC);
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("hash"), ZEND_ACC_PUBLIC TSRMLS_CC);
@@ -597,6 +598,7 @@ PHP_MINIT_FUNCTION(handlebars_options)
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("inverse"), ZEND_ACC_PUBLIC TSRMLS_CC);
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("scope"), ZEND_ACC_PUBLIC TSRMLS_CC);
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("data"), ZEND_ACC_PUBLIC TSRMLS_CC);
+    */
 
     // Used by handlebars.php
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("ids"), ZEND_ACC_PUBLIC TSRMLS_CC);
@@ -607,7 +609,6 @@ PHP_MINIT_FUNCTION(handlebars_options)
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("contexts"), ZEND_ACC_PUBLIC TSRMLS_CC);
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("args"), ZEND_ACC_PUBLIC TSRMLS_CC);
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("partial"), ZEND_ACC_PUBLIC TSRMLS_CC);
-    */
 
     return SUCCESS;
 }

@@ -200,11 +200,23 @@ void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, z
 }
 /* }}} php_handlebars_fetch_known_helpers */
 
+static void php_handlebars_vm_set_helpers(zval * _this_zval, zval * helpers)
+{
+    jmp_buf buf;
+    struct php_handlebars_vm_obj * intern = Z_HANDLEBARS_VM_P(_this_zval);
+    php_handlebars_try(HandlebarsRuntimeException_ce_ptr, intern->context, &buf);
+    if( intern->helpers ) {
+        handlebars_value_dtor(intern->helpers);
+    }
+    intern->vm->helpers = intern->helpers = handlebars_value_from_zval(HBSCTX(intern->context), helpers TSRMLS_CC);
+    zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("helpers"), helpers TSRMLS_CC);
+    done:
+    intern->context->jmp = NULL;
+}
 PHP_METHOD(HandlebarsVM, setHelpers)
 {
     zval * _this_zval;
     zval * helpers;
-    jmp_buf buf;
 
 #ifndef FAST_ZPP
     if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), (char *) "OO",
@@ -217,15 +229,20 @@ PHP_METHOD(HandlebarsVM, setHelpers)
         Z_PARAM_OBJECT_OF_CLASS(helpers, HandlebarsRegistry_ce_ptr)
     ZEND_PARSE_PARAMETERS_END();
 #endif
+    php_handlebars_vm_set_helpers(_this_zval, helpers);
+}
 
+static void php_handlebars_vm_set_partials(zval * _this_zval, zval * partials)
+{
+    jmp_buf buf;
     struct php_handlebars_vm_obj * intern = Z_HANDLEBARS_VM_P(_this_zval);
     php_handlebars_try(HandlebarsRuntimeException_ce_ptr, intern->context, &buf);
-    if( intern->helpers ) {
-        handlebars_value_dtor(intern->helpers);
+    if( intern->partials ) {
+        handlebars_value_dtor(intern->partials);
     }
-    intern->vm->helpers = intern->helpers = handlebars_value_from_zval(HBSCTX(intern->context), helpers TSRMLS_CC);
-    zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("helpers"), helpers TSRMLS_CC);
-done:
+    intern->vm->partials = intern->partials = handlebars_value_from_zval(HBSCTX(intern->context), partials TSRMLS_CC);
+    zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("partials"), partials TSRMLS_CC);
+    done:
     intern->context->jmp = NULL;
 }
 
@@ -233,7 +250,6 @@ PHP_METHOD(HandlebarsVM, setPartials)
 {
     zval * _this_zval;
     zval * partials;
-    jmp_buf buf;
 
 #ifndef FAST_ZPP
     if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), (char *) "OO",
@@ -247,15 +263,38 @@ PHP_METHOD(HandlebarsVM, setPartials)
     ZEND_PARSE_PARAMETERS_END();
 #endif
 
-    struct php_handlebars_vm_obj * intern = Z_HANDLEBARS_VM_P(_this_zval);
-    php_handlebars_try(HandlebarsRuntimeException_ce_ptr, intern->context, &buf);
-    if( intern->partials ) {
-        handlebars_value_dtor(intern->partials);
+    php_handlebars_vm_set_partials(_this_zval, partials);
+}
+
+PHP_METHOD(HandlebarsVM, __construct)
+{
+    zval * _this_zval;
+    zval * z_options = NULL;
+
+#ifndef FAST_ZPP
+    if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "O|z",
+            &_this_zval, HandlebarsOptions_ce_ptr, &z_options) == FAILURE) {
+        return;
     }
-    intern->vm->partials = intern->partials = handlebars_value_from_zval(HBSCTX(intern->context), partials TSRMLS_CC);
-    zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("partials"), partials TSRMLS_CC);
-done:
-    intern->context->jmp = NULL;
+#else
+    _this_zval = getThis();
+    ZEND_PARSE_PARAMETERS_START(0, 1)
+            Z_PARAM_OPTIONAL
+            Z_PARAM_ARRAY(z_options)
+    ZEND_PARSE_PARAMETERS_END();
+#endif
+
+    if( z_options && Z_TYPE_P(z_options) == IS_ARRAY ) {
+        HashTable * ht = Z_ARRVAL_P(z_options);
+        zval * helpers = php5to7_zend_hash_find(ht, PHP5TO7_STRL("helpers"));
+        zval * partials = php5to7_zend_hash_find(ht, PHP5TO7_STRL("partials"));
+        if( helpers ) {
+            php_handlebars_vm_set_helpers(_this_zval, helpers);
+        }
+        if( partials ) {
+            php_handlebars_vm_set_partials(_this_zval, partials);
+        }
+    }
 }
 
 PHP_METHOD(HandlebarsVM, render)
@@ -468,8 +507,16 @@ PHP_METHOD(HandlebarsVM, renderFile)
     intern->context->jmp = NULL;
 }
 
+/* {{{ Argument Info */
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsVM_construct_args, ZEND_SEND_BY_VAL, 0, 1)
+    ZEND_ARG_ARRAY_INFO(0, options, 1)
+ZEND_END_ARG_INFO()
+/* }}} Argument Info */
+
+
 /* {{{ HandlebarsVM methods */
 static zend_function_entry HandlebarsCompiler_methods[] = {
+    PHP_ME(HandlebarsVM, __construct, HandlebarsVM_construct_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsVM, setHelpers, HandlebarsImpl_setHelpers_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsVM, setPartials, HandlebarsImpl_setPartials_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsVM, render, HandlebarsImpl_render_args, ZEND_ACC_PUBLIC)
