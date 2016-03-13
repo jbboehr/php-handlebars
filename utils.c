@@ -9,6 +9,9 @@
 #include "ext/standard/html.h"
 #include "ext/standard/php_array.h"
 
+#include "handlebars_memory.h"
+#include "handlebars_utils.h"
+
 #include "php5to7.h"
 #include "php_handlebars.h"
 
@@ -278,6 +281,32 @@ PHP_METHOD(HandlebarsUtils, nameLookup)
     php_handlebars_name_lookup(value, field, return_value TSRMLS_CC);
 }
 /* }}} Handlebars\Utils::nameLookup */
+
+/* {{{ proto boolean Handlebars\Utils::indent(string str, string indent) */
+PHP_METHOD(HandlebarsUtils, indent)
+{
+    char * str;
+    strsize_t str_len;
+    char * indent;
+    strsize_t indent_len;
+
+#ifndef FAST_ZPP
+    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &str, &str_len, &indent, &indent_len) == FAILURE ) {
+        return;
+    }
+#else
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+            Z_PARAM_STRING(str, str_len)
+            Z_PARAM_STRING(indent, indent_len)
+    ZEND_PARSE_PARAMETERS_END();
+#endif
+
+    char * tmp = handlebars_indent(HANDLEBARS_G(root), str, indent);
+    PHP5TO7_RETVAL_STRING(tmp);
+    handlebars_talloc_free(tmp);
+
+}
+/* }}} Handlebars\Utils::indent */
 
 /* {{{ proto boolean Handlebars\Utils::isCallable(mixed name) */
 zend_bool inline php_handlebars_is_callable(zval * var TSRMLS_DC)
@@ -710,15 +739,20 @@ ZEND_BEGIN_ARG_INFO_EX(HandlebarsUtils_nameLookup_args, ZEND_SEND_BY_VAL, ZEND_R
     ZEND_ARG_INFO(0, field)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsUtils_isCallable_args, ZEND_SEND_BY_VAL, 0, 1)
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsUtils_indent_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
+    ZEND_ARG_INFO(0, str)
+    ZEND_ARG_INFO(0, indent)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsUtils_isCallable_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
     ZEND_ARG_INFO(0, name)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsUtils_isIntArray_args, ZEND_SEND_BY_VAL, 0, 1)
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsUtils_isIntArray_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
     ZEND_ARG_INFO(0, arr)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsUtils_expression_args, ZEND_SEND_BY_VAL, 0, 1)
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsUtils_expression_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
     ZEND_ARG_INFO(0, value)
 ZEND_END_ARG_INFO()
 /* }}} Argument Info */
@@ -728,6 +762,7 @@ static zend_function_entry HandlebarsUtils_methods[] = {
     PHP_ME(HandlebarsUtils, appendContextPath, HandlebarsUtils_appendContextPath_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(HandlebarsUtils, createFrame, HandlebarsUtils_createFrame_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(HandlebarsUtils, nameLookup, HandlebarsUtils_nameLookup_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsUtils, indent, HandlebarsUtils_indent_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(HandlebarsUtils, isCallable, HandlebarsUtils_isCallable_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(HandlebarsUtils, isIntArray, HandlebarsUtils_isIntArray_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(HandlebarsUtils, expression, HandlebarsUtils_expression_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)

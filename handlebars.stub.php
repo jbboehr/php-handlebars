@@ -155,6 +155,15 @@ class Utils
     public static function escapeExpressionCompat($value) {}
 
     /**
+     * Indent a multi-line string
+     *
+     * @param string $str
+     * @param string $indent
+     * @return string
+     */
+    static public function indent($str, $indent) {}
+
+    /**
      * Similar to is_callable(), but only allows closures and objects
      * with an __invoke method, and removes the second and third 
      * arguments.
