@@ -106,7 +106,7 @@ static inline void php_handlebars_vm_obj_create_common(struct php_handlebars_vm_
         obj->context = handlebars_context_ctor_ex(HANDLEBARS_G(root));
     }
     obj->vm = handlebars_vm_ctor(obj->context);
-    obj->vm->cache = HANDLEBARS_G(cache);
+    obj->vm->cache = HANDLEBARS_G(cache_enabled) ? HANDLEBARS_G(cache) : NULL;
     obj->vm->helpers = obj->helpers = handlebars_value_ctor(obj->context);
     handlebars_value_map_init(obj->helpers);
     obj->vm->partials = obj->partials = handlebars_value_ctor(obj->context);
@@ -306,6 +306,8 @@ PHP_METHOD(HandlebarsVM, render)
     zval * z_options = NULL;
     zval * z_partials;
     void * mctx = NULL;
+    struct handlebars_cache * cache = NULL;
+    struct handlebars_cache_entry * cache_entry = NULL;
     struct handlebars_context * ctx = NULL;
     struct handlebars_parser * parser;
     struct handlebars_compiler * compiler;
@@ -332,19 +334,19 @@ PHP_METHOD(HandlebarsVM, render)
 
 #if PHP_MAJOR_VERSION >= 7
     // Dereference zval
-    if( Z_TYPE_P(z_context) == IS_REFERENCE ) {
+    if( z_context && Z_TYPE_P(z_context) == IS_REFERENCE ) {
         ZVAL_DEREF(z_context);
     }
 #endif
 
     struct php_handlebars_vm_obj * intern = Z_HANDLEBARS_VM_P(_this_zval);
     vm = intern->vm;
+    cache = vm->cache;
 
     struct handlebars_string * tmpl = handlebars_string_ctor(HBSCTX(vm), tmpl_str, tmpl_len);
 
     // Lookup cache entry
-    struct handlebars_cache_entry * cache_entry = handlebars_cache_find(HANDLEBARS_G(cache), tmpl);
-    if( cache_entry ) {
+    if( cache && (cache_entry = handlebars_cache_find(cache, tmpl)) ) {
         compiler = cache_entry->compiler;
     } else {
         ctx = handlebars_context_ctor_ex(HANDLEBARS_G(root));
@@ -366,7 +368,9 @@ PHP_METHOD(HandlebarsVM, render)
         handlebars_compiler_compile(compiler, parser->program);
 
         // Save cache entry
-        handlebars_cache_add(HANDLEBARS_G(cache), tmpl, compiler);
+        if( cache ) {
+            handlebars_cache_add(cache, tmpl, compiler);
+        }
     }
 
     // Make context
@@ -404,6 +408,8 @@ PHP_METHOD(HandlebarsVM, renderFile)
     zval * z_options = NULL;
     zval * z_partials;
     void * mctx = NULL;
+    struct handlebars_cache * cache = NULL;
+    struct handlebars_cache_entry * cache_entry = NULL;
     struct handlebars_context * ctx = NULL;
     struct handlebars_parser * parser;
     struct handlebars_compiler * compiler;
@@ -430,19 +436,19 @@ PHP_METHOD(HandlebarsVM, renderFile)
 
 #if PHP_MAJOR_VERSION >= 7
     // Dereference zval
-    if( Z_TYPE_P(z_context) == IS_REFERENCE ) {
+    if( z_context && Z_TYPE_P(z_context) == IS_REFERENCE ) {
         ZVAL_DEREF(z_context);
     }
 #endif
 
     struct php_handlebars_vm_obj * intern = Z_HANDLEBARS_VM_P(_this_zval);
     vm = intern->vm;
+    cache = vm->cache;
 
     struct handlebars_string * filename = handlebars_string_ctor(HBSCTX(vm), filename_str, filename_len);
 
     // Lookup cache entry
-    struct handlebars_cache_entry * cache_entry = handlebars_cache_find(HANDLEBARS_G(cache), filename);
-    if( cache_entry ) {
+    if( cache && (cache_entry = handlebars_cache_find(HANDLEBARS_G(cache), filename)) ) {
         compiler = cache_entry->compiler;
     } else {
         // Read file

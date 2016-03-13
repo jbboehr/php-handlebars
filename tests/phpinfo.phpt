@@ -16,9 +16,9 @@ Spec Version => %s
 libhandlebars Version => %s
 libhandlebars Handlebars Spec Version => %s
 libhandlebars Mustache Spec Version => %s
+Memory usage => %s
 Cache entries => %s
 Cache size => %s
-Memory usage => %s
 %A
 Directive => Local Value => Master Value
 handlebars.cache.enabled => %s => %s

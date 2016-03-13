@@ -58,7 +58,7 @@ static PHP_INI_MH(OnUpdatePoolSize)
 /* {{{ php.ini directive registration */
 PHP_INI_BEGIN()
     STD_PHP_INI_ENTRY("handlebars.pool_size", "-1", PHP_INI_ALL, OnUpdatePoolSize, pool_size, zend_handlebars_globals, handlebars_globals)
-    STD_PHP_INI_BOOLEAN("handlebars.cache.enabled", "1", PHP_INI_SYSTEM, OnUpdateBool, cache_enabled, zend_handlebars_globals, handlebars_globals)
+    STD_PHP_INI_BOOLEAN("handlebars.cache.enabled", "1", PHP_INI_ALL, OnUpdateBool, cache_enabled, zend_handlebars_globals, handlebars_globals)
     STD_PHP_INI_ENTRY("handlebars.cache.max_size", "52428800", PHP_INI_SYSTEM, OnUpdateLong, cache_max_size, zend_handlebars_globals, handlebars_globals)
     STD_PHP_INI_ENTRY("handlebars.cache.max_entries", "100", PHP_INI_SYSTEM, OnUpdateLong, cache_max_entries, zend_handlebars_globals, handlebars_globals)
     STD_PHP_INI_ENTRY("handlebars.cache.max_age", "3600", PHP_INI_SYSTEM, OnUpdateLong, cache_max_age, zend_handlebars_globals, handlebars_globals)
@@ -82,7 +82,7 @@ static PHP_MINIT_FUNCTION(handlebars)
     HANDLEBARS_G(root) = talloc_new(NULL);
     HANDLEBARS_G(context) = handlebars_context_ctor_ex(HANDLEBARS_G(root));
 
-    if( HANDLEBARS_G(cache_enabled) ) {
+    //if( HANDLEBARS_G(cache_enabled) ) {
         if (handlebars_setjmp_ex(HANDLEBARS_G(context), &buf)) {
             // @todo log?
             return FAILURE;
@@ -91,7 +91,7 @@ static PHP_MINIT_FUNCTION(handlebars)
         cache->max_entries = HANDLEBARS_G(cache_max_entries);
         cache->max_size = HANDLEBARS_G(cache_max_size);
         HANDLEBARS_G(cache) = cache;
-    }
+    //}
 
     PHP_MINIT(handlebars_impl)(INIT_FUNC_ARGS_PASSTHRU);
 
@@ -137,12 +137,14 @@ static PHP_MINFO_FUNCTION(handlebars)
     php_info_print_table_row(2, "libhandlebars Version", handlebars_version_string());
     php_info_print_table_row(2, "libhandlebars Handlebars Spec Version", handlebars_spec_version_string());
     php_info_print_table_row(2, "libhandlebars Mustache Spec Version", handlebars_mustache_spec_version_string());
-    snprintf(buf, sizeof(buf), "%ld", HANDLEBARS_G(cache)->current_entries);
-    php_info_print_table_row(2, "Cache entries", buf);
-    snprintf(buf, sizeof(buf), "%ld", HANDLEBARS_G(cache)->current_size);
-    php_info_print_table_row(2, "Cache size", buf);
     snprintf(buf, sizeof(buf), "%ld", talloc_total_size(HANDLEBARS_G(root)));
     php_info_print_table_row(2, "Memory usage", buf);
+    //if( HANDLEBARS_G(cache) ) {
+        snprintf(buf, sizeof(buf), "%ld", HANDLEBARS_G(cache)->current_entries);
+        php_info_print_table_row(2, "Cache entries", buf);
+        snprintf(buf, sizeof(buf), "%ld", HANDLEBARS_G(cache)->current_size);
+        php_info_print_table_row(2, "Cache size", buf);
+    //}
     php_info_print_table_end();
 
     DISPLAY_INI_ENTRIES();
