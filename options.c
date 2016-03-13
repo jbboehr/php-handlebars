@@ -575,6 +575,7 @@ PHP_MINIT_FUNCTION(handlebars_options)
 #endif
     HandlebarsOptions_obj_handlers.has_property = php_handlebars_options_object_has_property;
     HandlebarsOptions_obj_handlers.read_property = php_handlebars_options_object_read_property;
+    //HandlebarsOptions_obj_handlers.get_properties = php_handlebars_options_object_get_properties;
     HandlebarsOptions_obj_handlers.clone_obj = NULL;
 
     INIT_CLASS_ENTRY(ce, "Handlebars\\Options", HandlebarsOptions_methods);
@@ -590,7 +591,7 @@ PHP_MINIT_FUNCTION(handlebars_options)
     register_prop_handler("hash", hbs_read_hash);
     register_prop_handler("data", hbs_read_data);
 
-    // Note: declaring these prevents dynamic initialization
+    // Note: declaring these prevents dynamic initialization in PHP7
     /*
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("name"), ZEND_ACC_PUBLIC TSRMLS_CC);
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("hash"), ZEND_ACC_PUBLIC TSRMLS_CC);

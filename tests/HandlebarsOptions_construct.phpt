@@ -14,7 +14,23 @@ var_dump(get_class($options));
 var_dump($options);
 --EXPECT--
 string(18) "Handlebars\Options"
-object(Handlebars\Options)#1 (5) {
+object(Handlebars\Options)#1 (13) {
+  ["ids"]=>
+  NULL
+  ["hashIds"]=>
+  NULL
+  ["hashTypes"]=>
+  NULL
+  ["hashContexts"]=>
+  NULL
+  ["types"]=>
+  NULL
+  ["contexts"]=>
+  NULL
+  ["args"]=>
+  NULL
+  ["partial"]=>
+  NULL
   ["fn"]=>
   NULL
   ["inverse"]=>
