@@ -273,7 +273,7 @@ PHP_METHOD(HandlebarsVM, __construct)
 
 #ifndef FAST_ZPP
     if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "O|z",
-            &_this_zval, HandlebarsOptions_ce_ptr, &z_options) == FAILURE) {
+            &_this_zval, HandlebarsVM_ce_ptr, &z_options) == FAILURE) {
         return;
     }
 #else
@@ -286,8 +286,8 @@ PHP_METHOD(HandlebarsVM, __construct)
 
     if( z_options && Z_TYPE_P(z_options) == IS_ARRAY ) {
         HashTable * ht = Z_ARRVAL_P(z_options);
-        zval * helpers = php5to7_zend_hash_find(ht, PHP5TO7_STRL("helpers"));
-        zval * partials = php5to7_zend_hash_find(ht, PHP5TO7_STRL("partials"));
+        zval * helpers = php5to7_zend_hash_find(ht, ZEND_STRL("helpers"));
+        zval * partials = php5to7_zend_hash_find(ht, ZEND_STRL("partials"));
         if( helpers ) {
             php_handlebars_vm_set_helpers(_this_zval, helpers);
         }
@@ -453,7 +453,6 @@ PHP_METHOD(HandlebarsVM, renderFile)
     } else {
         // Read file
         php_stream *stream;
-        zend_string *contents;
         struct handlebars_string * tmpl;
 
         stream = php_stream_open_wrapper_ex(filename_str, "rb", REPORT_ERRORS, NULL, NULL);
@@ -461,11 +460,25 @@ PHP_METHOD(HandlebarsVM, renderFile)
             RETURN_FALSE;
         }
 
+#ifdef ZEND_ENGINE_3
+        zend_string *contents;
         if ((contents = php_stream_copy_to_mem(stream, PHP_STREAM_COPY_ALL, 0)) != NULL) {
             tmpl = handlebars_string_ctor(HBSCTX(vm), contents->val, contents->len);
         } else {
-            RETURN_FALSE;
+            RETVAL_FALSE;
+            goto done;
         }
+#else
+        char * contents_str;
+        strsize_t contents_len = php_stream_copy_to_mem(stream, &contents_str, PHP_STREAM_COPY_ALL, 0);
+        if( contents_len ) {
+            tmpl = handlebars_string_ctor(HBSCTX(vm), contents_str, contents_len);
+            efree(contents_str);
+        } else {
+            RETVAL_FALSE;
+            goto done;
+        }
+#endif
 
         ctx = handlebars_context_ctor_ex(HANDLEBARS_G(root));
         php_handlebars_try(HandlebarsRuntimeException_ce_ptr, ctx, &buf);
@@ -502,7 +515,7 @@ PHP_METHOD(HandlebarsVM, renderFile)
         PHP5TO7_RETVAL_STRING(vm->buffer);
     }
 
-    done:
+done:
     if( ctx ) {
         handlebars_context_dtor(ctx);
     }
@@ -521,7 +534,7 @@ ZEND_END_ARG_INFO()
 
 
 /* {{{ HandlebarsVM methods */
-static zend_function_entry HandlebarsCompiler_methods[] = {
+static zend_function_entry HandlebarsVM_methods[] = {
     PHP_ME(HandlebarsVM, __construct, HandlebarsVM_construct_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsVM, setHelpers, HandlebarsImpl_setHelpers_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsVM, setPartials, HandlebarsImpl_setPartials_args, ZEND_ACC_PUBLIC)
@@ -544,7 +557,7 @@ PHP_MINIT_FUNCTION(handlebars_vm)
 #endif
     HandlebarsVM_obj_handlers.clone_obj = NULL;
 
-    INIT_CLASS_ENTRY(ce, "Handlebars\\VM", HandlebarsCompiler_methods);
+    INIT_CLASS_ENTRY(ce, "Handlebars\\VM", HandlebarsVM_methods);
     HandlebarsVM_ce_ptr = php5to7_register_internal_class_ex(&ce, HandlebarsBaseImpl_ce_ptr);
     HandlebarsVM_ce_ptr ->create_object = php_handlebars_vm_obj_create;
 
