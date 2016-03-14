@@ -24,6 +24,7 @@ typedef long zend_long;
 #define php5to7_zend_read_property(a, b, c, d) zend_read_property(a, b, c, d TSRMLS_CC)
 #define php5to7_zend_read_property2(a, b, c, d, e) zend_read_property(a, b, c, d, e TSRMLS_CC)
 
+#define php5to7_zend_hash_exists(ht, str, len) zend_hash_exists(ht, str, len + 1)
 static inline zval * php5to7_zend_hash_find(const HashTable *ht, const char *arKey, uint nKeyLength) {
 	zval ** entry = NULL;
 	if( zend_hash_find(ht, arKey, nKeyLength + 1, (void **) &entry) == SUCCESS ) {
@@ -96,6 +97,7 @@ typedef size_t strsize_t;
 #define php5to7_zend_read_property(a, b, c, d) zend_read_property(a, b, c, d, NULL)
 #define php5to7_zend_read_property2(a, b, c, d, e) zend_read_property(a, b, c, d, e, NULL)
 
+#define php5to7_zend_hash_exists(ht, str, len) zend_hash_str_exists(ht, str, len)
 #define php5to7_zend_hash_find zend_hash_str_find
 #define php5to7_zend_hash_index_find zend_hash_index_find
 #define php5to7_zend_hash_find_ptr zend_hash_str_find_ptr

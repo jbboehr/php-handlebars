@@ -10,6 +10,7 @@
 #include "Zend/zend_API.h"
 #include "Zend/zend_constants.h"
 #include "Zend/zend_ini.h"
+#include "Zend/zend_modules.h"
 #include "Zend/zend_operators.h"
 #include "main/php.h"
 #include "main/php_ini.h"
@@ -75,6 +76,12 @@ static PHP_MINIT_FUNCTION(handlebars)
     struct handlebars_cache * cache;
 
     REGISTER_INI_ENTRIES();
+
+    if (php5to7_zend_hash_exists(&module_registry, "psr", sizeof("psr") - 1)) {
+        REGISTER_LONG_CONSTANT("HANDLEBARS_USE_PSR", 1, CONST_CS | CONST_PERSISTENT);
+    } else {
+        REGISTER_LONG_CONSTANT("HANDLEBARS_USE_PSR", 0, CONST_CS | CONST_PERSISTENT);
+    }
 
     REGISTER_STRING_CONSTANT("Handlebars\\VERSION", (char *) PHP_HANDLEBARS_VERSION, flags);
     REGISTER_STRING_CONSTANT("Handlebars\\LIBVERSION", (char *) version, flags);
@@ -164,9 +171,18 @@ static PHP_GINIT_FUNCTION(handlebars)
 }
 /* }}} */
 
+/* {{{ handlebars_deps
+ */
+static const zend_module_dep handlebars_deps[] = {
+    ZEND_MOD_OPTIONAL("psr")
+    ZEND_MOD_END
+};
+/* }}} */
+
 /* {{{ Module Entry */
 zend_module_entry handlebars_module_entry = {
-    STANDARD_MODULE_HEADER,
+    STANDARD_MODULE_HEADER_EX, NULL,
+    handlebars_deps,                    /* Deps */
     PHP_HANDLEBARS_NAME,                /* Name */
     NULL,                               /* Functions */
     PHP_MINIT(handlebars),              /* MINIT */
