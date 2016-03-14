@@ -8,6 +8,10 @@
 #include "Zend/zend_interfaces.h"
 #include "main/php.h"
 
+//#ifdef HAVE_HANDLEBARS_PSR
+//#include "ext/psr/psr_log.h"
+//#endif
+
 #include "php5to7.h"
 #include "php_handlebars.h"
 
@@ -15,6 +19,25 @@
 zend_class_entry * HandlebarsImpl_ce_ptr;
 zend_class_entry * HandlebarsBaseImpl_ce_ptr;
 /* }}} Variables & Prototypes */
+
+static zend_class_entry *lookup_class(const char *name TSRMLS_DC)
+{
+#ifdef ZEND_ENGINE_3
+    zend_string * key = zend_string_alloc(strlen(name), 0);
+    zend_str_tolower_copy(ZSTR_VAL(key), name, strlen(name));
+    zend_class_entry *ce = zend_hash_find_ptr(CG(class_table), key);
+    if( NULL == ce ) {
+        zend_error(E_ERROR, "Class %s not found", name);
+    }
+    return ce;
+#else
+    zend_class_entry **ce;
+    if( zend_hash_find(CG(class_table), name, strlen(name)+1, (void **) &ce)==FAILURE ) {
+        zend_error(E_ERROR, "Class %s not found", name);
+    }
+    return *ce;
+#endif
+}
 
 static inline void php_handlebars_impl_getter(INTERNAL_FUNCTION_PARAMETERS, const char * str, strsize_t len)
 {
@@ -157,10 +180,14 @@ PHP_MINIT_FUNCTION(handlebars_impl)
     HandlebarsBaseImpl_ce_ptr = zend_register_internal_class(&ce TSRMLS_CC);
     zend_class_implements(HandlebarsBaseImpl_ce_ptr TSRMLS_CC, 1, HandlebarsImpl_ce_ptr);
 
+    if( handlebars_has_psr ) {
+        zend_class_implements(HandlebarsBaseImpl_ce_ptr TSRMLS_CC, 1, lookup_class("Psr\\Log\\LoggerAwareInterface" TSRMLS_CC));
+        zend_do_implement_trait(HandlebarsBaseImpl_ce_ptr, lookup_class("Psr\\Log\\LoggerAwareTrait") TSRMLS_CC);
+    }
+
     zend_declare_property_null(HandlebarsBaseImpl_ce_ptr, ZEND_STRL("helpers"), ZEND_ACC_PROTECTED TSRMLS_CC);
     zend_declare_property_null(HandlebarsBaseImpl_ce_ptr, ZEND_STRL("partials"), ZEND_ACC_PROTECTED TSRMLS_CC);
     zend_declare_property_null(HandlebarsBaseImpl_ce_ptr, ZEND_STRL("decorators"), ZEND_ACC_PROTECTED TSRMLS_CC);
-
 
     return SUCCESS;
 }

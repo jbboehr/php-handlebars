@@ -16,6 +16,7 @@ Spec Version => %s
 libhandlebars Version => %s
 libhandlebars Handlebars Spec Version => %s
 libhandlebars Mustache Spec Version => %s
+PSR support => %s
 Memory usage => %s
 Cache entries => %s
 Cache size => %s

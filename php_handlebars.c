@@ -40,6 +40,8 @@ extern PHP_MINIT_FUNCTION(handlebars_vm);
 extern PHP_MSHUTDOWN_FUNCTION(handlebars_options);
 
 ZEND_DECLARE_MODULE_GLOBALS(handlebars);
+
+zend_bool handlebars_has_psr = false;
 /* }}} Prototypes */
 
 /* {{{ PHP_INI_MH */
@@ -77,11 +79,12 @@ static PHP_MINIT_FUNCTION(handlebars)
 
     REGISTER_INI_ENTRIES();
 
+#if PHP_API_VERSION >= 20100412
     if (php5to7_zend_hash_exists(&module_registry, "psr", sizeof("psr") - 1)) {
-        REGISTER_LONG_CONSTANT("HANDLEBARS_USE_PSR", 1, CONST_CS | CONST_PERSISTENT);
-    } else {
-        REGISTER_LONG_CONSTANT("HANDLEBARS_USE_PSR", 0, CONST_CS | CONST_PERSISTENT);
+        handlebars_has_psr = 1;
     }
+#endif
+    REGISTER_LONG_CONSTANT("HANDLEBARS_USE_PSR", handlebars_has_psr, CONST_CS | CONST_PERSISTENT);
 
     REGISTER_STRING_CONSTANT("Handlebars\\VERSION", (char *) PHP_HANDLEBARS_VERSION, flags);
     REGISTER_STRING_CONSTANT("Handlebars\\LIBVERSION", (char *) version, flags);
@@ -144,6 +147,7 @@ static PHP_MINFO_FUNCTION(handlebars)
     php_info_print_table_row(2, "libhandlebars Version", handlebars_version_string());
     php_info_print_table_row(2, "libhandlebars Handlebars Spec Version", handlebars_spec_version_string());
     php_info_print_table_row(2, "libhandlebars Mustache Spec Version", handlebars_mustache_spec_version_string());
+    php_info_print_table_row(2, "PSR support", handlebars_has_psr ? "active" : "inactive");
     snprintf(buf, sizeof(buf), "%ld", talloc_total_size(HANDLEBARS_G(root)));
     php_info_print_table_row(2, "Memory usage", buf);
     //if( HANDLEBARS_G(cache) ) {

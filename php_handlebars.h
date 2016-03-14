@@ -54,7 +54,7 @@ struct php_handlebars_cache_entry {
 };
 
 ZEND_BEGIN_MODULE_GLOBALS(handlebars)
-    zend_long  pool_size;
+    zend_long pool_size;
     zend_bool cache_enabled;
     zend_long cache_max_size;
     zend_long cache_max_entries;
@@ -66,6 +66,8 @@ ZEND_BEGIN_MODULE_GLOBALS(handlebars)
 ZEND_END_MODULE_GLOBALS(handlebars)
 
 ZEND_EXTERN_MODULE_GLOBALS(handlebars);
+
+extern zend_bool handlebars_has_psr;
 
 zend_bool inline php_handlebars_is_callable(zval * var TSRMLS_DC);
 zend_bool inline php_handlebars_is_int_array(zval * arr TSRMLS_DC);
