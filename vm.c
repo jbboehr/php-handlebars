@@ -7,6 +7,7 @@
 #include "Zend/zend_constants.h"
 #include "Zend/zend_exceptions.h"
 #include "main/php.h"
+#include "ext/standard/basic_functions.h"
 
 #include "handlebars.h"
 #include "handlebars_private.h"
@@ -93,6 +94,70 @@ static void php_handlebars_vm_obj_free(void *object TSRMLS_DC)
 }
 #endif
 /* }}} */
+
+/* php_handlebars_log */
+static void php_handlebars_log(
+        int argc,
+        struct handlebars_value * argv[],
+        struct handlebars_options * options
+) {
+    TSRMLS_FETCH();
+    zval * z_vm = (zval *) options->vm->log_ctx;
+    zval * logger = php5to7_zend_read_property(HandlebarsBaseImpl_ce_ptr, z_vm, ZEND_STRL("logger"), 1);
+    char * message;
+    strsize_t message_len;
+    int i;
+
+    // Generate message
+    message = handlebars_talloc_strdup(HANDLEBARS_G(root), "");
+    for (i = 0; i < argc; i++) {
+        char *tmp = handlebars_value_dump(argv[i], 0);
+        message = handlebars_talloc_strdup_append_buffer(message, tmp);
+        handlebars_talloc_free(tmp);
+    }
+    message_len = talloc_array_length(message) - 1;
+
+    if( logger && Z_TYPE_P(logger) == IS_OBJECT ) {
+        // @todo Look up log level
+
+        do {
+#ifdef ZEND_ENGINE_3
+            zval z_fn;
+            zval z_ret;
+            zval z_args[2];
+            ZVAL_STRING(&z_fn, "info");
+            ZVAL_STRINGL(&z_args[0], message, message_len);
+            array_init(&z_args[1]);
+            call_user_function(&Z_OBJCE_P(logger)->function_table, logger, &z_fn, &z_ret, 2, z_args TSRMLS_CC);
+            zval_ptr_dtor(&z_args[1]);
+            zval_ptr_dtor(&z_args[0]);
+            zval_ptr_dtor(&z_fn);
+            zval_ptr_dtor(&z_ret);
+#else
+            zval * z_fn;
+            zval * z_ret;
+            zval *z_args[2];
+            MAKE_STD_ZVAL(z_fn);
+            MAKE_STD_ZVAL(z_ret);
+            MAKE_STD_ZVAL(z_args[0]);
+            MAKE_STD_ZVAL(z_args[1]);
+            ZVAL_STRINGL(z_args[0], message, message_len, 0);
+            array_init(z_args[1]);
+            ZVAL_STRING(z_fn, "info", 1);
+            call_user_function(&Z_OBJCE_P(logger)->function_table, &logger, z_fn, z_ret, 2, z_args TSRMLS_CC);
+            zval_ptr_dtor(&z_args[1]);
+            zval_ptr_dtor(&z_args[0]);
+            zval_ptr_dtor(&z_fn);
+            zval_ptr_dtor(&z_ret);
+#endif
+        } while(0);
+    } else {
+        _php_error_log_ex(4, message, message_len, NULL, NULL);
+    }
+
+    handlebars_talloc_free(message);
+}
+/* */
 
 /* {{{ php_handlebars_vm_obj_create */
 static inline void php_handlebars_vm_obj_create_common(struct php_handlebars_vm_obj *obj TSRMLS_DC)
@@ -343,6 +408,9 @@ PHP_METHOD(HandlebarsVM, render)
     vm = intern->vm;
     cache = vm->cache;
 
+    vm->log_func = &php_handlebars_log;
+    vm->log_ctx = _this_zval;
+
     struct handlebars_string * tmpl = handlebars_string_ctor(HBSCTX(vm), tmpl_str, tmpl_len);
 
     // Lookup cache entry
@@ -376,7 +444,11 @@ PHP_METHOD(HandlebarsVM, render)
     // Make context
     php_handlebars_try(HandlebarsRuntimeException_ce_ptr, intern->context, &buf2);
     php_handlebars_try(HandlebarsRuntimeException_ce_ptr, vm, &buf);
-    context = handlebars_value_from_zval(HBSCTX(vm), z_context TSRMLS_CC);
+    if( z_context ) {
+        context = handlebars_value_from_zval(HBSCTX(vm), z_context TSRMLS_CC);
+    } else {
+        context = handlebars_value_ctor(HBSCTX(vm));
+    }
 
     // Execute
     vm->flags = compiler->flags;
@@ -444,6 +516,9 @@ PHP_METHOD(HandlebarsVM, renderFile)
     struct php_handlebars_vm_obj * intern = Z_HANDLEBARS_VM_P(_this_zval);
     vm = intern->vm;
     cache = vm->cache;
+
+    vm->log_func = &php_handlebars_log;
+    vm->log_ctx = _this_zval;
 
     struct handlebars_string * filename = handlebars_string_ctor(HBSCTX(vm), filename_str, filename_len);
 

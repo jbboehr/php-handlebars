@@ -109,6 +109,10 @@ ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_setDecorators_args, ZEND_SEND_BY_VAL, ZEND
     ZEND_ARG_OBJ_INFO(0, partials, Handlebars\\Registry, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_setLogger_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_OBJ_INFO(0, logger, Psr\\Log\\LoggerInterface, 0)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_render_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
     ZEND_ARG_INFO(0, tmpl)
     ZEND_ARG_INFO(0, context)

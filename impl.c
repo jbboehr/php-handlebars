@@ -31,9 +31,11 @@ static zend_class_entry *lookup_class(const char *name TSRMLS_DC)
     }
     return ce;
 #else
+    // @todo this is not working for PHP5 ...
     zend_class_entry **ce;
     if( zend_hash_find(CG(class_table), name, strlen(name)+1, (void **) &ce)==FAILURE ) {
-        zend_error(E_ERROR, "Class %s not found", name);
+        //zend_error(E_ERROR, "Class %s not found", name);
+        return NULL;
     }
     return *ce;
 #endif
@@ -138,6 +140,29 @@ PHP_METHOD(HandlebarsBaseImpl, setDecorators)
 }
 /* }}} */
 
+/* {{{ proto mixed Handlebars\BaseImpl::setLogger(Psr\Log\LoggerInterface $logger) */
+PHP_METHOD(HandlebarsBaseImpl, setLogger)
+{
+    zval * _this_zval;
+    zval * logger;
+    zend_class_entry * PsrLogLoggerInterface_ce_ptr = lookup_class("Psr\\Log\\LoggerInterface" TSRMLS_CC);
+
+#ifndef FAST_ZPP
+    if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "OO",
+                                     &_this_zval, NULL, &logger, PsrLogLoggerInterface_ce_ptr) == FAILURE) {
+        return;
+    }
+#else
+    _this_zval = getThis();
+	ZEND_PARSE_PARAMETERS_START(1, 1)
+        Z_PARAM_OBJECT_OF_CLASS(logger, PsrLogLoggerInterface_ce_ptr)
+	ZEND_PARSE_PARAMETERS_END();
+#endif
+
+    zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("logger"), logger TSRMLS_CC);
+}
+/* }}} */
+
 /* {{{ Handlebars\HandlebarsImpl methods */
 static zend_function_entry HandlebarsImpl_methods[] = {
     PHP_ABSTRACT_ME(HandlebarsImpl, getHelpers, HandlebarsImpl_getHelpers_args)
@@ -146,6 +171,7 @@ static zend_function_entry HandlebarsImpl_methods[] = {
     PHP_ABSTRACT_ME(HandlebarsImpl, setHelpers, HandlebarsImpl_setHelpers_args)
     PHP_ABSTRACT_ME(HandlebarsImpl, setPartials, HandlebarsImpl_setPartials_args)
     PHP_ABSTRACT_ME(HandlebarsImpl, setDecorators, HandlebarsImpl_setDecorators_args)
+    PHP_ABSTRACT_ME(HandlebarsImpl, setLogger, HandlebarsImpl_setLogger_args)
     PHP_ABSTRACT_ME(HandlebarsImpl, render, HandlebarsImpl_render_args)
     PHP_ABSTRACT_ME(HandlebarsImpl, renderFile, HandlebarsImpl_renderFile_args)
     PHP_FE_END
@@ -160,6 +186,7 @@ static zend_function_entry HandlebarsBaseImpl_methods[] = {
     PHP_ME(HandlebarsBaseImpl, setHelpers, HandlebarsImpl_setHelpers_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsBaseImpl, setPartials, HandlebarsImpl_setPartials_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsBaseImpl, setDecorators, HandlebarsImpl_setDecorators_args, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsBaseImpl, setLogger, HandlebarsImpl_setLogger_args, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 /* }}} Handlebars\HandlebarsBaseImpl methods */
@@ -181,13 +208,18 @@ PHP_MINIT_FUNCTION(handlebars_impl)
     zend_class_implements(HandlebarsBaseImpl_ce_ptr TSRMLS_CC, 1, HandlebarsImpl_ce_ptr);
 
     if( handlebars_has_psr ) {
-        zend_class_implements(HandlebarsBaseImpl_ce_ptr TSRMLS_CC, 1, lookup_class("Psr\\Log\\LoggerAwareInterface" TSRMLS_CC));
-        zend_do_implement_trait(HandlebarsBaseImpl_ce_ptr, lookup_class("Psr\\Log\\LoggerAwareTrait") TSRMLS_CC);
+        //zend_do_implement_trait(HandlebarsBaseImpl_ce_ptr, lookup_class("Psr\\Log\\LoggerAwareTrait") TSRMLS_CC);
+        // @todo this is not working for PHP5 ...
+        zend_class_entry *tmp = lookup_class("Psr\\Log\\LoggerAwareInterface" TSRMLS_CC);
+        if( tmp ) {
+            zend_class_implements(HandlebarsBaseImpl_ce_ptr TSRMLS_CC, 1, tmp);
+        }
     }
 
     zend_declare_property_null(HandlebarsBaseImpl_ce_ptr, ZEND_STRL("helpers"), ZEND_ACC_PROTECTED TSRMLS_CC);
     zend_declare_property_null(HandlebarsBaseImpl_ce_ptr, ZEND_STRL("partials"), ZEND_ACC_PROTECTED TSRMLS_CC);
     zend_declare_property_null(HandlebarsBaseImpl_ce_ptr, ZEND_STRL("decorators"), ZEND_ACC_PROTECTED TSRMLS_CC);
+    zend_declare_property_null(HandlebarsBaseImpl_ce_ptr, ZEND_STRL("logger"), ZEND_ACC_PROTECTED TSRMLS_CC);
 
     return SUCCESS;
 }

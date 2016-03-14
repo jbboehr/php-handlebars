@@ -41,7 +41,7 @@ extern PHP_MSHUTDOWN_FUNCTION(handlebars_options);
 
 ZEND_DECLARE_MODULE_GLOBALS(handlebars);
 
-zend_bool handlebars_has_psr = false;
+zend_bool handlebars_has_psr = 0;
 /* }}} Prototypes */
 
 /* {{{ PHP_INI_MH */
