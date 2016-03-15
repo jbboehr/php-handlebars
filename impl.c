@@ -22,23 +22,26 @@ zend_class_entry * HandlebarsBaseImpl_ce_ptr;
 
 static zend_class_entry *lookup_class(const char *name TSRMLS_DC)
 {
+    zend_class_entry * ce = NULL;
+    strsize_t len = strlen(name);
 #ifdef ZEND_ENGINE_3
-    zend_string * key = zend_string_alloc(strlen(name), 0);
-    zend_str_tolower_copy(ZSTR_VAL(key), name, strlen(name));
-    zend_class_entry *ce = zend_hash_find_ptr(CG(class_table), key);
+    zend_string * key = zend_string_alloc(len, 0);
+    zend_str_tolower_copy(ZSTR_VAL(key), name, len);
+    ce = zend_hash_find_ptr(CG(class_table), key);
+    zend_string_free(key);
+#else
+    char * key = emalloc(len + 1);
+    zend_str_tolower_copy(key, name, len);
+    zend_class_entry ** pce;
+    if( zend_hash_find(CG(class_table), key, len + 1, (void **) &pce) == SUCCESS ) {
+        ce = *pce;
+    }
+    efree(key);
+#endif
     if( NULL == ce ) {
         zend_error(E_ERROR, "Class %s not found", name);
     }
     return ce;
-#else
-    // @todo this is not working for PHP5 ...
-    zend_class_entry **ce;
-    if( zend_hash_find(CG(class_table), name, strlen(name)+1, (void **) &ce)==FAILURE ) {
-        //zend_error(E_ERROR, "Class %s not found", name);
-        return NULL;
-    }
-    return *ce;
-#endif
 }
 
 static inline void php_handlebars_impl_getter(INTERNAL_FUNCTION_PARAMETERS, const char * str, strsize_t len)
@@ -208,11 +211,11 @@ PHP_MINIT_FUNCTION(handlebars_impl)
     zend_class_implements(HandlebarsBaseImpl_ce_ptr TSRMLS_CC, 1, HandlebarsImpl_ce_ptr);
 
     if( handlebars_has_psr ) {
-        //zend_do_implement_trait(HandlebarsBaseImpl_ce_ptr, lookup_class("Psr\\Log\\LoggerAwareTrait") TSRMLS_CC);
-        // @todo this is not working for PHP5 ...
         zend_class_entry *tmp = lookup_class("Psr\\Log\\LoggerAwareInterface" TSRMLS_CC);
         if( tmp ) {
             zend_class_implements(HandlebarsBaseImpl_ce_ptr TSRMLS_CC, 1, tmp);
+        } else {
+            return FAILURE;
         }
     }
 
