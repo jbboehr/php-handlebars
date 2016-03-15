@@ -136,12 +136,12 @@ static void php_handlebars_log(
 #else
             zval * z_fn;
             zval * z_ret;
-            zval *z_args[2];
+            zval * z_args[2];
             MAKE_STD_ZVAL(z_fn);
             MAKE_STD_ZVAL(z_ret);
             MAKE_STD_ZVAL(z_args[0]);
             MAKE_STD_ZVAL(z_args[1]);
-            ZVAL_STRINGL(z_args[0], message, message_len, 0);
+            ZVAL_STRINGL(z_args[0], message, message_len, 1);
             array_init(z_args[1]);
             ZVAL_STRING(z_fn, "info", 1);
             call_user_function(&Z_OBJCE_P(logger)->function_table, &logger, z_fn, z_ret, 2, z_args TSRMLS_CC);
@@ -536,8 +536,9 @@ PHP_METHOD(HandlebarsVM, renderFile)
         }
 
 #ifdef ZEND_ENGINE_3
-        zend_string *contents;
-        if ((contents = php_stream_copy_to_mem(stream, PHP_STREAM_COPY_ALL, 0)) != NULL) {
+        zend_string *contents = php_stream_copy_to_mem(stream, PHP_STREAM_COPY_ALL, 0);
+        php_stream_close(stream);
+        if( contents != NULL) {
             tmpl = handlebars_string_ctor(HBSCTX(vm), contents->val, contents->len);
         } else {
             RETVAL_FALSE;
@@ -546,6 +547,7 @@ PHP_METHOD(HandlebarsVM, renderFile)
 #else
         char * contents_str;
         strsize_t contents_len = php_stream_copy_to_mem(stream, &contents_str, PHP_STREAM_COPY_ALL, 0);
+        php_stream_close(stream);
         if( contents_len ) {
             tmpl = handlebars_string_ctor(HBSCTX(vm), contents_str, contents_len);
             efree(contents_str);
