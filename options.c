@@ -224,8 +224,8 @@ static zval * hbs_read_scope(READ_PROPERTY_ARGS)
     if( intern->options.scope ) {
         zval * z_scope;
         PHP5TO7_MAKE_STD_ZVAL(z_scope);
-        handlebars_value_to_zval(intern->options.scope, z_scope);
-        zend_update_property(Z_OBJCE_P(object), object, ZEND_STRL("scope"), z_scope);
+        handlebars_value_to_zval(intern->options.scope, z_scope TSRMLS_CC);
+        zend_update_property(Z_OBJCE_P(object), object, ZEND_STRL("scope"), z_scope TSRMLS_CC);
         php5to7_zval_ptr_dtor(z_scope);
         intern->options.scope = NULL;
     }
@@ -237,8 +237,8 @@ static zval * hbs_read_hash(READ_PROPERTY_ARGS)
     if( intern->options.hash ) {
         zval * z_hash;
         PHP5TO7_MAKE_STD_ZVAL(z_hash);
-        handlebars_value_to_zval(intern->options.hash, z_hash);
-        zend_update_property(Z_OBJCE_P(object), object, ZEND_STRL("hash"), z_hash);
+        handlebars_value_to_zval(intern->options.hash, z_hash TSRMLS_CC);
+        zend_update_property(Z_OBJCE_P(object), object, ZEND_STRL("hash"), z_hash TSRMLS_CC);
         php5to7_zval_ptr_dtor(z_hash);
         intern->options.hash = NULL;
     }
@@ -250,7 +250,7 @@ static zval * hbs_read_data(READ_PROPERTY_ARGS)
     if( intern->options.data ) {
         zval * z_data;
         PHP5TO7_MAKE_STD_ZVAL(z_data);
-        handlebars_value_to_zval(intern->options.data, z_data);
+        handlebars_value_to_zval(intern->options.data, z_data TSRMLS_CC);
         zend_update_property(Z_OBJCE_P(object), object, ZEND_STRL("data"), z_data TSRMLS_CC);
         php5to7_zval_ptr_dtor(z_data);
         intern->options.data = NULL;

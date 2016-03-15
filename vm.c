@@ -152,7 +152,7 @@ static void php_handlebars_log(
 #endif
         } while(0);
     } else {
-        _php_error_log_ex(4, message, message_len, NULL, NULL);
+        _php_error_log_ex(4, message, message_len, NULL, NULL TSRMLS_CC);
     }
 
     handlebars_talloc_free(message);
@@ -265,7 +265,7 @@ void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, z
 }
 /* }}} php_handlebars_fetch_known_helpers */
 
-static void php_handlebars_vm_set_helpers(zval * _this_zval, zval * helpers)
+static void php_handlebars_vm_set_helpers(zval * _this_zval, zval * helpers TSRMLS_DC)
 {
     jmp_buf buf;
     struct php_handlebars_vm_obj * intern = Z_HANDLEBARS_VM_P(_this_zval);
@@ -294,10 +294,10 @@ PHP_METHOD(HandlebarsVM, setHelpers)
         Z_PARAM_OBJECT_OF_CLASS(helpers, HandlebarsRegistry_ce_ptr)
     ZEND_PARSE_PARAMETERS_END();
 #endif
-    php_handlebars_vm_set_helpers(_this_zval, helpers);
+    php_handlebars_vm_set_helpers(_this_zval, helpers TSRMLS_CC);
 }
 
-static void php_handlebars_vm_set_partials(zval * _this_zval, zval * partials)
+static void php_handlebars_vm_set_partials(zval * _this_zval, zval * partials TSRMLS_DC)
 {
     jmp_buf buf;
     struct php_handlebars_vm_obj * intern = Z_HANDLEBARS_VM_P(_this_zval);
@@ -328,7 +328,7 @@ PHP_METHOD(HandlebarsVM, setPartials)
     ZEND_PARSE_PARAMETERS_END();
 #endif
 
-    php_handlebars_vm_set_partials(_this_zval, partials);
+    php_handlebars_vm_set_partials(_this_zval, partials TSRMLS_CC);
 }
 
 PHP_METHOD(HandlebarsVM, __construct)
@@ -354,10 +354,10 @@ PHP_METHOD(HandlebarsVM, __construct)
         zval * helpers = php5to7_zend_hash_find(ht, ZEND_STRL("helpers"));
         zval * partials = php5to7_zend_hash_find(ht, ZEND_STRL("partials"));
         if( helpers ) {
-            php_handlebars_vm_set_helpers(_this_zval, helpers);
+            php_handlebars_vm_set_helpers(_this_zval, helpers TSRMLS_CC);
         }
         if( partials ) {
-            php_handlebars_vm_set_partials(_this_zval, partials);
+            php_handlebars_vm_set_partials(_this_zval, partials TSRMLS_CC);
         }
     }
 }
