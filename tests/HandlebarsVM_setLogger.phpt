@@ -15,8 +15,10 @@ $logger = new TestLogger();
 $vm = new VM();
 $vm->render('{{log "TESTING"}}');
 $vm->setLogger($logger);
+var_dump($vm->getLogger() === $logger);
 $vm->render('{{log "TESTING2"}}');
 --EXPECT--
 string(TESTING)
+bool(true)
 string(4) "info"
 string(16) "string(TESTING2)"

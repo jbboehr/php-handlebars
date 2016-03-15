@@ -77,6 +77,11 @@ PHP_METHOD(HandlebarsBaseImpl, getDecorators)
     php_handlebars_impl_getter(INTERNAL_FUNCTION_PARAM_PASSTHRU, ZEND_STRL("decorators"));
 }
 
+PHP_METHOD(HandlebarsBaseImpl, getLogger)
+{
+    php_handlebars_impl_getter(INTERNAL_FUNCTION_PARAM_PASSTHRU, ZEND_STRL("logger"));
+}
+
 /* {{{ proto mixed Handlebars\BaseImpl::setHelpers(Handlebars\Registry $helpers) */
 PHP_METHOD(HandlebarsBaseImpl, setHelpers)
 {
@@ -171,6 +176,7 @@ static zend_function_entry HandlebarsImpl_methods[] = {
     PHP_ABSTRACT_ME(HandlebarsImpl, getHelpers, HandlebarsImpl_getHelpers_args)
     PHP_ABSTRACT_ME(HandlebarsImpl, getPartials, HandlebarsImpl_getHelpers_args)
     PHP_ABSTRACT_ME(HandlebarsImpl, getDecorators, HandlebarsImpl_getHelpers_args)
+    PHP_ABSTRACT_ME(HandlebarsImpl, getLogger, HandlebarsImpl_getHelpers_args)
     PHP_ABSTRACT_ME(HandlebarsImpl, setHelpers, HandlebarsImpl_setHelpers_args)
     PHP_ABSTRACT_ME(HandlebarsImpl, setPartials, HandlebarsImpl_setPartials_args)
     PHP_ABSTRACT_ME(HandlebarsImpl, setDecorators, HandlebarsImpl_setDecorators_args)
@@ -186,6 +192,7 @@ static zend_function_entry HandlebarsBaseImpl_methods[] = {
     PHP_ME(HandlebarsBaseImpl, getHelpers, HandlebarsImpl_getHelpers_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsBaseImpl, getPartials, HandlebarsImpl_getHelpers_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsBaseImpl, getDecorators, HandlebarsImpl_getHelpers_args, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsBaseImpl, getLogger, HandlebarsImpl_getHelpers_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsBaseImpl, setHelpers, HandlebarsImpl_setHelpers_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsBaseImpl, setPartials, HandlebarsImpl_setPartials_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsBaseImpl, setDecorators, HandlebarsImpl_setDecorators_args, ZEND_ACC_PUBLIC)
