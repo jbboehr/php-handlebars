@@ -37,7 +37,6 @@ struct php_handlebars_vm_obj {
 #endif
     TALLOC_CTX * mctx;
     struct handlebars_context * context;
-    struct handlebars_vm * vm;
     struct handlebars_value * helpers;
     struct handlebars_value * partials;
 #if PHP_MAJOR_VERSION >= 7
@@ -172,11 +171,9 @@ static inline void php_handlebars_vm_obj_create_common(struct php_handlebars_vm_
     } else {
         obj->context = handlebars_context_ctor_ex(HANDLEBARS_G(root));
     }
-    obj->vm = handlebars_vm_ctor(obj->context);
-    obj->vm->cache = HANDLEBARS_G(cache_enabled) ? HANDLEBARS_G(cache) : NULL;
-    obj->vm->helpers = obj->helpers = handlebars_value_ctor(obj->context);
+    obj->helpers = handlebars_value_ctor(obj->context);
     handlebars_value_map_init(obj->helpers);
-    obj->vm->partials = obj->partials = handlebars_value_ctor(obj->context);
+    obj->partials = handlebars_value_ctor(obj->context);
     handlebars_value_map_init(obj->partials);
 }
 #ifdef ZEND_ENGINE_3
@@ -275,7 +272,7 @@ static void php_handlebars_vm_set_helpers(zval * _this_zval, zval * helpers TSRM
     if( intern->helpers ) {
         handlebars_value_dtor(intern->helpers);
     }
-    intern->vm->helpers = intern->helpers = handlebars_value_from_zval(HBSCTX(intern->context), helpers TSRMLS_CC);
+    intern->helpers = handlebars_value_from_zval(HBSCTX(intern->context), helpers TSRMLS_CC);
     zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("helpers"), helpers TSRMLS_CC);
     done:
     intern->context->jmp = NULL;
@@ -307,7 +304,7 @@ static void php_handlebars_vm_set_partials(zval * _this_zval, zval * partials TS
     if( intern->partials ) {
         handlebars_value_dtor(intern->partials);
     }
-    intern->vm->partials = intern->partials = handlebars_value_from_zval(HBSCTX(intern->context), partials TSRMLS_CC);
+    intern->partials = handlebars_value_from_zval(HBSCTX(intern->context), partials TSRMLS_CC);
     zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("partials"), partials TSRMLS_CC);
     done:
     intern->context->jmp = NULL;
@@ -377,17 +374,14 @@ PHP_METHOD(HandlebarsVM, render)
     zval * z_context = NULL;
     zval * z_options = NULL;
     zval * z_partials;
-    void * mctx = NULL;
     struct handlebars_cache * cache = NULL;
     struct handlebars_cache_entry * cache_entry = NULL;
     struct handlebars_context * ctx = NULL;
     struct handlebars_parser * parser;
     struct handlebars_compiler * compiler;
-    struct handlebars_vm * vm;
     struct handlebars_value * context;
     zend_long pool_size = HANDLEBARS_G(pool_size);
     jmp_buf buf;
-    jmp_buf buf2;
 
 #ifndef FAST_ZPP
     if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Os|zz",
@@ -412,9 +406,12 @@ PHP_METHOD(HandlebarsVM, render)
 #endif
 
     struct php_handlebars_vm_obj * intern = Z_HANDLEBARS_VM_P(_this_zval);
-    vm = intern->vm;
-    cache = vm->cache;
+    struct handlebars_vm * vm = handlebars_vm_ctor(intern->context);
+    cache = HANDLEBARS_G(cache_enabled) ? HANDLEBARS_G(cache) : NULL;
 
+    vm->cache = cache;
+    vm->helpers = intern->helpers;
+    vm->partials = intern->partials;
     vm->log_func = &php_handlebars_log;
     vm->log_ctx = _this_zval;
 
@@ -449,7 +446,6 @@ PHP_METHOD(HandlebarsVM, render)
     }
 
     // Make context
-    php_handlebars_try(HandlebarsRuntimeException_ce_ptr, intern->context, &buf2);
     php_handlebars_try(HandlebarsRuntimeException_ce_ptr, vm, &buf);
     if( z_context ) {
         context = handlebars_value_from_zval(HBSCTX(vm), z_context TSRMLS_CC);
@@ -466,14 +462,8 @@ PHP_METHOD(HandlebarsVM, render)
     }
 
 done:
-    if( ctx ) {
-        handlebars_context_dtor(ctx);
-    }
-    talloc_free(mctx);
-
-    talloc_free_children(intern->vm); // potentially dangerous
-    vm->ctx.jmp = NULL;
-    intern->context->jmp = NULL;
+    handlebars_vm_dtor(vm);
+    handlebars_context_dtor(ctx);
 }
 
 PHP_METHOD(HandlebarsVM, renderFile)
@@ -492,11 +482,9 @@ PHP_METHOD(HandlebarsVM, renderFile)
     struct handlebars_context * ctx = NULL;
     struct handlebars_parser * parser;
     struct handlebars_compiler * compiler;
-    struct handlebars_vm * vm;
     struct handlebars_value * context;
     zend_long pool_size = HANDLEBARS_G(pool_size);
     jmp_buf buf;
-    jmp_buf buf2;
 
 #ifndef FAST_ZPP
     if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Os|zz",
@@ -506,10 +494,10 @@ PHP_METHOD(HandlebarsVM, renderFile)
 #else
     _this_zval = getThis();
     ZEND_PARSE_PARAMETERS_START(1, 3)
-            Z_PARAM_STRING(filename_str, filename_len)
-            Z_PARAM_OPTIONAL
-            Z_PARAM_ZVAL(z_context)
-            Z_PARAM_ZVAL(z_options)
+        Z_PARAM_STRING(filename_str, filename_len)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_ZVAL(z_context)
+        Z_PARAM_ZVAL(z_options)
     ZEND_PARSE_PARAMETERS_END();
 #endif
 
@@ -521,9 +509,12 @@ PHP_METHOD(HandlebarsVM, renderFile)
 #endif
 
     struct php_handlebars_vm_obj * intern = Z_HANDLEBARS_VM_P(_this_zval);
-    vm = intern->vm;
-    cache = vm->cache;
+    struct handlebars_vm * vm = handlebars_vm_ctor(intern->context);
+    cache = HANDLEBARS_G(cache_enabled) ? HANDLEBARS_G(cache) : NULL;
 
+    vm->cache = cache;
+    vm->helpers = intern->helpers;
+    vm->partials = intern->partials;
     vm->log_func = &php_handlebars_log;
     vm->log_ctx = _this_zval;
 
@@ -587,7 +578,6 @@ PHP_METHOD(HandlebarsVM, renderFile)
     }
 
     // Make context
-    php_handlebars_try(HandlebarsRuntimeException_ce_ptr, intern->context, &buf2);
     php_handlebars_try(HandlebarsRuntimeException_ce_ptr, vm, &buf);
     context = handlebars_value_from_zval(HBSCTX(vm), z_context TSRMLS_CC);
 
@@ -603,11 +593,7 @@ done:
     if( ctx ) {
         handlebars_context_dtor(ctx);
     }
-    talloc_free(mctx);
-
-    talloc_free_children(intern->vm); // potentially dangerous
-    vm->ctx.jmp = NULL;
-    intern->context->jmp = NULL;
+    handlebars_vm_dtor(vm);
 }
 
 /* {{{ Argument Info */
