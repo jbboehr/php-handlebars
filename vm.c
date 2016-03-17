@@ -112,20 +112,22 @@ static void php_handlebars_log(
     message = handlebars_talloc_strdup(HANDLEBARS_G(root), "");
     for (i = 0; i < argc; i++) {
         char *tmp = handlebars_value_dump(argv[i], 0);
-        message = handlebars_talloc_strdup_append_buffer(message, tmp);
+        message = handlebars_talloc_asprintf_append_buffer(message, "%s ", tmp);
         handlebars_talloc_free(tmp);
     }
     message_len = talloc_array_length(message) - 1;
 
     if( logger && Z_TYPE_P(logger) == IS_OBJECT ) {
         // @todo Look up log level
+        struct handlebars_value * level = options->hash ? handlebars_value_map_str_find(options->hash, HBS_STRL("level")) : NULL;
+        const char * level_str = level && level->type == HANDLEBARS_VALUE_TYPE_STRING ? level->v.string->val : "info";
 
         do {
 #ifdef ZEND_ENGINE_3
             zval z_fn;
             zval z_ret;
             zval z_args[2];
-            ZVAL_STRING(&z_fn, "info");
+            ZVAL_STRING(&z_fn, level_str);
             ZVAL_STRINGL(&z_args[0], message, message_len);
             array_init(&z_args[1]);
             call_user_function(&Z_OBJCE_P(logger)->function_table, logger, &z_fn, &z_ret, 2, z_args TSRMLS_CC);
@@ -143,7 +145,7 @@ static void php_handlebars_log(
             MAKE_STD_ZVAL(z_args[1]);
             ZVAL_STRINGL(z_args[0], message, message_len, 1);
             array_init(z_args[1]);
-            ZVAL_STRING(z_fn, "info", 1);
+            ZVAL_STRING(z_fn, level_str, 1);
             call_user_function(&Z_OBJCE_P(logger)->function_table, &logger, z_fn, z_ret, 2, z_args TSRMLS_CC);
             zval_ptr_dtor(&z_args[1]);
             zval_ptr_dtor(&z_args[0]);

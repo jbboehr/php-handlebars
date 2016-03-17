@@ -13,12 +13,14 @@ class TestLogger extends AbstractLogger {
 }
 $logger = new TestLogger();
 $vm = new VM();
-$vm->render('{{log "TESTING"}}');
+// $vm->render('{{log "TESTING"}}');
 $vm->setLogger($logger);
 var_dump($vm->getLogger() === $logger);
 $vm->render('{{log "TESTING2"}}');
+$vm->render('{{log "TESTING3" level="warning"}}');
 --EXPECT--
-string(TESTING)
 bool(true)
 string(4) "info"
-string(16) "string(TESTING2)"
+string(17) "string(TESTING2) "
+string(7) "warning"
+string(17) "string(TESTING3) "
