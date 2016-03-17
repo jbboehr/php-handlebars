@@ -15,6 +15,7 @@ git clone -b $PHP_PSR_VERSION https://github.com/jbboehr/php-psr.git
 cd php-psr
 phpize
 ./configure
-make
-echo "extension=`pwd`/modules/psr.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+make install
+echo "extension=psr.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
 cd ..
+
