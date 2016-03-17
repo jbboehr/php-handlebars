@@ -457,7 +457,7 @@ PHP_METHOD(HandlebarsVM, render)
     vm->flags = compiler->flags;
     handlebars_vm_execute(vm, compiler, context);
 
-    if( vm->buffer ) { // @todo this probably shouldn't be null?
+    if( vm->buffer && !EG(exception) ) { // @todo this probably shouldn't be null?
         PHP5TO7_RETVAL_STRING(vm->buffer);
     }
 
@@ -585,7 +585,7 @@ PHP_METHOD(HandlebarsVM, renderFile)
     vm->flags = compiler->flags;
     handlebars_vm_execute(vm, compiler, context);
 
-    if( vm->buffer ) { // @todo this probably shouldn't be null?
+    if( vm->buffer && !EG(exception) ) { // @todo this probably shouldn't be null?
         PHP5TO7_RETVAL_STRING(vm->buffer);
     }
 
