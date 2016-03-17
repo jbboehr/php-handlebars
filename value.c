@@ -483,6 +483,10 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     zval_ptr_dtor(&z_ret);
 #endif
 
+    if( EG(exception) ) {
+        handlebars_throw(HBSCTX(options->vm), HANDELBARS_EXTERNAL_ERROR, "external error");
+    }
+
     return retval;
 }
 
