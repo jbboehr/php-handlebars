@@ -355,11 +355,16 @@ PHP_METHOD(HandlebarsVM, __construct)
         HashTable * ht = Z_ARRVAL_P(z_options);
         zval * helpers = php5to7_zend_hash_find(ht, ZEND_STRL("helpers"));
         zval * partials = php5to7_zend_hash_find(ht, ZEND_STRL("partials"));
+        zval * logger = php5to7_zend_hash_find(ht, ZEND_STRL("logger"));
         if( helpers ) {
             php_handlebars_vm_set_helpers(_this_zval, helpers TSRMLS_CC);
         }
         if( partials ) {
             php_handlebars_vm_set_partials(_this_zval, partials TSRMLS_CC);
+        }
+        if( logger ) {
+            // @todo check type
+            zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("logger"), logger TSRMLS_CC);
         }
     }
 }
