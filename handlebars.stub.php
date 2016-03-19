@@ -339,8 +339,8 @@ interface Impl {
     public function setHelpers(Registry $helpers);
     public function setPartials(Registry $partials);
     public function setDecorators(Registry $decorators);
-    public function render($tmpl, $context = null, $options = null);
-    public function renderFile($filename, $context = null, $options = null);
+    public function render($tmpl, $context = null, array $options = null);
+    public function renderFile($filename, $context = null, array $options = null);
 }
 
 abstract class BaseImpl implements Impl {
@@ -408,9 +408,9 @@ class VM extends BaseImpl
 
     public function setPartials(Registry $partials) {}
 
-    public function render($tmpl, $context = null, $options = null) {}
+    public function render($tmpl, $context = null, array $options = null) {}
 
-    public function renderFile($filename, $context = null, $options = null) {}
+    public function renderFile($filename, $context = null, array $options = null) {}
 }
 
 /*
