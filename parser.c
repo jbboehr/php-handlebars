@@ -296,11 +296,14 @@ static void php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node, z
             }
             break;
         }
+
         // These should never happen
+        // LCOV_EXCL_START
         case HANDLEBARS_AST_NODE_INTERMEDIATE:
         case HANDLEBARS_AST_NODE_INVERSE:
         case HANDLEBARS_AST_NODE_NIL:
             break;
+        // LCOV_EXCL_STOP
     }
 }
 /* }}} Conversion Utils */

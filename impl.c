@@ -38,9 +38,9 @@ static zend_class_entry *lookup_class(const char *name TSRMLS_DC)
     }
     efree(key);
 #endif
-    if( NULL == ce ) {
+    if( NULL == ce ) { // LCOV_EXCL_START
         zend_error(E_ERROR, "Class %s not found", name);
-    }
+    } // LCOV_EXCL_STOP
     return ce;
 }
 
@@ -221,9 +221,9 @@ PHP_MINIT_FUNCTION(handlebars_impl)
         zend_class_entry *tmp = lookup_class("Psr\\Log\\LoggerAwareInterface" TSRMLS_CC);
         if( tmp ) {
             zend_class_implements(HandlebarsBaseImpl_ce_ptr TSRMLS_CC, 1, tmp);
-        } else {
+        } else { // LCOV_EXCL_START
             return FAILURE;
-        }
+        } // LCOV_EXCL_STOP
     }
 
     zend_declare_property_null(HandlebarsBaseImpl_ce_ptr, ZEND_STRL("helpers"), ZEND_ACC_PROTECTED TSRMLS_CC);

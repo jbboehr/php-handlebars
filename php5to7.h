@@ -53,9 +53,9 @@ static inline void * php5to7_zend_hash_update_mem(HashTable *ht, const char *str
 	void * pDest;
 	if( zend_hash_update(ht, str, len, pData, size, &pDest) == SUCCESS ) {
 		return pDest;
-	} else {
+	} else { // LCOV_EXCL_START
 		return NULL;
-	}
+	} // LCOV_EXCL_STOP
 }
 static inline void * php5to7_zend_hash_str_add_ptr(HashTable *ht, const char *str, strsize_t len, void *pData) {
 	void * pDest;
