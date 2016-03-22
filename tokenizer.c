@@ -33,7 +33,7 @@ static inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
     struct handlebars_token_list * list;
     struct handlebars_token_list_item * el = NULL;
     struct handlebars_token_list_item * tmp = NULL;
-    char * output;
+    struct handlebars_string * output;
     char * errmsg;
     volatile struct {
         zend_class_entry * ce;
@@ -67,8 +67,8 @@ static inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
     // Print or convert to zval
     php_handlebars_try(HandlebarsRuntimeException_ce_ptr, parser, &buf);
     if( print ) {
-        output = handlebars_token_list_print(list, 0);
-        PHP5TO7_RETVAL_STRING(output);
+        output = handlebars_token_list_print(HBSCTX(parser), list, 0);
+        PHP5TO7_RETVAL_STRINGL(output->val, output->len);
     } else {
         array_init(return_value);
         handlebars_token_list_foreach(list, el, tmp) {

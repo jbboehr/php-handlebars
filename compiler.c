@@ -355,7 +355,7 @@ long php_handlebars_process_options_zval(struct handlebars_compiler * compiler, 
         }
     }
     if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("knownHelpers"))) ) {
-        compiler->known_helpers = php_handlebars_compiler_known_helpers_from_zval(compiler, entry TSRMLS_CC);
+        compiler->known_helpers = (const char **) php_handlebars_compiler_known_helpers_from_zval(compiler, entry TSRMLS_CC);
     }
     if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("knownHelpersOnly"))) ) {
         if( PHP5TO7_Z_IS_TRUE_P(entry) ) {
@@ -449,7 +449,7 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
 
     // Print or convert to zval
     if( print ) {
-        printer = handlebars_opcode_printer_ctor(compiler);
+        printer = handlebars_opcode_printer_ctor(HBSCTX(compiler));
         handlebars_opcode_printer_print(printer, compiler);
         PHP5TO7_RETVAL_STRING(printer->output);
     } else {

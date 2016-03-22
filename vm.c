@@ -260,7 +260,7 @@ void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, z
     } while(0);
 
     known_helpers[idx++] = 0;
-    compiler->known_helpers = known_helpers;
+    compiler->known_helpers = (const char **) known_helpers;
 }
 /* }}} php_handlebars_fetch_known_helpers */
 
