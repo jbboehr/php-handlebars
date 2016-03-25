@@ -553,8 +553,11 @@ PHPAPI zval * handlebars_value_to_zval(struct handlebars_value * value, zval * v
         case HANDLEBARS_VALUE_TYPE_NULL:
         ZVAL_NULL(val);
             break;
-        case HANDLEBARS_VALUE_TYPE_BOOLEAN:
-            ZVAL_BOOL(val, value->v.bval);
+        case HANDLEBARS_VALUE_TYPE_TRUE:
+            ZVAL_BOOL(val, 1);
+            break;
+        case HANDLEBARS_VALUE_TYPE_FALSE:
+            ZVAL_BOOL(val, 0);
             break;
         case HANDLEBARS_VALUE_TYPE_FLOAT:
         ZVAL_DOUBLE(val, value->v.dval);
@@ -596,17 +599,14 @@ PHPAPI struct handlebars_value * handlebars_value_from_zval(struct handlebars_co
             break;
 #ifdef ZEND_ENGINE_3
         case IS_TRUE:
-            value->type = HANDLEBARS_VALUE_TYPE_BOOLEAN;
-            value->v.bval = true;
+            value->type = HANDLEBARS_VALUE_TYPE_TRUE;
             break;
         case IS_FALSE:
-            value->type = HANDLEBARS_VALUE_TYPE_BOOLEAN;
-            value->v.bval = false;
+            value->type = HANDLEBARS_VALUE_TYPE_FALSE;
             break;
 #else
         case IS_BOOL:
-            value->type = HANDLEBARS_VALUE_TYPE_BOOLEAN;
-            value->v.bval = Z_BVAL_P(val);
+            value->type = Z_BVAL_P(val) ? HANDLEBARS_VALUE_TYPE_TRUE : HANDLEBARS_VALUE_TYPE_FALSE;
             break;
 #endif
         case IS_DOUBLE:

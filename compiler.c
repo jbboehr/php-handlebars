@@ -449,9 +449,9 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
 
     // Print or convert to zval
     if( print ) {
-        printer = handlebars_opcode_printer_ctor(HBSCTX(compiler));
-        handlebars_opcode_printer_print(printer, compiler);
-        PHP5TO7_RETVAL_STRING(printer->output);
+        struct handlebars_string * tmp = handlebars_compiler_print(compiler, 0);
+        PHP5TO7_RETVAL_STRINGL(tmp->val, tmp->len);
+        handlebars_talloc_free(tmp);
     } else {
         php_handlebars_compiler_to_zval(compiler, return_value TSRMLS_CC);
     }
