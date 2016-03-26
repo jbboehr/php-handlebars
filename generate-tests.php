@@ -176,7 +176,7 @@ function patch_context(array $context) {
     }
     $blockParams = isset($context['blockParams']) ? $context['blockParams'] : null;
     
-    $obj = new Handlebars\CompileContext($opcodes, $children, $blockParams);
+    $obj = new Handlebars\Program($opcodes, $children, $blockParams);
     
     foreach( array('useDepths', 'usePartial', 'useDecorators') as $k ) {
         if( !empty($context[$k]) ) {

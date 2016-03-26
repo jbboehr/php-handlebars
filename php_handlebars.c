@@ -23,13 +23,13 @@
 #include "handlebars_cache.h"
 
 /* {{{ Prototypes */
-extern PHP_MINIT_FUNCTION(handlebars_compile_context);
 extern PHP_MINIT_FUNCTION(handlebars_compiler);
 extern PHP_MINIT_FUNCTION(handlebars_exceptions);
 extern PHP_MINIT_FUNCTION(handlebars_impl);
 extern PHP_MINIT_FUNCTION(handlebars_parser);
 extern PHP_MINIT_FUNCTION(handlebars_opcode);
 extern PHP_MINIT_FUNCTION(handlebars_options);
+extern PHP_MINIT_FUNCTION(handlebars_program);
 extern PHP_MINIT_FUNCTION(handlebars_registry);
 extern PHP_MINIT_FUNCTION(handlebars_safe_string);
 extern PHP_MINIT_FUNCTION(handlebars_token);
@@ -105,12 +105,12 @@ static PHP_MINIT_FUNCTION(handlebars)
 
     PHP_MINIT(handlebars_impl)(INIT_FUNC_ARGS_PASSTHRU);
 
-    PHP_MINIT(handlebars_compile_context)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_compiler)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_exceptions)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_opcode)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_options)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_parser)(INIT_FUNC_ARGS_PASSTHRU);
+    PHP_MINIT(handlebars_program)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_registry)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_safe_string)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_token)(INIT_FUNC_ARGS_PASSTHRU);

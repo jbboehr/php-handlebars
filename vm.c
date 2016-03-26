@@ -379,6 +379,7 @@ PHP_METHOD(HandlebarsVM, render)
     struct handlebars_context * ctx = NULL;
     struct handlebars_parser * parser;
     struct handlebars_compiler * compiler;
+    struct handlebars_program * program = NULL;
     struct handlebars_value * context;
     zend_long pool_size = HANDLEBARS_G(pool_size);
     jmp_buf buf;
@@ -419,7 +420,7 @@ PHP_METHOD(HandlebarsVM, render)
 
     // Lookup cache entry
     if( cache && (cache_entry = handlebars_cache_find(cache, tmpl)) ) {
-        compiler = cache_entry->compiler;
+        program = cache_entry->program;
     } else {
         ctx = handlebars_context_ctor_ex(HANDLEBARS_G(root));
         php_handlebars_try(HandlebarsRuntimeException_ce_ptr, ctx, &buf);
@@ -438,10 +439,11 @@ PHP_METHOD(HandlebarsVM, render)
             php_handlebars_fetch_known_helpers(compiler, z_helpers TSRMLS_CC);
         }*/
         handlebars_compiler_compile(compiler, parser->program);
+        program = compiler->program;
 
         // Save cache entry
         if( cache ) {
-            handlebars_cache_add(cache, tmpl, compiler);
+            handlebars_cache_add(cache, tmpl, program);
         }
     }
 
@@ -454,8 +456,8 @@ PHP_METHOD(HandlebarsVM, render)
     }
 
     // Execute
-    vm->flags = compiler->flags;
-    handlebars_vm_execute(vm, compiler, context);
+    vm->flags = program->flags;
+    handlebars_vm_execute(vm, program, context);
 
     if( vm->buffer && !EG(exception) ) {
         PHP5TO7_RETVAL_STRINGL(vm->buffer->val, vm->buffer->len);
@@ -482,6 +484,7 @@ PHP_METHOD(HandlebarsVM, renderFile)
     struct handlebars_context * ctx = NULL;
     struct handlebars_parser * parser;
     struct handlebars_compiler * compiler;
+    struct handlebars_program * program;
     struct handlebars_value * context;
     zend_long pool_size = HANDLEBARS_G(pool_size);
     jmp_buf buf;
@@ -522,7 +525,7 @@ PHP_METHOD(HandlebarsVM, renderFile)
 
     // Lookup cache entry
     if( cache && (cache_entry = handlebars_cache_find(HANDLEBARS_G(cache), filename)) ) {
-        compiler = cache_entry->compiler;
+        program = cache_entry->program;
     } else {
         // Read file
         php_stream *stream;
@@ -572,9 +575,13 @@ PHP_METHOD(HandlebarsVM, renderFile)
             php_handlebars_fetch_known_helpers(compiler, z_helpers TSRMLS_CC);
         }*/
         handlebars_compiler_compile(compiler, parser->program);
+        program = compiler->program;
 
         // Save cache entry
-        handlebars_cache_add(HANDLEBARS_G(cache), filename, compiler);
+        if( cache ) {
+            handlebars_cache_add(cache, filename, program);
+            //handlebars_cache_add(cache, tmpl, program);
+        }
     }
 
     // Make context
@@ -582,8 +589,8 @@ PHP_METHOD(HandlebarsVM, renderFile)
     context = handlebars_value_from_zval(HBSCTX(vm), z_context TSRMLS_CC);
 
     // Execute
-    vm->flags = compiler->flags;
-    handlebars_vm_execute(vm, compiler, context);
+    vm->flags = program->flags;
+    handlebars_vm_execute(vm, program, context);
 
     if( vm->buffer && !EG(exception) ) {
         PHP5TO7_RETVAL_STRINGL(vm->buffer->val, vm->buffer->len);

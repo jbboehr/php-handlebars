@@ -28,7 +28,7 @@
 /* {{{ Variables & Prototypes */
 zend_class_entry * HandlebarsCompiler_ce_ptr;
 
-static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compiler, zval * current TSRMLS_DC);
+static void php_handlebars_program_to_zval(struct handlebars_program * program, zval * current TSRMLS_DC);
 /* }}} Variables & Prototypes */
 
 
@@ -138,24 +138,24 @@ static zend_always_inline void php_handlebars_opcodes_to_zval(
     }
 }
 
-static zend_always_inline void php_handlebars_compilers_to_zval(
-    struct handlebars_compiler ** compilers, size_t count, zval * current TSRMLS_DC)
+static zend_always_inline void php_handlebars_programs_to_zval(
+    struct handlebars_program ** programs, size_t count, zval * current TSRMLS_DC)
 {
     size_t i;
-    struct handlebars_compiler * child;
+    struct handlebars_program * child;
     _DECLARE_ZVAL(tmp);
 
     array_init(current);
 
     for( i = 0; i < count; i++ ) {
-        child = *(compilers + i);
+        child = *(programs + i);
         _ALLOC_INIT_ZVAL(tmp);
-        php_handlebars_compiler_to_zval(child, tmp TSRMLS_CC);
+        php_handlebars_program_to_zval(child, tmp TSRMLS_CC);
         add_next_index_zval(current, tmp);
     }
 }
 
-static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compiler, zval * current TSRMLS_DC)
+static void php_handlebars_program_to_zval(struct handlebars_program * program, zval * current TSRMLS_DC)
 {
     _DECLARE_ZVAL(opcodes);
     _DECLARE_ZVAL(children);
@@ -163,18 +163,18 @@ static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compile
 
     // Opcodes
     _ALLOC_INIT_ZVAL(opcodes);
-    php_handlebars_opcodes_to_zval(compiler->opcodes, compiler->opcodes_length, opcodes TSRMLS_CC);
+    php_handlebars_opcodes_to_zval(program->opcodes, program->opcodes_length, opcodes TSRMLS_CC);
 
     // Children
     _ALLOC_INIT_ZVAL(children);
-    php_handlebars_compilers_to_zval(compiler->children, compiler->children_length, children TSRMLS_CC);
+    php_handlebars_programs_to_zval(program->children, program->children_length, children TSRMLS_CC);
 
     // Block params
     _ALLOC_INIT_ZVAL(blockParams);
-    ZVAL_LONG(blockParams, compiler->block_params);
+    ZVAL_LONG(blockParams, program->block_params);
 
     // Construct object
-	object_init_ex(current, HandlebarsCompileContext_ce_ptr);
+	object_init_ex(current, HandlebarsProgram_ce_ptr);
 
 	do {
 		zval z_const, z_ret;
@@ -186,7 +186,7 @@ static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compile
 		z_const_args[1] = children;
 		z_const_args[2] = blockParams;
 
-	    call_user_function(&HandlebarsCompileContext_ce_ptr->function_table, &current, &z_const, &z_ret, 3, z_const_args TSRMLS_CC);
+	    call_user_function(&HandlebarsProgram_ce_ptr->function_table, &current, &z_const, &z_ret, 3, z_const_args TSRMLS_CC);
 
 		efree(z_const_args);
 #else
@@ -197,7 +197,7 @@ static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compile
 		z_const_args[1] = *children;
 		z_const_args[2] = *blockParams;
 
-		call_user_function(&HandlebarsCompileContext_ce_ptr->function_table, current, &z_const, &z_ret, 3, z_const_args TSRMLS_CC);
+		call_user_function(&HandlebarsProgram_ce_ptr->function_table, current, &z_const, &z_ret, 3, z_const_args TSRMLS_CC);
 
 		zval_ptr_dtor(&z_const);
 #endif
@@ -208,30 +208,30 @@ static void php_handlebars_compiler_to_zval(struct handlebars_compiler * compile
     php5to7_zval_ptr_dtor(blockParams);
 
 	// Set flags
-    if( compiler->result_flags & handlebars_compiler_result_flag_use_depths ) {
+    if( program->result_flags & handlebars_compiler_result_flag_use_depths ) {
         zend_update_property_bool(Z_OBJCE_P(current), current, ZEND_STRL("useDepths"), 1 TSRMLS_CC);
     }
-    if( compiler->result_flags & handlebars_compiler_result_flag_use_partial ) {
+    if( program->result_flags & handlebars_compiler_result_flag_use_partial ) {
         zend_update_property_bool(Z_OBJCE_P(current), current, ZEND_STRL("usePartial"), 1 TSRMLS_CC);
     }
 //    if( compiler->result_flags & handlebars_compiler_result_flag_is_simple ) {
 //    	zend_update_property_bool(Z_OBJCE_P(current), current, ZEND_STRL("isSimple"), 1 TSRMLS_CC);
 //    }
-    if( compiler->result_flags & handlebars_compiler_result_flag_use_decorators ) {
+    if( program->result_flags & handlebars_compiler_result_flag_use_decorators ) {
         zend_update_property_bool(Z_OBJCE_P(current), current, ZEND_STRL("useDecorators"), 1 TSRMLS_CC);
     }
-    if( compiler->flags & handlebars_compiler_flag_string_params ) {
+    if( program->flags & handlebars_compiler_flag_string_params ) {
         zend_update_property_bool(Z_OBJCE_P(current), current, ZEND_STRL("stringParams"), 1 TSRMLS_CC);
     }
-    if( compiler->flags & handlebars_compiler_flag_track_ids ) {
+    if( program->flags & handlebars_compiler_flag_track_ids ) {
         zend_update_property_bool(Z_OBJCE_P(current), current, ZEND_STRL("trackIds"), 1 TSRMLS_CC);
     }
 
 	// Decorators
-	if( compiler->flags & handlebars_compiler_flag_alternate_decorators ) {
+	if( program->flags & handlebars_compiler_flag_alternate_decorators ) {
 	    _DECLARE_ZVAL(decorators);
 		_ALLOC_INIT_ZVAL(decorators);
-		php_handlebars_compilers_to_zval(compiler->decorators, compiler->decorators_length, decorators TSRMLS_CC);
+		php_handlebars_programs_to_zval(program->decorators, program->decorators_length, decorators TSRMLS_CC);
 		zend_update_property(Z_OBJCE_P(current), current, ZEND_STRL("decorators"), decorators TSRMLS_CC);
 	    php5to7_zval_ptr_dtor(decorators);
 	}
@@ -449,11 +449,11 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
 
     // Print or convert to zval
     if( print ) {
-        struct handlebars_string * tmp = handlebars_compiler_print(compiler, 0);
+        struct handlebars_string * tmp = handlebars_program_print(ctx, compiler->program, 0);
         PHP5TO7_RETVAL_STRINGL(tmp->val, tmp->len);
         handlebars_talloc_free(tmp);
     } else {
-        php_handlebars_compiler_to_zval(compiler, return_value TSRMLS_CC);
+        php_handlebars_program_to_zval(compiler->program, return_value TSRMLS_CC);
     }
 
 done:
