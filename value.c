@@ -23,6 +23,7 @@
 
 /* {{{ Variables & Prototypes */
 struct handlebars_zval {
+    struct handlebars_user usr;
     short callable;
     short int_array;
     zend_fcall_info_cache fcc;
@@ -32,6 +33,7 @@ struct handlebars_zval {
     zval * intern;
 #endif
 };
+static struct handlebars_value_handlers handlebars_value_std_zval_handlers;
 /* }}} Variables & Prototypes */
 
 /* {{{ Utils */
@@ -45,7 +47,8 @@ static handlebars_zval_intern_dtor(struct handlebars_zval * intern) {
 #endif
 }
 static inline zval * get_intern_zval(struct handlebars_value * value) {
-    struct handlebars_zval * obj = talloc_get_type(value->v.usr.ptr, struct handlebars_zval);
+    //struct handlebars_zval * obj = talloc_get_type(value->v.usr, struct handlebars_zval);
+    struct handlebars_zval * obj = (struct handlebars_zval *) value->v.usr;
     if( !obj ) {
         return NULL;
     }
@@ -57,14 +60,17 @@ static inline zval * get_intern_zval(struct handlebars_value * value) {
 }
 static inline void set_intern_zval(struct handlebars_value * value, zval * val) {
     struct handlebars_zval * obj;
-    if( !value->v.usr.ptr ) {
-        value->v.usr.ptr = obj = talloc_zero(value->ctx, struct handlebars_zval);
+    if( !value->v.usr ) {
+        obj = talloc_zero(value->ctx, struct handlebars_zval);
+        obj->usr.handlers = &handlebars_value_std_zval_handlers;
+        value->v.usr = (struct handlebars_user *) obj;
 #ifndef ZEND_ENGINE_3
         MAKE_STD_ZVAL(obj->intern);
 #endif
         talloc_set_destructor(obj, handlebars_zval_intern_dtor);
     } else {
-        obj = talloc_get_type(value->v.usr.ptr, struct handlebars_zval);
+        //obj = talloc_get_type(value->v.usr, struct handlebars_zval);
+        obj = (struct handlebars_zval *) value->v.usr;
     }
     obj->int_array = -1;
     obj->callable = -1;
@@ -97,8 +103,13 @@ static void handlebars_std_zval_convert(struct handlebars_value * value, bool re
 
 static enum handlebars_value_type handlebars_std_zval_type(struct handlebars_value * value)
 {
-    struct handlebars_zval * obj = talloc_get_type(value->v.usr.ptr, struct handlebars_zval);
-    zval * intern = get_intern_zval(value);
+    //struct handlebars_zval * obj = talloc_get_type(value->v.usr, struct handlebars_zval);
+    struct handlebars_zval * obj = (struct handlebars_zval *) value->v.usr;
+#ifdef ZEND_ENGINE_3
+    zval * intern = &obj->intern;
+#else
+    zval * intern = obj->intern;
+#endif
     TSRMLS_FETCH();
 
     switch( Z_TYPE_P(intern) ) {
@@ -357,7 +368,8 @@ long handlebars_std_zval_count(struct handlebars_value * value)
 
 struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * value, HANDLEBARS_HELPER_ARGS)
 {
-    struct handlebars_zval * obj = value->v.usr.ptr;
+    //struct handlebars_zval * obj = talloc_get_type(value->v.usr, struct handlebars_zval);
+    struct handlebars_zval * obj = (struct handlebars_zval *) value->v.usr;
     zval * intern = get_intern_zval(value);
     zval * z_ret;
     TSRMLS_FETCH();
@@ -491,6 +503,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
 }
 
 static struct handlebars_value_handlers handlebars_value_std_zval_handlers = {
+        "zval",
         &handlebars_std_zval_copy,
         &handlebars_std_zval_dtor,
         &handlebars_std_zval_convert,
@@ -627,7 +640,6 @@ PHPAPI struct handlebars_value * handlebars_value_from_zval(struct handlebars_co
             // fall-through
         case IS_ARRAY:
             value->type = HANDLEBARS_VALUE_TYPE_USER;
-            value->v.usr.handlers = &handlebars_value_std_zval_handlers;
             set_intern_zval(value, val);
             break;
         default:
