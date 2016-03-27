@@ -475,8 +475,8 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
     php_handlebars_try(HandlebarsRuntimeException_ce_ptr, vm, &buf);
 
     // Execute
-    char * ret = handlebars_vm_execute_program_ex(vm, programGuid, context, data, block_params);
-    PHP5TO7_RETVAL_STRINGL(ret, talloc_array_length(ret) - 1);
+    struct handlebars_string * ret = handlebars_vm_execute_program_ex(vm, programGuid, context, data, block_params);
+    PHP5TO7_RETVAL_STRINGL(ret->val, ret->len);
     talloc_free(ret);
 
 done:

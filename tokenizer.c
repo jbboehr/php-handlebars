@@ -9,10 +9,9 @@
 
 #include "handlebars.h"
 #include "handlebars_memory.h"
+
 #include "handlebars_string.h"
 #include "handlebars_token.h"
-#include "handlebars_token_list.h"
-#include "handlebars_token_printer.h"
 #include "handlebars.tab.h"
 #include "handlebars.lex.h"
 
@@ -30,10 +29,8 @@ static inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
     strsize_t tmpl_len;
     struct handlebars_context * ctx;
     struct handlebars_parser * parser;
-    struct handlebars_token_list * list;
-    struct handlebars_token_list_item * el = NULL;
-    struct handlebars_token_list_item * tmp = NULL;
-    char * output;
+    struct handlebars_token ** tokens;
+    struct handlebars_string * output;
     char * errmsg;
     volatile struct {
         zend_class_entry * ce;
@@ -62,18 +59,22 @@ static inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
     ex.ce = HandlebarsParseException_ce_ptr;
     parser->tmpl = handlebars_string_ctor(HBSCTX(parser), tmpl, tmpl_len);
     php_handlebars_try(HandlebarsParseException_ce_ptr, parser, &buf);
-    list = handlebars_lex(parser);
+    tokens = handlebars_lex(parser);
 
     // Print or convert to zval
     php_handlebars_try(HandlebarsRuntimeException_ce_ptr, parser, &buf);
     if( print ) {
-        output = handlebars_token_list_print(list, 0);
-        PHP5TO7_RETVAL_STRING(output);
+        output = handlebars_string_init(HBSCTX(parser), 256);
+        for( ; *tokens; tokens++ ) {
+            output = handlebars_token_print_append(HBSCTX(parser), output, *tokens, 0);
+        }
+        output = handlebars_string_rtrim(output, HBS_STRL("\r\n "));
+        PHP5TO7_RETVAL_STRINGL(output->val, output->len);
     } else {
         array_init(return_value);
-        handlebars_token_list_foreach(list, el, tmp) {
+        for( ; *tokens; tokens++ ) {
             _ALLOC_INIT_ZVAL(child);
-            php_handlebars_token_ctor(el->data, child TSRMLS_CC);
+            php_handlebars_token_ctor(*tokens, child TSRMLS_CC);
             add_next_index_zval(return_value, child);
         }
     }

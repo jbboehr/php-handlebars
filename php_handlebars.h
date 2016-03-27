@@ -30,7 +30,6 @@ extern zend_module_entry handlebars_module_entry;
 
 extern zend_class_entry * HandlebarsImpl_ce_ptr;
 extern zend_class_entry * HandlebarsBaseImpl_ce_ptr;
-extern zend_class_entry * HandlebarsCompileContext_ce_ptr;
 extern zend_class_entry * HandlebarsCompiler_ce_ptr;
 extern zend_class_entry * HandlebarsException_ce_ptr;
 extern zend_class_entry * HandlebarsParseException_ce_ptr;
@@ -39,6 +38,7 @@ extern zend_class_entry * HandlebarsInvalidArgumentException_ce_ptr;
 extern zend_class_entry * HandlebarsOpcode_ce_ptr;
 extern zend_class_entry * HandlebarsOptions_ce_ptr;
 extern zend_class_entry * HandlebarsParser_ce_ptr;
+extern zend_class_entry * HandlebarsProgram_ce_ptr;
 extern zend_class_entry * HandlebarsRegistry_ce_ptr;
 extern zend_class_entry * HandlebarsDefaultRegistry_ce_ptr;
 extern zend_class_entry * HandlebarsRuntimeException_ce_ptr;

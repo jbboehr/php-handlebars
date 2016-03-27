@@ -17,12 +17,12 @@ if test "$PHP_HANDLEBARS" != "no"; then
 	PHP_HANDLEBARS_ADD_SOURCES([
 		php_handlebars.c
 		impl.c
-		compile_context.c
 		compiler.c
 		exceptions.c
 		opcode.c
 		options.c
 		parser.c
+		program.c
 		registry.c
 		safe_string.c
 		token.c

@@ -9,7 +9,10 @@
 #include "ext/standard/html.h"
 #include "ext/standard/php_array.h"
 
+#include "handlebars.h"
 #include "handlebars_memory.h"
+
+#include "handlebars_string.h"
 #include "handlebars_utils.h"
 
 #include "php5to7.h"
@@ -301,8 +304,8 @@ PHP_METHOD(HandlebarsUtils, indent)
     ZEND_PARSE_PARAMETERS_END();
 #endif
 
-    char * tmp = handlebars_indent(HANDLEBARS_G(root), str, indent);
-    PHP5TO7_RETVAL_STRING(tmp);
+    struct handlebars_string * tmp = handlebars_string_indent(HANDLEBARS_G(context), str, str_len, indent, indent_len);
+    PHP5TO7_RETVAL_STRINGL(tmp->val, tmp->len);
     handlebars_talloc_free(tmp);
 
 }

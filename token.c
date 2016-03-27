@@ -8,6 +8,8 @@
 
 #include "php5to7.h"
 #include "php_handlebars.h"
+
+#include "handlebars_string.h"
 #include "handlebars_token.h"
 
 /* {{{ Variables & Prototypes */
@@ -29,11 +31,11 @@ PHPAPI void php_handlebars_token_ctor(struct handlebars_token * token, zval * z_
     _DECLARE_ZVAL(text);
 
     _ALLOC_INIT_ZVAL(name);
-            PHP5TO7_ZVAL_STRING(name, (char *) handlebars_token_readable_type(token->token));
+    PHP5TO7_ZVAL_STRING(name, (char *) handlebars_token_readable_type(token->token));
 
     _ALLOC_INIT_ZVAL(text);
-    if( token->text ) {
-        PHP5TO7_ZVAL_STRING(text, token->text);
+    if( token->string ) {
+        PHP5TO7_ZVAL_STRINGL(text, token->string->val, token->string->len);
     }
 
     object_init_ex(z_token, HandlebarsToken_ce_ptr);

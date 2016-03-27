@@ -266,7 +266,7 @@ class Token
     }
 }
 
-class CompileContext
+class Program
 {
 	/**
 	 * @var Opcode[]
@@ -274,12 +274,12 @@ class CompileContext
 	public $opcodes;
 	
 	/**
-	 * @var CompileContext[]
+	 * @var Program[]
 	 */
 	public $children;
 	
 	/**
-	 * @var CompileContext[]
+	 * @var Program[]
 	 */
 	public $decorators;
 
