@@ -148,7 +148,7 @@ static struct handlebars_value * handlebars_std_zval_map_find(struct handlebars_
             entry = php5to7_zend_hash_find(Z_ARRVAL_P(intern), key->val, key->len);
             if( !entry ) {
                 char * end;
-                long index = strtod(key->val, &end);
+                long index = strtol(key->val, &end, 10);
                 if( !*end ) {
                     entry = php5to7_zend_hash_index_find(Z_ARRVAL_P(intern), index);
                 }
@@ -209,6 +209,74 @@ static struct handlebars_value * handlebars_std_zval_array_find(struct handlebar
     return ret;
 }
 
+static bool handlebars_std_zval_iterator_void(struct handlebars_value_iterator * it)
+{
+    return false;
+}
+
+static bool handlebars_std_zval_iterator_array(struct handlebars_value_iterator * it)
+{
+    struct handlebars_value * value = it->value;
+    zval * intern = get_intern_zval(value);
+    HashTable * ht = Z_ARRVAL_P(intern);
+    HashPosition * data_pointer = (HashPosition *) it->usr;
+
+    if( it->key ) {
+        handlebars_talloc_free(it->key);
+        it->key = NULL;
+    }
+
+    if( it->current != NULL ) {
+        handlebars_value_delref(it->current);
+        it->current = NULL;
+    }
+
+    do {
+#ifdef ZEND_ENGINE_3
+        zval * entry = zend_hash_get_current_data_ex(ht, data_pointer);
+        zend_string *string_key;
+        zend_ulong num_key;
+        if( entry ) {
+            if( HASH_KEY_IS_STRING == zend_hash_get_current_key_ex(ht, &string_key, &num_key, data_pointer) ) {
+                it->key = handlebars_string_ctor(value->ctx, ZSTR_VAL(string_key), ZSTR_LEN(string_key));
+                it->index = 0;
+            } else {
+                it->key = NULL;
+                it->index = num_key;
+            }
+            it->current = handlebars_value_from_zval(value->ctx, entry);
+            handlebars_value_addref(it->current);
+            zend_hash_move_forward_ex(ht, data_pointer);
+            return true;
+        }
+#else
+        zval ** data_entry = NULL;
+        int key_type = 0;
+        char * key_str = NULL;
+        uint key_len = 0;
+        ulong key_nindex = 0;
+        if( SUCCESS == zend_hash_get_current_data_ex(ht, (void**) &data_entry, data_pointer) ) {
+            key_type = zend_hash_get_current_key_ex(ht, &key_str, &key_len, &key_nindex, false, data_pointer);
+
+            ret = true;
+            if( key_type == HASH_KEY_IS_STRING ) {
+                it->key = handlebars_string_ctor(value->ctx, key_str, key_len - 1);
+                it->index = 0;
+            } else {
+                it->key = NULL;
+                it->index = key_nindex;
+            }
+            it->current = handlebars_value_from_zval(value->ctx, *data_entry TSRMLS_CC);
+            handlebars_value_addref(it->current);
+            zend_hash_move_forward_ex(ht, data_pointer);
+            return true;
+        }
+#endif
+    } while(0);
+
+    return false;
+}
+
 bool handlebars_std_zval_iterator_init(struct handlebars_value_iterator * it, struct handlebars_value * value)
 {
     zval * intern = get_intern_zval(value);
@@ -242,8 +310,10 @@ bool handlebars_std_zval_iterator_init(struct handlebars_value_iterator * it, st
                         it->index = num_key;
                     }
                     it->current = handlebars_value_from_zval(value->ctx, entry);
+                    it->next = &handlebars_std_zval_iterator_array;
                     handlebars_value_addref(it->current);
                     zend_hash_move_forward_ex(ht, data_pointer);
+                    return true;
                 }
 #else
                 int key_type = 0;
@@ -261,80 +331,10 @@ bool handlebars_std_zval_iterator_init(struct handlebars_value_iterator * it, st
                         it->index = key_nindex;
                     }
                     it->current = handlebars_value_from_zval(value->ctx, *data_entry TSRMLS_CC);
+                    it->next = &handlebars_std_zval_iterator_array;
                     handlebars_value_addref(it->current);
                     zend_hash_move_forward_ex(ht, data_pointer);
-                }
-#endif
-            } while(0);
-            break;
-        case IS_OBJECT:
-            // @todo
-            break;
-        default:
-            handlebars_talloc_free(it);
-            it = NULL;
-            break;
-    }
-
-    return it;
-}
-
-bool handlebars_std_zval_iterator_next(struct handlebars_value_iterator * it)
-{
-    bool ret = false;
-    struct handlebars_value * value = it->value;
-    zval * intern = get_intern_zval(value);
-    HashTable * ht;
-    HashPosition * data_pointer;
-    TSRMLS_FETCH();
-
-    if( it->key ) {
-        handlebars_talloc_free(it->key);
-        it->key = NULL;
-    }
-
-    switch( Z_TYPE_P(intern) ) {
-        case IS_ARRAY:
-            ht = Z_ARRVAL_P(intern);
-            data_pointer = (HashPosition *) it->usr;
-            do {
-#ifdef ZEND_ENGINE_3
-                zval * entry = zend_hash_get_current_data_ex(ht, data_pointer);
-                zend_string *string_key;
-                zend_ulong num_key;
-                if( entry ) {
-                    ret = true;
-                    if( HASH_KEY_IS_STRING == zend_hash_get_current_key_ex(ht, &string_key, &num_key, data_pointer) ) {
-                        it->key = handlebars_string_ctor(value->ctx, ZSTR_VAL(string_key), ZSTR_LEN(string_key));
-                        it->index = 0;
-                    } else {
-                        it->key = NULL;
-                        it->index = num_key;
-                    }
-                    it->current = handlebars_value_from_zval(value->ctx, entry);
-                    handlebars_value_addref(it->current);
-                    zend_hash_move_forward_ex(ht, data_pointer);
-                }
-#else
-                zval ** data_entry = NULL;
-                int key_type = 0;
-                char * key_str = NULL;
-                uint key_len = 0;
-                ulong key_nindex = 0;
-                if( SUCCESS == zend_hash_get_current_data_ex(ht, (void**) &data_entry, data_pointer) ) {
-                    key_type = zend_hash_get_current_key_ex(ht, &key_str, &key_len, &key_nindex, false, data_pointer);
-
-                    ret = true;
-                    if( key_type == HASH_KEY_IS_STRING ) {
-                        it->key = handlebars_string_ctor(value->ctx, key_str, key_len - 1);
-                        it->index = 0;
-                    } else {
-                        it->key = NULL;
-                        it->index = key_nindex;
-                    }
-                    it->current = handlebars_value_from_zval(value->ctx, *data_entry TSRMLS_CC);
-                    handlebars_value_addref(it->current);
-                    zend_hash_move_forward_ex(ht, data_pointer);
+                    return true;
                 }
 #endif
             } while(0);
@@ -345,10 +345,11 @@ bool handlebars_std_zval_iterator_next(struct handlebars_value_iterator * it)
         default:
             // Do nothing
             break;
-
     }
 
-    return ret;
+    it->next = &handlebars_std_zval_iterator_void;
+
+    return false;
 }
 
 long handlebars_std_zval_count(struct handlebars_value * value)
@@ -358,11 +359,10 @@ long handlebars_std_zval_count(struct handlebars_value * value)
     switch( Z_TYPE_P(intern) ) {
         case IS_ARRAY:
             return zend_hash_num_elements(Z_ARRVAL_P(intern));
-        case IS_OBJECT:
-            return -1; // @todo
+        case IS_OBJECT: // @todo
+        default:
+            return -1;
     }
-
-    return -1;
 
 }
 
@@ -393,15 +393,15 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
 
     // Convert paramsma
     int n_args = argc + 1;
-    zval z_const_args[argc + 1];
-    memset(z_const_args, 0, sizeof(z_const_args));
+    zval z_args[argc + 1];
+    memset(z_args, 0, sizeof(z_args));
 
     int i;
     for( i = 0; i < argc; i++ ) {
-        handlebars_value_to_zval(argv[i], &z_const_args[i]);
+        handlebars_value_to_zval(argv[i], &z_args[i]);
     }
 
-    z_const_args[n_args - 1] = z_options;
+    z_args[n_args - 1] = z_options;
 
     // Make ret
     zval _z_ret;
@@ -413,7 +413,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     fci.symbol_table = NULL;
     fci.object = Z_OBJ_P(intern);
     fci.retval = &_z_ret;
-    fci.params = z_const_args;
+    fci.params = z_args;
     fci.param_count = n_args;
     fci.no_separation = 1;
 
@@ -424,7 +424,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     }
 
     for( i = 0; i < n_args; i++ ) {
-        zval_ptr_dtor(&z_const_args[i]);
+        zval_ptr_dtor(&z_args[i]);
     }
     zval_ptr_dtor(&fci.function_name);
 
@@ -436,56 +436,37 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
 
     // Convert params
     int n_args = argc + 1;
-    zval * z_const_args[n_args];
-    memset(z_const_args, 0, sizeof(z_const_args));
+    zval * z_args[n_args];
+    memset(z_args, 0, sizeof(z_args));
 
     int i;
     for( i = 0; i < argc; i++ ) {
-        MAKE_STD_ZVAL(z_const_args[i]);
-        handlebars_value_to_zval(argv[i], z_const_args[i] TSRMLS_CC);
+        MAKE_STD_ZVAL(z_args[i]);
+        handlebars_value_to_zval(argv[i], z_args[i] TSRMLS_CC);
     }
 
-    z_const_args[n_args - 1] = z_options;
+    z_args[n_args - 1] = z_options;
 
     // Call
     zval * z_const;
     MAKE_STD_ZVAL(z_const);
     MAKE_STD_ZVAL(z_ret);
     ZVAL_STRING(z_const, "__invoke", 1);
-    call_user_function(&Z_OBJCE_P(intern)->function_table, &intern, z_const, z_ret, n_args, z_const_args TSRMLS_CC);
+    call_user_function(&Z_OBJCE_P(intern)->function_table, &intern, z_const, z_ret, n_args, z_args TSRMLS_CC);
     for( i = 0; i < n_args; i++ ) {
-        zval_ptr_dtor(&z_const_args[i]);
+        zval_ptr_dtor(&z_args[i]);
     }
     zval_ptr_dtor(&z_const);
 #endif
 
     struct handlebars_value * retval = NULL;
-    bool is_safe_string = false;
 
-    switch( Z_TYPE_P(z_ret) ) {
-        case IS_OBJECT:
-            if( instanceof_function(Z_OBJCE_P(z_ret), HandlebarsSafeString_ce_ptr TSRMLS_CC) ) {
-                convert_to_string(z_ret);
-                retval = handlebars_value_from_zval(HBSCTX(options->vm), z_ret TSRMLS_CC);
-                retval->flags |= HANDLEBARS_VALUE_FLAG_SAFE_STRING;
-                break;
-            }
-            // fall-through
-        case IS_ARRAY:
-        case IS_NULL:
-#ifdef ZEND_ENGINE_3
-            case IS_TRUE:
-        case IS_FALSE:
-#else
-        case IS_BOOL:
-#endif
-        case IS_LONG:
-        case IS_DOUBLE:
-        case IS_STRING:
-            retval = handlebars_value_from_zval(HBSCTX(options->vm), z_ret TSRMLS_CC);
-            break;
-        default:
-            break;
+    if( Z_TYPE_P(z_ret) == IS_OBJECT && instanceof_function(Z_OBJCE_P(z_ret), HandlebarsSafeString_ce_ptr TSRMLS_CC) ) {
+        convert_to_string(z_ret);
+        retval = handlebars_value_from_zval(HBSCTX(options->vm), z_ret TSRMLS_CC);
+        retval->flags |= HANDLEBARS_VALUE_FLAG_SAFE_STRING;
+    } else {
+        retval = handlebars_value_from_zval(HBSCTX(options->vm), z_ret TSRMLS_CC);
     }
 
 #ifdef ZEND_ENGINE_3
@@ -511,7 +492,6 @@ static struct handlebars_value_handlers handlebars_value_std_zval_handlers = {
         &handlebars_std_zval_map_find,
         &handlebars_std_zval_array_find,
         &handlebars_std_zval_iterator_init,
-        &handlebars_std_zval_iterator_next,
         &handlebars_std_zval_call,
         &handlebars_std_zval_count
 };
@@ -524,7 +504,7 @@ static inline handlebars_value_array_to_zval(struct handlebars_value * value, zv
     handlebars_value_iterator_init(&it, value);
     array_init(val);
 
-    for( ; it.current != NULL; handlebars_value_iterator_next(&it) ) {
+    for( ; it.current != NULL; it.next(&it) ) {
 #ifdef ZEND_ENGINE_3
         zval _tmp;
         zval * tmp = &_tmp;
@@ -543,7 +523,7 @@ static inline handlebars_value_map_to_zval(struct handlebars_value * value, zval
     handlebars_value_iterator_init(&it, value);
     array_init(val);
 
-    for( ; it.current != NULL; handlebars_value_iterator_next(&it) ) {
+    for( ; it.current != NULL; it.next(&it) ) {
 #ifdef ZEND_ENGINE_3
         zval _tmp;
         zval * tmp = &_tmp;
@@ -655,9 +635,6 @@ PHPAPI struct handlebars_value * handlebars_value_from_zval(struct handlebars_co
 /* {{{ PHP_MINIT_FUNCTION */
 PHP_MINIT_FUNCTION(handlebars_value)
 {
-    zend_class_entry ce;
-    int flags = CONST_CS | CONST_PERSISTENT;
-
     return SUCCESS;
 }
 /* }}} */
