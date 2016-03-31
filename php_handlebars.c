@@ -98,6 +98,9 @@ static PHP_MINIT_FUNCTION(handlebars)
             return FAILURE;
         }
         cache = handlebars_cache_ctor(HANDLEBARS_G(context));
+        //cache = handlebars_cache_lmdb_ctor(HANDLEBARS_G(context), "/tmp");
+        //cache = handlebars_cache_mmap_ctor(HANDLEBARS_G(context), "php-handlebars-opcache");
+
         cache->max_entries = HANDLEBARS_G(cache_max_entries);
         cache->max_size = HANDLEBARS_G(cache_max_size);
         HANDLEBARS_G(cache) = cache;

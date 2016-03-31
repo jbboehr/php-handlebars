@@ -12,10 +12,12 @@
 #include "handlebars.h"
 #include "handlebars_private.h"
 #include "handlebars_memory.h"
+
 #include "handlebars_cache.h"
 #include "handlebars_compiler.h"
 #include "handlebars_helpers.h"
 #include "handlebars_opcodes.h"
+#include "handlebars_opcode_serializer.h"
 #include "handlebars_string.h"
 #include "handlebars_value.h"
 #include "handlebars_vm.h"
@@ -375,11 +377,10 @@ PHP_METHOD(HandlebarsVM, render)
     zval * z_options = NULL;
     zval * z_partials;
     struct handlebars_cache * cache = NULL;
-    struct handlebars_cache_entry * cache_entry = NULL;
+    struct handlebars_module * module = NULL;
     struct handlebars_context * ctx = NULL;
     struct handlebars_parser * parser;
     struct handlebars_compiler * compiler;
-    struct handlebars_program * program = NULL;
     struct handlebars_value * context;
     zend_long pool_size = HANDLEBARS_G(pool_size);
     jmp_buf buf;
@@ -419,8 +420,8 @@ PHP_METHOD(HandlebarsVM, render)
     struct handlebars_string * tmpl = handlebars_string_ctor(HBSCTX(vm), tmpl_str, tmpl_len);
 
     // Lookup cache entry
-    if( cache && (cache_entry = handlebars_cache_find(cache, tmpl)) ) {
-        program = cache_entry->program;
+    if( cache && (module = handlebars_cache_find(cache, tmpl)) ) {
+        // Use cached
     } else {
         ctx = handlebars_context_ctor_ex(HANDLEBARS_G(root));
         php_handlebars_try(HandlebarsRuntimeException_ce_ptr, ctx, &buf);
@@ -439,11 +440,12 @@ PHP_METHOD(HandlebarsVM, render)
             php_handlebars_fetch_known_helpers(compiler, z_helpers TSRMLS_CC);
         }*/
         handlebars_compiler_compile(compiler, parser->program);
-        program = compiler->program;
+
+        module = handlebars_program_serialize(HBSCTX(vm), compiler->program);
 
         // Save cache entry
         if( cache ) {
-            handlebars_cache_add(cache, tmpl, program);
+            handlebars_cache_add(cache, tmpl, module);
         }
     }
 
@@ -456,8 +458,8 @@ PHP_METHOD(HandlebarsVM, render)
     }
 
     // Execute
-    vm->flags = program->flags;
-    handlebars_vm_execute(vm, program, context);
+    vm->flags = module->flags;
+    handlebars_vm_execute(vm, module, context);
 
     if( vm->buffer && !EG(exception) ) {
         PHP5TO7_RETVAL_STRINGL(vm->buffer->val, vm->buffer->len);
@@ -480,7 +482,7 @@ PHP_METHOD(HandlebarsVM, renderFile)
     zval * z_partials;
     void * mctx = NULL;
     struct handlebars_cache * cache = NULL;
-    struct handlebars_cache_entry * cache_entry = NULL;
+    struct handlebars_module * module = NULL;
     struct handlebars_context * ctx = NULL;
     struct handlebars_parser * parser;
     struct handlebars_compiler * compiler;
@@ -524,8 +526,8 @@ PHP_METHOD(HandlebarsVM, renderFile)
     struct handlebars_string * filename = handlebars_string_ctor(HBSCTX(vm), filename_str, filename_len);
 
     // Lookup cache entry
-    if( cache && (cache_entry = handlebars_cache_find(HANDLEBARS_G(cache), filename)) ) {
-        program = cache_entry->program;
+    if( cache && (module = handlebars_cache_find(HANDLEBARS_G(cache), filename)) ) {
+        // Use cached
     } else {
         // Read file
         php_stream *stream;
@@ -575,11 +577,12 @@ PHP_METHOD(HandlebarsVM, renderFile)
             php_handlebars_fetch_known_helpers(compiler, z_helpers TSRMLS_CC);
         }*/
         handlebars_compiler_compile(compiler, parser->program);
-        program = compiler->program;
+
+        module = handlebars_program_serialize(HBSCTX(vm), compiler->program);
 
         // Save cache entry
         if( cache ) {
-            handlebars_cache_add(cache, filename, program);
+            handlebars_cache_add(cache, filename, module);
             //handlebars_cache_add(cache, tmpl, program);
         }
     }
@@ -589,8 +592,8 @@ PHP_METHOD(HandlebarsVM, renderFile)
     context = handlebars_value_from_zval(HBSCTX(vm), z_context TSRMLS_CC);
 
     // Execute
-    vm->flags = program->flags;
-    handlebars_vm_execute(vm, program, context);
+    vm->flags = module->flags;
+    handlebars_vm_execute(vm, module, context);
 
     if( vm->buffer && !EG(exception) ) {
         PHP5TO7_RETVAL_STRINGL(vm->buffer->val, vm->buffer->len);

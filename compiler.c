@@ -46,17 +46,19 @@ static void php_handlebars_operand_append_zval(struct handlebars_operand * opera
             add_next_index_long(arr, operand->data.longval);
             break;
         case handlebars_operand_type_string:
-        	php5to7_add_next_index_stringl(arr, operand->data.string->val, operand->data.string->len);
+        	php5to7_add_next_index_stringl(arr, HBS_STR_STRL(operand->data.string.string));
             break;
         case handlebars_operand_type_array: {
             _DECLARE_ZVAL(current);
-            struct handlebars_string ** tmp = operand->data.array;
+            int len = operand->data.array.count;
+            int i;
+            struct handlebars_operand_string * tmp = operand->data.array.array;
 
             _ALLOC_INIT_ZVAL(current);
             array_init(current);
 
-            for( ; *tmp; ++tmp ) {
-                php5to7_add_next_index_stringl(current, (*tmp)->val, (*tmp)->len);
+            for( i = 0 ; i < len; ++i ) {
+                php5to7_add_next_index_stringl(current, HBS_STR_STRL(tmp[i].string));
             }
 
             add_next_index_zval(arr, current);
