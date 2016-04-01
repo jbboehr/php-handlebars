@@ -259,14 +259,15 @@ static void php_handlebars_vm_set_helpers(zval * _this_zval, zval * helpers TSRM
 {
     jmp_buf buf;
     struct php_handlebars_vm_obj * intern = Z_HANDLEBARS_VM_P(_this_zval);
-    php_handlebars_try(HandlebarsRuntimeException_ce_ptr, intern->context, &buf);
+    struct handlebars_context * context = intern->context;
+    php_handlebars_try(HandlebarsRuntimeException_ce_ptr, context, &buf);
     if( intern->helpers ) {
         handlebars_value_dtor(intern->helpers);
     }
-    intern->helpers = handlebars_value_from_zval(HBSCTX(intern->context), helpers TSRMLS_CC);
+    intern->helpers = handlebars_value_from_zval(HBSCTX(context), helpers TSRMLS_CC);
     zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("helpers"), helpers TSRMLS_CC);
-    done:
-    intern->context->jmp = NULL;
+done:
+    context->e->jmp = NULL;
 }
 PHP_METHOD(HandlebarsVM, setHelpers)
 {
@@ -291,14 +292,15 @@ static void php_handlebars_vm_set_partials(zval * _this_zval, zval * partials TS
 {
     jmp_buf buf;
     struct php_handlebars_vm_obj * intern = Z_HANDLEBARS_VM_P(_this_zval);
-    php_handlebars_try(HandlebarsRuntimeException_ce_ptr, intern->context, &buf);
+    struct handlebars_context * context = intern->context;
+    php_handlebars_try(HandlebarsRuntimeException_ce_ptr, context, &buf);
     if( intern->partials ) {
         handlebars_value_dtor(intern->partials);
     }
-    intern->partials = handlebars_value_from_zval(HBSCTX(intern->context), partials TSRMLS_CC);
+    intern->partials = handlebars_value_from_zval(HBSCTX(context), partials TSRMLS_CC);
     zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("partials"), partials TSRMLS_CC);
-    done:
-    intern->context->jmp = NULL;
+done:
+    context->e->jmp = NULL;
 }
 
 PHP_METHOD(HandlebarsVM, setPartials)

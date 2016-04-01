@@ -471,7 +471,7 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
     }
 
     // Save jump buffer;
-    prev = HBSCTX(vm)->jmp;
+    prev = HBSCTX(vm)->e->jmp;
     php_handlebars_try(HandlebarsRuntimeException_ce_ptr, vm, &buf);
 
     // Execute
@@ -480,7 +480,7 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
     talloc_free(ret);
 
 done:
-    HBSCTX(vm)->jmp = prev;
+    HBSCTX(vm)->e->jmp = prev;
 }
 
 PHP_METHOD(HandlebarsOptions, fn)

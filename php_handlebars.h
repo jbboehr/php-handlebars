@@ -80,8 +80,9 @@ PHPAPI zval * handlebars_value_to_zval(struct handlebars_value * value, zval * v
 
 #define php_handlebars_throw(ce, ctx) \
     do { \
-        if( HBSCTX(ctx)->num != HANDELBARS_EXTERNAL_ERROR ) { \
-            zend_throw_exception(ce, handlebars_error_message(HBSCTX(ctx)), HBSCTX(ctx)->num TSRMLS_CC); \
+        int num = handlebars_error_num(HBSCTX(ctx)); \
+        if( num != HANDELBARS_EXTERNAL_ERROR ) { \
+            zend_throw_exception(ce, handlebars_error_message(HBSCTX(ctx)), num TSRMLS_CC); \
         } \
         goto done; \
     } while(0)
