@@ -60,7 +60,7 @@ static PHP_INI_MH(OnUpdatePoolSize)
 
 /* {{{ php.ini directive registration */
 PHP_INI_BEGIN()
-    STD_PHP_INI_ENTRY("handlebars.pool_size", "-1", PHP_INI_ALL, OnUpdatePoolSize, pool_size, zend_handlebars_globals, handlebars_globals)
+    STD_PHP_INI_ENTRY("handlebars.pool_size", "128k", PHP_INI_ALL, OnUpdatePoolSize, pool_size, zend_handlebars_globals, handlebars_globals)
     STD_PHP_INI_BOOLEAN("handlebars.cache.enabled", "1", PHP_INI_ALL, OnUpdateBool, cache_enabled, zend_handlebars_globals, handlebars_globals)
     STD_PHP_INI_ENTRY("handlebars.cache.max_size", "52428800", PHP_INI_SYSTEM, OnUpdateLong, cache_max_size, zend_handlebars_globals, handlebars_globals)
     STD_PHP_INI_ENTRY("handlebars.cache.max_entries", "100", PHP_INI_SYSTEM, OnUpdateLong, cache_max_entries, zend_handlebars_globals, handlebars_globals)
@@ -162,7 +162,7 @@ static PHP_GINIT_FUNCTION(handlebars)
     handlebars_globals->root = NULL;
     handlebars_globals->context = NULL;
     handlebars_globals->cache = NULL;
-    handlebars_globals->pool_size = -1;
+    handlebars_globals->pool_size = 128 * 1024;
     handlebars_globals->cache_enabled = 1;
     handlebars_globals->cache_max_age = 3600;
     handlebars_globals->cache_max_entries = 100;

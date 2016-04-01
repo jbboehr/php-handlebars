@@ -37,7 +37,6 @@ struct php_handlebars_vm_obj {
 #if PHP_MAJOR_VERSION < 7
     zend_object std;
 #endif
-    TALLOC_CTX * mctx;
     struct handlebars_context * context;
     struct handlebars_value * helpers;
     struct handlebars_value * partials;
@@ -86,9 +85,6 @@ static void php_handlebars_vm_obj_free(void *object TSRMLS_DC)
         handlebars_value_dtor(obj->partials);
     }
     handlebars_context_dtor(obj->context);
-    if( obj->mctx ) {
-        handlebars_talloc_free(obj->mctx);
-    }
 
     zend_object_std_dtor(&obj->std TSRMLS_CC);
     efree(object);
@@ -165,14 +161,7 @@ static void php_handlebars_log(
 /* {{{ php_handlebars_vm_obj_create */
 static inline void php_handlebars_vm_obj_create_common(struct php_handlebars_vm_obj *obj TSRMLS_DC)
 {
-    zend_long pool_size = HANDLEBARS_G(pool_size);
-
-    if( pool_size > 0 ) {
-        obj->mctx = talloc_pool(HANDLEBARS_G(root), pool_size);
-        obj->context = handlebars_context_ctor_ex(obj->mctx);
-    } else {
-        obj->context = handlebars_context_ctor_ex(HANDLEBARS_G(root));
-    }
+    obj->context = handlebars_context_ctor_ex(HANDLEBARS_G(root));
     obj->helpers = handlebars_value_ctor(obj->context);
     handlebars_value_map_init(obj->helpers);
     obj->partials = handlebars_value_ctor(obj->context);
@@ -376,6 +365,7 @@ PHP_METHOD(HandlebarsVM, render)
     zval * z_context = NULL;
     zval * z_options = NULL;
     zval * z_partials;
+    TALLOC_CTX * mctx;
     struct handlebars_cache * cache = NULL;
     struct handlebars_module * module = NULL;
     struct handlebars_context * ctx = NULL;
@@ -409,7 +399,14 @@ PHP_METHOD(HandlebarsVM, render)
 #endif
 
     struct php_handlebars_vm_obj * intern = Z_HANDLEBARS_VM_P(_this_zval);
-    struct handlebars_vm * vm = handlebars_vm_ctor(intern->context);
+    if( HANDLEBARS_G(pool_size) > 0 ) {
+        mctx = talloc_pool(intern->context, HANDLEBARS_G(pool_size));
+    } else {
+        mctx = talloc_new(intern->context);
+    }
+    ctx = handlebars_context_ctor_ex(mctx);
+
+    struct handlebars_vm * vm = handlebars_vm_ctor(ctx);
     cache = HANDLEBARS_G(cache_enabled) ? HANDLEBARS_G(cache) : NULL;
 
     vm->cache = cache;
@@ -425,7 +422,6 @@ PHP_METHOD(HandlebarsVM, render)
         // Use cached
         from_cache = true;
     } else {
-        ctx = handlebars_context_ctor_ex(HANDLEBARS_G(root));
         php_handlebars_try(HandlebarsRuntimeException_ce_ptr, ctx, &buf);
         parser = handlebars_parser_ctor(ctx);
         compiler = handlebars_compiler_ctor(ctx);
@@ -472,7 +468,7 @@ done:
         cache->release(cache, tmpl, module);
     }
     handlebars_vm_dtor(vm);
-    handlebars_context_dtor(ctx);
+    handlebars_talloc_free(mctx);
 }
 
 PHP_METHOD(HandlebarsVM, renderFile)
@@ -520,7 +516,14 @@ PHP_METHOD(HandlebarsVM, renderFile)
 #endif
 
     struct php_handlebars_vm_obj * intern = Z_HANDLEBARS_VM_P(_this_zval);
-    struct handlebars_vm * vm = handlebars_vm_ctor(intern->context);
+    if( HANDLEBARS_G(pool_size) > 0 ) {
+        mctx = talloc_pool(intern->context, HANDLEBARS_G(pool_size));
+    } else {
+        mctx = talloc_new(intern->context);
+    }
+    ctx = handlebars_context_ctor_ex(mctx);
+
+    struct handlebars_vm * vm = handlebars_vm_ctor(ctx);
     cache = HANDLEBARS_G(cache_enabled) ? HANDLEBARS_G(cache) : NULL;
 
     vm->cache = cache;
@@ -542,7 +545,8 @@ PHP_METHOD(HandlebarsVM, renderFile)
 
         stream = php_stream_open_wrapper_ex(filename_str, "rb", REPORT_ERRORS, NULL, NULL);
         if( !stream ) {
-            RETURN_FALSE;
+            RETVAL_FALSE;
+            goto done;
         }
 
 #ifdef ZEND_ENGINE_3
@@ -567,7 +571,7 @@ PHP_METHOD(HandlebarsVM, renderFile)
         }
 #endif
 
-        ctx = handlebars_context_ctor_ex(HANDLEBARS_G(root));
+        //ctx = handlebars_context_ctor_ex(HANDLEBARS_G(root));
         php_handlebars_try(HandlebarsRuntimeException_ce_ptr, ctx, &buf);
         parser = handlebars_parser_ctor(ctx);
         compiler = handlebars_compiler_ctor(ctx);
@@ -610,10 +614,8 @@ done:
     if( from_cache ) {
         cache->release(cache, filename, module);
     }
-    if( ctx ) {
-        handlebars_context_dtor(ctx);
-    }
     handlebars_vm_dtor(vm);
+    handlebars_talloc_free(mctx);
 }
 
 /* {{{ Argument Info */
