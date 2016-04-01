@@ -91,20 +91,11 @@ static PHP_MINIT_FUNCTION(handlebars)
 
     HANDLEBARS_G(root) = talloc_new(NULL);
     HANDLEBARS_G(context) = handlebars_context_ctor_ex(HANDLEBARS_G(root));
-
-    //if( HANDLEBARS_G(cache_enabled) ) {
-        if (handlebars_setjmp_ex(HANDLEBARS_G(context), &buf)) {
-            // @todo log?
-            return FAILURE;
-        }
-        cache = handlebars_cache_ctor(HANDLEBARS_G(context));
-        //cache = handlebars_cache_lmdb_ctor(HANDLEBARS_G(context), "/tmp");
-        //cache = handlebars_cache_mmap_ctor(HANDLEBARS_G(context), "php-handlebars-opcache");
-
-        cache->max_entries = HANDLEBARS_G(cache_max_entries);
-        cache->max_size = HANDLEBARS_G(cache_max_size);
-        HANDLEBARS_G(cache) = cache;
-    //}
+    //HANDLEBARS_G(cache) = handlebars_cache_ctor(HANDLEBARS_G(context));
+    //HANDLEBARS_G(cache) = handlebars_cache_lmdb_ctor(HANDLEBARS_G(context), "/tmp");
+    HANDLEBARS_G(cache) = handlebars_cache_mmap_ctor(HANDLEBARS_G(context));
+    HANDLEBARS_G(cache)->max_entries = HANDLEBARS_G(cache_max_entries);
+    HANDLEBARS_G(cache)->max_size = HANDLEBARS_G(cache_max_size);
 
     PHP_MINIT(handlebars_impl)(INIT_FUNC_ARGS_PASSTHRU);
 
@@ -169,12 +160,13 @@ static PHP_MINFO_FUNCTION(handlebars)
 static PHP_GINIT_FUNCTION(handlebars)
 {
     handlebars_globals->root = NULL;
+    handlebars_globals->context = NULL;
+    handlebars_globals->cache = NULL;
     handlebars_globals->pool_size = -1;
     handlebars_globals->cache_enabled = 1;
     handlebars_globals->cache_max_age = 3600;
     handlebars_globals->cache_max_entries = 100;
     handlebars_globals->cache_max_size = 52428800;
-    memset(&handlebars_globals->cache, 0, sizeof(handlebars_globals->cache));
 }
 /* }}} */
 

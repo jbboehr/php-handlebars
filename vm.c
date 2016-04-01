@@ -384,6 +384,7 @@ PHP_METHOD(HandlebarsVM, render)
     struct handlebars_value * context;
     zend_long pool_size = HANDLEBARS_G(pool_size);
     jmp_buf buf;
+    bool from_cache = false;
 
 #ifndef FAST_ZPP
     if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Os|zz",
@@ -422,6 +423,7 @@ PHP_METHOD(HandlebarsVM, render)
     // Lookup cache entry
     if( cache && (module = handlebars_cache_find(cache, tmpl)) ) {
         // Use cached
+        from_cache = true;
     } else {
         ctx = handlebars_context_ctor_ex(HANDLEBARS_G(root));
         php_handlebars_try(HandlebarsRuntimeException_ce_ptr, ctx, &buf);
@@ -466,6 +468,9 @@ PHP_METHOD(HandlebarsVM, render)
     }
 
 done:
+    if( from_cache ) {
+        cache->release(cache, tmpl, module);
+    }
     handlebars_vm_dtor(vm);
     handlebars_context_dtor(ctx);
 }
@@ -490,6 +495,7 @@ PHP_METHOD(HandlebarsVM, renderFile)
     struct handlebars_value * context;
     zend_long pool_size = HANDLEBARS_G(pool_size);
     jmp_buf buf;
+    bool from_cache = false;
 
 #ifndef FAST_ZPP
     if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Os|zz",
@@ -528,6 +534,7 @@ PHP_METHOD(HandlebarsVM, renderFile)
     // Lookup cache entry
     if( cache && (module = handlebars_cache_find(HANDLEBARS_G(cache), filename)) ) {
         // Use cached
+        from_cache = true;
     } else {
         // Read file
         php_stream *stream;
@@ -600,6 +607,9 @@ PHP_METHOD(HandlebarsVM, renderFile)
     }
 
 done:
+    if( from_cache ) {
+        cache->release(cache, filename, module);
+    }
     if( ctx ) {
         handlebars_context_dtor(ctx);
     }
