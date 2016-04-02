@@ -258,7 +258,6 @@ static bool handlebars_std_zval_iterator_array(struct handlebars_value_iterator 
         if( SUCCESS == zend_hash_get_current_data_ex(ht, (void**) &data_entry, data_pointer) ) {
             key_type = zend_hash_get_current_key_ex(ht, &key_str, &key_len, &key_nindex, false, data_pointer);
 
-            ret = true;
             if( key_type == HASH_KEY_IS_STRING ) {
                 it->key = handlebars_string_ctor(value->ctx, key_str, key_len - 1);
                 it->index = 0;
