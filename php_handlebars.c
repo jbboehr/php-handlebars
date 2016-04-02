@@ -132,6 +132,8 @@ static PHP_MSHUTDOWN_FUNCTION(handlebars)
 static PHP_MINFO_FUNCTION(handlebars)
 {
     char buf[64];
+    struct handlebars_cache_stat stat = handlebars_cache_stat(HANDLEBARS_G(cache));
+
     php_info_print_table_start();
     php_info_print_table_row(2, "Version", PHP_HANDLEBARS_VERSION);
     php_info_print_table_row(2, "Released", PHP_HANDLEBARS_RELEASE);
@@ -145,10 +147,14 @@ static PHP_MINFO_FUNCTION(handlebars)
     snprintf(buf, sizeof(buf), "%ld", talloc_total_size(HANDLEBARS_G(root)));
     php_info_print_table_row(2, "Memory usage", buf);
     //if( HANDLEBARS_G(cache) ) {
-        snprintf(buf, sizeof(buf), "%ld", HANDLEBARS_G(cache)->current_entries);
+        snprintf(buf, sizeof(buf), "%ld", stat.current_entries);
         php_info_print_table_row(2, "Cache entries", buf);
-        snprintf(buf, sizeof(buf), "%ld", HANDLEBARS_G(cache)->current_size);
+        snprintf(buf, sizeof(buf), "%ld", stat.current_size);
         php_info_print_table_row(2, "Cache size", buf);
+        snprintf(buf, sizeof(buf), "%ld", stat.hits);
+        php_info_print_table_row(2, "Cache hits", buf);
+        snprintf(buf, sizeof(buf), "%ld", stat.misses);
+        php_info_print_table_row(2, "Cache misses", buf);
     //}
     php_info_print_table_end();
 
