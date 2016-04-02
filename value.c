@@ -193,10 +193,10 @@ static struct handlebars_value * handlebars_std_zval_map_find(struct handlebars_
 
 static struct handlebars_value * handlebars_std_zval_array_find(struct handlebars_value * value, size_t index)
 {
+    TSRMLS_FETCH();
     zval * intern = get_intern_zval(value);
     zval * entry = NULL;
     struct handlebars_value * ret = NULL;
-    TSRMLS_FETCH();
 
     if( Z_TYPE_P(intern) == IS_ARRAY ) {
         entry = php5to7_zend_hash_index_find(Z_ARRVAL_P(intern), index);
@@ -216,6 +216,7 @@ static bool handlebars_std_zval_iterator_void(struct handlebars_value_iterator *
 
 static bool handlebars_std_zval_iterator_array(struct handlebars_value_iterator * it)
 {
+    TSRMLS_FETCH();
     struct handlebars_value * value = it->value;
     zval * intern = get_intern_zval(value);
     HashTable * ht = Z_ARRVAL_P(intern);
@@ -278,11 +279,11 @@ static bool handlebars_std_zval_iterator_array(struct handlebars_value_iterator 
 
 bool handlebars_std_zval_iterator_init(struct handlebars_value_iterator * it, struct handlebars_value * value)
 {
+    TSRMLS_FETCH();
     zval * intern = get_intern_zval(value);
     zval ** data_entry = NULL;
     HashPosition * data_pointer = handlebars_talloc_zero(value->ctx, HashPosition);
     HashTable * ht;
-    TSRMLS_FETCH();
 
     it->value = value;
 
