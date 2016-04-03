@@ -85,9 +85,12 @@ static inline struct php_handlebars_options_obj * php_handlebars_options_fetch_o
 /* {{{ php_handlebars_options_obj_free */
 static inline void php_handlebars_options_obj_free_common(struct php_handlebars_options_obj * intern)
 {
+    // Note: these can be freed by talloc without being released by options_deinit during an exception
+    /*
     handlebars_value_try_delref(intern->options.scope);
     handlebars_value_try_delref(intern->options.hash);
     handlebars_value_try_delref(intern->options.data);
+    */
 }
 #ifdef ZEND_ENGINE_3
 static void php_handlebars_options_obj_free(zend_object * object TSRMLS_DC)
@@ -263,11 +266,14 @@ static zval *php_handlebars_options_object_read_property(zval *object, zval *mem
     zend_string *member_str = zval_get_string(member);
     struct php_handlebars_options_obj * intern = Z_HBS_OPTIONS_P(object);
     struct hbs_prop_handlers * hnd = zend_hash_find_ptr(&HandlebarsOptions_prop_handlers, member_str);
+    zval * ret;
     if( hnd ) {
-        return hnd->read_property(object, member, type, cache_slot, rv);
+        ret = hnd->read_property(object, member, type, cache_slot, rv);
     } else {
-        return intern->std_hnd->read_property(object, member, type, cache_slot, rv);
+        ret = intern->std_hnd->read_property(object, member, type, cache_slot, rv);
     }
+    zend_string_release(member_str);
+    return ret;
 }
 static int php_handlebars_options_object_has_property(zval *object, zval *member, int check_empty, void **cache_slot)
 {

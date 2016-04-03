@@ -8,6 +8,7 @@ set -e
     cd handlebars-c
     ./bootstrap
     ./configure --prefix=$HOME/build
+    touch src/handlebars_scanners.c
     make install
     cd ..
 #fi
