@@ -174,7 +174,7 @@ static PHP_MINFO_FUNCTION(handlebars)
     snprintf(buf, sizeof(buf), "%ld", stat.current_data_size);
     php_info_print_table_row(2, "Data segment used", buf);
 
-    snprintf(buf, sizeof(buf), "%ld", stat.total_data_size > 0 ? stat.total_data_size - stat.current_table_size : 0);
+    snprintf(buf, sizeof(buf), "%ld", stat.total_data_size > 0 ? stat.total_data_size - stat.current_data_size : 0);
     php_info_print_table_row(2, "Data segment free", buf);
 
     snprintf(buf, sizeof(buf), "%ld", stat.hits);
@@ -182,6 +182,9 @@ static PHP_MINFO_FUNCTION(handlebars)
 
     snprintf(buf, sizeof(buf), "%ld", stat.misses);
     php_info_print_table_row(2, "Misses", buf);
+
+    snprintf(buf, sizeof(buf), "%ld", stat.refcount);
+    php_info_print_table_row(2, "Refcount", buf);
 
     php_info_print_table_end();
     //}
