@@ -25,20 +25,14 @@ zend_class_entry * HandlebarsTokenizer_ce_ptr;
 /* {{{ proto mixed Handlebars\Tokenizer::lex(string tmpl) */
 static inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
 {
-    char * tmpl;
-    strsize_t tmpl_len;
+    char * tmpl = NULL;
+    strsize_t tmpl_len = 0;
     struct handlebars_context * ctx;
     struct handlebars_parser * parser;
     struct handlebars_token ** tokens;
     struct handlebars_string * output;
-    char * errmsg;
-    volatile struct {
-        zend_class_entry * ce;
-    } ex;
     jmp_buf buf;
     _DECLARE_ZVAL(child);
-
-    ex.ce = HandlebarsRuntimeException_ce_ptr;
 
 #ifndef FAST_ZPP
     if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &tmpl, &tmpl_len) == FAILURE ) {
@@ -56,7 +50,6 @@ static inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
     parser = handlebars_parser_ctor(ctx);
 
     // Lex
-    ex.ce = HandlebarsParseException_ce_ptr;
     parser->tmpl = handlebars_string_ctor(HBSCTX(parser), tmpl, tmpl_len);
     php_handlebars_try(HandlebarsParseException_ce_ptr, parser, &buf);
     tokens = handlebars_lex(parser);

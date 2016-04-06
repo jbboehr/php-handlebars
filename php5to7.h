@@ -1,5 +1,5 @@
 
-#if PHP_MAJOR_VERSION < 7
+#ifndef ZEND_ENGINE_3
 
 typedef int strsize_t;
 typedef long zend_long;
@@ -73,7 +73,7 @@ static inline void * php5to7_zend_hash_str_add_ptr(HashTable *ht, const char *st
 
 #define PHP5TO7_MAKE_STD_ZVAL MAKE_STD_ZVAL
 
-#else /* PHP_MAJOR_VERSION >= 7 */
+#else /* ZEND_ENGINE_3 */
 
 typedef size_t strsize_t;
 
@@ -109,7 +109,7 @@ typedef size_t strsize_t;
 #define _ALLOC_INIT_ZVAL(name) ZVAL_NULL(name)
 #define php5to7_zval_ptr_dtor(z) zval_ptr_dtor(z)
 
-#define PHP5TO7_MAKE_STD_ZVAL(name) zval name ## _v = {0}; name = &name ## _v;
+#define PHP5TO7_MAKE_STD_ZVAL(name) zval name ## _v; name = &name ## _v; ZVAL_UNDEF(name);
 
 #endif
 

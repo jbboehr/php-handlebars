@@ -37,7 +37,7 @@ static struct handlebars_value_handlers handlebars_value_std_zval_handlers;
 /* }}} Variables & Prototypes */
 
 /* {{{ Utils */
-static handlebars_zval_intern_dtor(struct handlebars_zval * intern) {
+static void handlebars_zval_intern_dtor(struct handlebars_zval * intern) {
 #ifdef ZEND_ENGINE_3
     zval_ptr_dtor(&intern->intern);
 #else
@@ -85,20 +85,20 @@ static inline void set_intern_zval(struct handlebars_value * value, zval * val) 
 /* {{{ handlebars zval value handlers */
 static struct handlebars_value * handlebars_std_zval_copy(struct handlebars_value * value)
 {
-    handlebars_context_throw(value->ctx, HANDLEBARS_ERROR, "handlebars_std_zval_convert is not implemented");
+    handlebars_throw(value->ctx, HANDLEBARS_ERROR, "handlebars_std_zval_convert is not implemented");
     return NULL;
 }
 
 static void handlebars_std_zval_dtor(struct handlebars_value * value)
 {
-    zval * intern = get_intern_zval(value);
+    //zval * intern = get_intern_zval(value);
     //Z_DELREF_P(intern);
     //zval_ptr_dtor(&intern);
 }
 
 static void handlebars_std_zval_convert(struct handlebars_value * value, bool recurse)
 {
-    handlebars_context_throw(value->ctx, HANDLEBARS_ERROR, "handlebars_std_zval_convert is not implemented");
+    handlebars_throw(value->ctx, HANDLEBARS_ERROR, "handlebars_std_zval_convert is not implemented");
 }
 
 static enum handlebars_value_type handlebars_std_zval_type(struct handlebars_value * value)
@@ -157,9 +157,10 @@ static struct handlebars_value * handlebars_std_zval_map_find(struct handlebars_
         case IS_OBJECT:
             if( instanceof_function(Z_OBJCE_P(intern), zend_ce_arrayaccess TSRMLS_CC) ) {
 #ifdef ZEND_ENGINE_3
-                zval rv = {0};
+                zval rv;
                 zval prop;
                 ZVAL_STRINGL(&prop, key->val, key->len);
+                ZVAL_UNDEF(&rv);
                 if( Z_OBJ_HT_P(intern)->has_dimension(intern, &prop, 0 TSRMLS_CC) ) {
                     entry = Z_OBJ_HT_P(intern)->read_dimension(intern, &prop, 0, &rv TSRMLS_CC);
                 }
@@ -281,7 +282,6 @@ bool handlebars_std_zval_iterator_init(struct handlebars_value_iterator * it, st
 {
     TSRMLS_FETCH();
     zval * intern = get_intern_zval(value);
-    zval ** data_entry = NULL;
     HashPosition * data_pointer = handlebars_talloc_zero(value->ctx, HashPosition);
     HashTable * ht;
 
@@ -316,6 +316,7 @@ bool handlebars_std_zval_iterator_init(struct handlebars_value_iterator * it, st
                     return true;
                 }
 #else
+                zval ** data_entry = NULL;
                 int key_type = 0;
                 char * key_str = NULL;
                 uint key_len = 0;
@@ -498,7 +499,7 @@ static struct handlebars_value_handlers handlebars_value_std_zval_handlers = {
 /* }}} handlebars zval value handlers */
 
 /* {{{ handlebars_value_to_zval */
-static inline handlebars_value_array_to_zval(struct handlebars_value * value, zval * val TSRMLS_DC)
+static inline void handlebars_value_array_to_zval(struct handlebars_value * value, zval * val TSRMLS_DC)
 {
     struct handlebars_value_iterator it;
     handlebars_value_iterator_init(&it, value);
@@ -517,7 +518,7 @@ static inline handlebars_value_array_to_zval(struct handlebars_value * value, zv
     }
 }
 
-static inline handlebars_value_map_to_zval(struct handlebars_value * value, zval * val TSRMLS_DC)
+static inline void handlebars_value_map_to_zval(struct handlebars_value * value, zval * val TSRMLS_DC)
 {
     struct handlebars_value_iterator it;
     handlebars_value_iterator_init(&it, value);
@@ -544,7 +545,7 @@ PHPAPI zval * handlebars_value_to_zval(struct handlebars_value * value, zval * v
 
     switch( value->type ) {
         case HANDLEBARS_VALUE_TYPE_NULL:
-        ZVAL_NULL(val);
+            ZVAL_NULL(val);
             break;
         case HANDLEBARS_VALUE_TYPE_TRUE:
             ZVAL_BOOL(val, 1);
@@ -553,10 +554,10 @@ PHPAPI zval * handlebars_value_to_zval(struct handlebars_value * value, zval * v
             ZVAL_BOOL(val, 0);
             break;
         case HANDLEBARS_VALUE_TYPE_FLOAT:
-        ZVAL_DOUBLE(val, value->v.dval);
+            ZVAL_DOUBLE(val, value->v.dval);
             break;
         case HANDLEBARS_VALUE_TYPE_INTEGER:
-        ZVAL_LONG(val, value->v.lval);
+            ZVAL_LONG(val, value->v.lval);
             break;
         case HANDLEBARS_VALUE_TYPE_STRING:
             PHP5TO7_ZVAL_STRINGL(val, handlebars_value_get_strval(value), handlebars_value_get_strlen(value));
@@ -571,6 +572,10 @@ PHPAPI zval * handlebars_value_to_zval(struct handlebars_value * value, zval * v
             intern = get_intern_zval(value);
             // @todo check to make sure it's a zval type
             ZVAL_ZVAL(val, intern, 1, 0);
+            break;
+
+        default: // This shouldn't happen
+            ZVAL_NULL(val);
             break;
     }
 

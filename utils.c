@@ -4,10 +4,12 @@
 #endif
 
 #include "Zend/zend_API.h"
+#include "Zend/zend_exceptions.h"
 #include "Zend/zend_interfaces.h"
 #include "main/php.h"
 #include "ext/standard/html.h"
 #include "ext/standard/php_array.h"
+#include "ext/standard/php_string.h"
 
 #include "handlebars.h"
 #include "handlebars_memory.h"
@@ -29,7 +31,6 @@ PHP_METHOD(HandlebarsUtils, appendContextPath)
     char * id;
     strsize_t id_length;
     zval * entry = NULL;
-    zval ** entry2 = NULL;
     char * tmp = NULL;
     strsize_t tmp_length = 0;
     char * out;
@@ -55,7 +56,7 @@ PHP_METHOD(HandlebarsUtils, appendContextPath)
         	}
             break;
         case IS_OBJECT:
-#if PHP_MAJOR_VERSION < 7
+#ifndef ZEND_ENGINE_3
             entry = zend_read_property(Z_OBJCE_P(context_path), context_path, "contextPath", sizeof("contextPath") - 1, 1 TSRMLS_CC);
 #else
             entry = zend_read_property(Z_OBJCE_P(context_path), context_path, "contextPath", sizeof("contextPath") - 1, 1, NULL);
@@ -82,7 +83,7 @@ PHP_METHOD(HandlebarsUtils, appendContextPath)
 /* }}} Handlebars\Utils::appendContextPath */
 
 /* {{{ proto mixed Handlebars\Utils::createFrame(mixed $value) */
-#if PHP_MAJOR_VERSION < 7
+#ifndef ZEND_ENGINE_3
 static inline void php_handlebars_create_frame(zval * return_value, zval * value TSRMLS_DC)
 {
     array_init(return_value);
@@ -149,15 +150,12 @@ static zend_always_inline short is_integer_string(char * str, strsize_t len) {
     }
     return 1;
 }
-#if PHP_MAJOR_VERSION < 7
+#ifndef ZEND_ENGINE_3
 static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * field, zval * return_value TSRMLS_DC)
 {
     long index = -1;
-    HashTable * data_hash;
     zval * entry = NULL;
-    zval * fname;
     zval * prop;
-    zval * params[1];
 
     // Support integer keys
     switch( Z_TYPE_P(field) ) {
@@ -204,14 +202,12 @@ static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * f
 #else
 static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * field, zval * return_value TSRMLS_DC)
 {
-    long long_index;
     zend_long index = -1;
     zval * entry = NULL;
-    zval fname;
-    zval prop;
-    HashTable * data_hash;
-    zval result = {0};
+    zval result;
     zval *retval = NULL;
+
+    ZVAL_UNDEF(&result);
 
     // Support integer keys
     switch( Z_TYPE_P(field) ) {
@@ -322,7 +318,7 @@ zend_bool inline php_handlebars_is_callable(zval * var TSRMLS_DC)
         return 0;
     }
 
-#if PHP_MAJOR_VERSION < 7
+#ifndef ZEND_ENGINE_3
     retval = zend_is_callable_ex(var, NULL, check_flags, NULL, NULL, NULL, &error TSRMLS_CC);
 #else
     retval = zend_is_callable_ex(var, NULL, check_flags, NULL, NULL, &error);
@@ -354,15 +350,15 @@ PHP_METHOD(HandlebarsUtils, isCallable)
 /* }}} Handlebars\Utils::isCallable */
 
 /* {{{ proto boolean Handlebars\Utils::isIntArray(mixed value) */
-#if PHP_MAJOR_VERSION < 7
+#ifndef ZEND_ENGINE_3
 zend_bool inline php_handlebars_is_int_array(zval * arr TSRMLS_DC)
 {
     HashTable * data_hash = NULL;
     HashPosition data_pointer = NULL;
     zval ** data_entry = NULL;
     char * key;
-    int key_len;
-    long index;
+    uint key_len;
+    ulong index;
     long idx = 0;
 
     if( Z_TYPE_P(arr) != IS_ARRAY ) {
@@ -447,7 +443,7 @@ PHP_METHOD(HandlebarsUtils, isIntArray)
 /* }}} Handlebars\Utils::isIntArray */
 
 /* {{{ proto string Handlebars\Utils::expression(mixed value) */
-#if PHP_MAJOR_VERSION < 7
+#ifndef ZEND_ENGINE_3
 static zend_always_inline zend_bool php_handlebars_expression(zval * val, zval * return_value TSRMLS_DC)
 {
     zval delim;
@@ -536,12 +532,11 @@ PHP_METHOD(HandlebarsUtils, expression)
 /* }}} Handlebars\Utils::expression */
 
 /* {{{ proto string Handlebars\Utils::escapeExpression(mixed value) */
-#if PHP_MAJOR_VERSION < 7
+#ifndef ZEND_ENGINE_3
 static zend_always_inline void php_handlebars_escape_expression(zval * val, zval * return_value TSRMLS_DC)
 {
     size_t new_len;
     char * replaced;
-    zval tmp;
 
     // @todo this should probably support inheritance
     if( Z_TYPE_P(val) == IS_OBJECT && instanceof_function(Z_OBJCE_P(val), HandlebarsSafeString_ce_ptr TSRMLS_CC) ) {
@@ -550,14 +545,13 @@ static zend_always_inline void php_handlebars_escape_expression(zval * val, zval
     }
 
     convert_to_string(val);
-    replaced = php_escape_html_entities_ex(Z_STRVAL_P(val), Z_STRLEN_P(val), &new_len, 0, (int) ENT_QUOTES, "UTF-8", 1 TSRMLS_CC);
+    replaced = php_escape_html_entities_ex((unsigned char *) Z_STRVAL_P(val), Z_STRLEN_P(val), &new_len, 0, (int) ENT_QUOTES, "UTF-8", 1 TSRMLS_CC);
     RETURN_STRING(replaced, 0);
 }
 #else
 static zend_always_inline void php_handlebars_escape_expression(zval * val, zval * return_value TSRMLS_DC)
 {
     zend_string * replaced;
-    zval tmp;
     zval rv;
 
     if( Z_TYPE_P(val) == IS_OBJECT && instanceof_function(Z_OBJCE_P(val), HandlebarsSafeString_ce_ptr TSRMLS_CC) ) {
@@ -566,7 +560,7 @@ static zend_always_inline void php_handlebars_escape_expression(zval * val, zval
     }
 
     convert_to_string(val);
-    replaced = php_escape_html_entities_ex(Z_STRVAL_P(val), Z_STRLEN_P(val), 0, (int) ENT_QUOTES, "UTF-8", 1 TSRMLS_CC);
+    replaced = php_escape_html_entities_ex((unsigned char *) Z_STRVAL_P(val), Z_STRLEN_P(val), 0, (int) ENT_QUOTES, "UTF-8", 1 TSRMLS_CC);
     RETURN_STR(replaced);
 }
 #endif
@@ -653,7 +647,7 @@ static zend_always_inline char * php_handlebars_escape_expression_replace_helper
     return output;
 }
 
-#if PHP_MAJOR_VERSION < 7
+#ifndef ZEND_ENGINE_3
 static zend_always_inline void php_handlebars_escape_expression_compat(zval * val, zval * return_value TSRMLS_DC)
 {
     size_t new_len;
@@ -671,7 +665,7 @@ static zend_always_inline void php_handlebars_escape_expression_compat(zval * va
         return;
     }
 
-    replaced = php_escape_html_entities_ex(Z_STRVAL(tmp), Z_STRLEN(tmp), &new_len, 0, (int) ENT_COMPAT, "UTF-8", 1 TSRMLS_CC);
+    replaced = php_escape_html_entities_ex((unsigned char *) Z_STRVAL(tmp), Z_STRLEN(tmp), &new_len, 0, (int) ENT_COMPAT, "UTF-8", 1 TSRMLS_CC);
     zval_dtor(&tmp);
 
     replaced2 = php_handlebars_escape_expression_replace_helper(replaced TSRMLS_CC);
@@ -698,7 +692,7 @@ static zend_always_inline void php_handlebars_escape_expression_compat(zval * va
         return;
     }
 
-    replaced = php_escape_html_entities_ex(Z_STRVAL(tmp), Z_STRLEN(tmp), 0, (int) ENT_COMPAT, "UTF-8", 1 TSRMLS_CC);
+    replaced = php_escape_html_entities_ex((unsigned char *) Z_STRVAL(tmp), Z_STRLEN(tmp), 0, (int) ENT_COMPAT, "UTF-8", 1 TSRMLS_CC);
     zval_dtor(&tmp);
 
     replaced2 = php_handlebars_escape_expression_replace_helper(replaced->val TSRMLS_CC);

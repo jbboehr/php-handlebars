@@ -71,11 +71,8 @@ PHP_INI_END()
 /* {{{ PHP_MINIT_FUNCTION */
 static PHP_MINIT_FUNCTION(handlebars)
 {
-    zend_class_entry ce;
     int flags = CONST_CS | CONST_PERSISTENT;
     const char * version = handlebars_version_string();
-    jmp_buf buf;
-    struct handlebars_cache * cache;
 
     REGISTER_INI_ENTRIES();
 

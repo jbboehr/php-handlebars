@@ -41,7 +41,7 @@ PHPAPI void php_handlebars_token_ctor(struct handlebars_token * token, zval * z_
     object_init_ex(z_token, HandlebarsToken_ce_ptr);
 
     do {
-#if PHP_MAJOR_VERSION < 7
+#ifndef ZEND_ENGINE_3
         zval **z_const_args = emalloc(2 * sizeof(zval *));
 
 		ZVAL_STRING(&z_const, "__construct", 0);

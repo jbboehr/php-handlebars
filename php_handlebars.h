@@ -11,9 +11,11 @@
 #define PHP_HANDLEBARS_SPEC "4.0.4"
 
 struct handlebars_cache;
+struct handlebars_compiler;
 struct handlebars_context;
 struct handlebars_options;
 struct handlebars_token;
+struct handlebars_vm;
 
 extern zend_module_entry handlebars_module_entry;
 #define phpext_handlebars_ptr &handlebars_module_entry
@@ -69,6 +71,7 @@ zend_bool inline php_handlebars_is_int_array(zval * arr TSRMLS_DC);
 
 PHPAPI void php_handlebars_options_ctor(struct handlebars_options * options, zval * z_options TSRMLS_DC);
 PHPAPI void php_handlebars_token_ctor(struct handlebars_token * token, zval * z_token TSRMLS_DC);
+PHPAPI void php_handlebars_process_options_zval(struct handlebars_compiler * compiler, struct handlebars_vm * vm, zval * options TSRMLS_DC);
 
 PHPAPI struct handlebars_value * handlebars_value_from_zval(struct handlebars_context * context, zval * val TSRMLS_DC);
 PHPAPI zval * handlebars_value_to_zval(struct handlebars_value * value, zval * val TSRMLS_DC);

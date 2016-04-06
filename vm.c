@@ -34,13 +34,13 @@ zend_class_entry * HandlebarsVM_ce_ptr;
 static zend_object_handlers HandlebarsVM_obj_handlers;
 
 struct php_handlebars_vm_obj {
-#if PHP_MAJOR_VERSION < 7
+#ifndef ZEND_ENGINE_3
     zend_object std;
 #endif
     struct handlebars_context * context;
     struct handlebars_value * helpers;
     struct handlebars_value * partials;
-#if PHP_MAJOR_VERSION >= 7
+#ifdef ZEND_ENGINE_3
     zend_object std;
 #endif
 };
@@ -185,11 +185,12 @@ zend_object_value php_handlebars_vm_obj_create(zend_class_entry *ce TSRMLS_DC)
 {
     zend_object_value retval;
     struct php_handlebars_vm_obj *obj;
-    zval *tmp;
 
     obj = ecalloc(1, sizeof(struct php_handlebars_vm_obj));
     zend_object_std_init(&obj->std, ce TSRMLS_CC);
+
 #if PHP_VERSION_ID < 50399
+    zval *tmp;
     zend_hash_copy(obj->std.properties, &ce->default_properties, (copy_ctor_func_t) zval_property_ctor, (void *) &tmp, sizeof(zval *));
 #else
     object_properties_init(&obj->std, ce);
@@ -208,8 +209,6 @@ zend_object_value php_handlebars_vm_obj_create(zend_class_entry *ce TSRMLS_DC)
 void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, zval * helpers TSRMLS_DC)
 {
     HashTable * data_hash = NULL;
-    HashPosition data_pointer = NULL;
-    zval ** data_entry = NULL;
     long num;
     long idx = 0;
     char ** known_helpers;
@@ -234,12 +233,16 @@ void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, z
         ZEND_HASH_FOREACH_KEY(data_hash, index, key) {
             if( key ) {
                 known_helpers[idx++] = handlebars_talloc_strndup(known_helpers, ZSTR_VAL(key), ZSTR_LEN(key));
+            } else {
+                (void) index;
             }
         } ZEND_HASH_FOREACH_END();
 #else
+        HashPosition data_pointer = NULL;
+        zval ** data_entry = NULL;
         char * key;
-        int key_len;
-        long index;
+        uint key_len;
+        ulong index;
         zend_hash_internal_pointer_reset_ex(data_hash, &data_pointer);
         while( zend_hash_get_current_data_ex(data_hash, (void**) &data_entry, &data_pointer) == SUCCESS ) {
             if (zend_hash_get_current_key_ex(data_hash, &key, &key_len, &index, 0, &data_pointer) == HASH_KEY_IS_STRING) {
@@ -366,7 +369,6 @@ PHP_METHOD(HandlebarsVM, render)
     strsize_t tmpl_len;
     zval * z_context = NULL;
     zval * z_options = NULL;
-    zval * z_partials;
     TALLOC_CTX * mctx;
     struct handlebars_cache * cache = NULL;
     struct handlebars_module * module = NULL;
@@ -374,7 +376,6 @@ PHP_METHOD(HandlebarsVM, render)
     struct handlebars_parser * parser;
     struct handlebars_compiler * compiler;
     struct handlebars_value * context;
-    zend_long pool_size = HANDLEBARS_G(pool_size);
     jmp_buf buf;
     bool from_cache = false;
 
@@ -393,7 +394,7 @@ PHP_METHOD(HandlebarsVM, render)
     ZEND_PARSE_PARAMETERS_END();
 #endif
 
-#if PHP_MAJOR_VERSION >= 7
+#ifdef ZEND_ENGINE_3
     // Dereference zval
     if( z_context && Z_TYPE_P(z_context) == IS_REFERENCE ) {
         ZVAL_DEREF(z_context);
@@ -478,20 +479,15 @@ PHP_METHOD(HandlebarsVM, renderFile)
     zval * _this_zval;
     char * filename_str;
     strsize_t filename_len;
-    char * tmpl_str;
-    strsize_t tmpl_len;
     zval * z_context = NULL;
     zval * z_options = NULL;
-    zval * z_partials;
     void * mctx = NULL;
     struct handlebars_cache * cache = NULL;
     struct handlebars_module * module = NULL;
     struct handlebars_context * ctx = NULL;
     struct handlebars_parser * parser;
     struct handlebars_compiler * compiler;
-    struct handlebars_program * program;
     struct handlebars_value * context;
-    zend_long pool_size = HANDLEBARS_G(pool_size);
     jmp_buf buf;
     bool from_cache = false;
 
@@ -642,7 +638,6 @@ static zend_function_entry HandlebarsVM_methods[] = {
 PHP_MINIT_FUNCTION(handlebars_vm)
 {
     zend_class_entry ce;
-    int flags = CONST_CS | CONST_PERSISTENT;
 
     memcpy(&HandlebarsVM_obj_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
 #ifdef ZEND_ENGINE_3

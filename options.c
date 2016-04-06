@@ -25,12 +25,12 @@ static HashTable HandlebarsOptions_prop_handlers;
 /* }}} Variables & Prototypes */
 
 struct php_handlebars_options_obj {
-#if PHP_MAJOR_VERSION < 7
+#ifndef ZEND_ENGINE_3
     zend_object std;
 #endif
     struct handlebars_options options;
     zend_object_handlers * std_hnd;
-#if PHP_MAJOR_VERSION >= 7
+#ifdef ZEND_ENGINE_3
     zend_object std;
 #endif
 };
@@ -78,7 +78,7 @@ static inline struct php_handlebars_options_obj * php_handlebars_options_fetch_o
 }
 #define Z_HBS_OPTIONS_P(zv) php_handlebars_options_fetch_object(Z_OBJ_P((zv)))
 #else
-#define Z_HBS_OPTIONS_P(zv) zend_object_store_get_object(zv TSRMLS_CC)
+#define Z_HBS_OPTIONS_P(zv) (struct php_handlebars_options_obj *) zend_object_store_get_object(zv TSRMLS_CC)
 #endif
 /* }}} */
 
@@ -132,11 +132,12 @@ zend_object_value php_handlebars_options_obj_create(zend_class_entry *ce TSRMLS_
 {
     zend_object_value retval;
     struct php_handlebars_options_obj *obj;
-    zval *tmp;
 
-    obj = ecalloc(1, sizeof(struct php_handlebars_options_obj));
+    obj = (struct php_handlebars_options_obj *) ecalloc(1, sizeof(struct php_handlebars_options_obj));
 	zend_object_std_init(&obj->std, ce TSRMLS_CC);
+
 #if PHP_VERSION_ID < 50399
+    zval *tmp;
     zend_hash_copy(obj->std.properties, &ce->default_properties, (copy_ctor_func_t) zval_property_ctor, (void *) &tmp, sizeof(zval *));
 #else
 	object_properties_init(&obj->std, ce);
@@ -165,7 +166,7 @@ PHPAPI void php_handlebars_options_ctor(
 
     /*
     do {
-#if PHP_MAJOR_VERSION < 7
+#ifndef ZEND_ENGINE_3
         zval * z_const;
         zval * z_ret;
         MAKE_STD_ZVAL(z_const);
@@ -301,11 +302,11 @@ static zval *php_handlebars_options_object_read_property(zval *object, zval *mem
 static int php_handlebars_options_object_has_property(zval *object, zval *member, int has_set_exists, const zend_literal *key TSRMLS_DC)
 {
     struct php_handlebars_options_obj * intern = Z_HBS_OPTIONS_P(object);
-    zval * tmp = php_handlebars_options_object_read_property(object, member, 0, key TSRMLS_CC);
+    /*zval * tmp =*/ php_handlebars_options_object_read_property(object, member, 0, key TSRMLS_CC);
     return intern->std_hnd->has_property(object, member, has_set_exists, key TSRMLS_CC);
 }
 #endif
-/* }}} Object handlers
+/* }}} Object handlers */
 
 /* {{{ proto Handlebars\Options::__construct([array $props]) */
 PHP_METHOD(HandlebarsOptions, __construct)
@@ -334,19 +335,21 @@ PHP_METHOD(HandlebarsOptions, __construct)
 #ifdef ZEND_ENGINE_3
         zend_string * key;
         zend_ulong index;
-        zend_ulong idx = 0;
         zval * entry;
 
         ZEND_HASH_FOREACH_KEY_VAL(ht, index, key, entry) {
-            zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZSTR_VAL(key), ZSTR_LEN(key), entry);
+            if( key ) {
+                zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZSTR_VAL(key), ZSTR_LEN(key), entry);
+            } else {
+                (void) index;
+            }
         } ZEND_HASH_FOREACH_END();
 #else
         HashPosition data_pointer = NULL;
         zval ** data_entry = NULL;
         char * key;
-        int key_len;
-        long index;
-        long idx = 0;
+        uint key_len;
+        ulong index;
 
         zend_hash_internal_pointer_reset_ex(ht, &data_pointer);
         while( zend_hash_get_current_data_ex(ht, (void**) &data_entry, &data_pointer) == SUCCESS ) {
@@ -572,7 +575,6 @@ static zend_function_entry HandlebarsOptions_methods[] = {
 PHP_MINIT_FUNCTION(handlebars_options)
 {
     zend_class_entry ce;
-    int flags = CONST_CS | CONST_PERSISTENT;
 
     memcpy(&HandlebarsOptions_obj_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
 #ifdef ZEND_ENGINE_3

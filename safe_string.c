@@ -50,7 +50,6 @@ PHP_METHOD(HandlebarsSafeString, __toString)
 {
     zval * _this_zval;
     zval * value;
-    zval rv;
 
 #ifndef FAST_ZPP
     if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "O",
@@ -61,10 +60,11 @@ PHP_METHOD(HandlebarsSafeString, __toString)
     _this_zval = getThis();
 #endif
 
-#if PHP_MAJOR_VERSION < 7
-    value = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, "value", sizeof("value")-1, 1 TSRMLS_CC);
-#else
+#ifdef ZEND_ENGINE_3
+    zval rv;
     value = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, "value", sizeof("value")-1, 1, &rv TSRMLS_CC);
+#else
+    value = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, "value", sizeof("value")-1, 1 TSRMLS_CC);
 #endif
     RETURN_ZVAL(value, 1, 0);
 }

@@ -77,13 +77,12 @@ static zend_always_inline void add_next_index_handlebars_ast_node(zval * current
 static zend_always_inline void php_handlebars_ast_list_to_zval(struct handlebars_ast_list * list, zval * current TSRMLS_DC)
 {
     struct handlebars_ast_list_item * item;
-    struct handlebars_ast_list_item * ltmp;
-    _DECLARE_ZVAL(tmp);
+    struct handlebars_ast_list_item * tmp;
 
     if( list != NULL ) {
         array_init(current);
 
-        handlebars_ast_list_foreach(list, item, ltmp) {
+        handlebars_ast_list_foreach(list, item, tmp) {
             add_next_index_handlebars_ast_node_ex(current, item->data);
         }
     }
@@ -92,13 +91,13 @@ static zend_always_inline void php_handlebars_ast_list_to_zval(struct handlebars
 static zend_always_inline void php_handlebars_strip_to_zval(unsigned strip, zval * current)
 {
     array_init(current);
-    add_assoc_bool_ex(current, PHP5TO7_STRL("left"), 1 && (strip & handlebars_ast_strip_flag_left));
-    add_assoc_bool_ex(current, PHP5TO7_STRL("right"), 1 && (strip & handlebars_ast_strip_flag_right));
-    add_assoc_bool_ex(current, PHP5TO7_STRL("openStandalone"), 1 && (strip & handlebars_ast_strip_flag_open_standalone));
-    add_assoc_bool_ex(current, PHP5TO7_STRL("closeStandalone"), 1 && (strip & handlebars_ast_strip_flag_close_standalone));
-    add_assoc_bool_ex(current, PHP5TO7_STRL("inlineStandalone"), 1 && (strip & handlebars_ast_strip_flag_inline_standalone));
-    add_assoc_bool_ex(current, PHP5TO7_STRL("leftStripped"), 1 && (strip & handlebars_ast_strip_flag_left_stripped));
-    add_assoc_bool_ex(current, PHP5TO7_STRL("rightStriped"), 1 && (strip & handlebars_ast_strip_flag_right_stripped));
+    add_assoc_bool_ex(current, PHP5TO7_STRL("left"), 0 != (strip & handlebars_ast_strip_flag_left));
+    add_assoc_bool_ex(current, PHP5TO7_STRL("right"), 0 != (strip & handlebars_ast_strip_flag_right));
+    add_assoc_bool_ex(current, PHP5TO7_STRL("openStandalone"), 0 != (strip & handlebars_ast_strip_flag_open_standalone));
+    add_assoc_bool_ex(current, PHP5TO7_STRL("closeStandalone"), 0 != (strip & handlebars_ast_strip_flag_close_standalone));
+    add_assoc_bool_ex(current, PHP5TO7_STRL("inlineStandalone"), 0 != (strip & handlebars_ast_strip_flag_inline_standalone));
+    add_assoc_bool_ex(current, PHP5TO7_STRL("leftStripped"), 0 != (strip & handlebars_ast_strip_flag_left_stripped));
+    add_assoc_bool_ex(current, PHP5TO7_STRL("rightStriped"), 0 != (strip & handlebars_ast_strip_flag_right_stripped));
 }
 
 static zend_always_inline void php_handlebars_ast_node_add_path_params_hash(struct handlebars_ast_node * node, zval * current TSRMLS_DC)
@@ -156,7 +155,6 @@ static zend_always_inline void php_handlebars_loc_to_zval(struct handlebars_loci
 static void php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node, zval * current TSRMLS_DC)
 {
     _DECLARE_ZVAL(tmp);
-    _DECLARE_ZVAL(tmp2);
     array_init(current);
 
     if( node == NULL ) {
@@ -313,6 +311,7 @@ static void php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node, z
         case HANDLEBARS_AST_NODE_INTERMEDIATE:
         case HANDLEBARS_AST_NODE_INVERSE:
         case HANDLEBARS_AST_NODE_NIL:
+        case HANDLEBARS_AST_NODE_PARTIAL_BLOCK: // ?
             break;
         // LCOV_EXCL_STOP
     }
@@ -322,8 +321,8 @@ static void php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node, z
 /* {{{ proto mixed Handlebars\Parser::parse(string tmpl) */
 static void php_handlebars_parse(INTERNAL_FUNCTION_PARAMETERS, short print)
 {
-    char * tmpl;
-    strsize_t tmpl_len;
+    char * tmpl = NULL;
+    strsize_t tmpl_len = 0;
     struct handlebars_context * ctx;
     struct handlebars_parser * parser;
     struct handlebars_string * output;

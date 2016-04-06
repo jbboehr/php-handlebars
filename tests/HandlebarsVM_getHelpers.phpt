@@ -1,7 +1,5 @@
 --TEST--
 Handlebars\VM::getHelpers()
---EXTENSIONS--
-psr
 --SKIPIF--
 <?php if( !extension_loaded('handlebars') ) die('skip '); ?>
 --FILE--

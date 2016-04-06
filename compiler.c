@@ -96,7 +96,7 @@ static void php_handlebars_opcode_to_zval(struct handlebars_opcode * opcode, zva
 
 	do {
 		zval z_const, z_ret;
-#if PHP_MAJOR_VERSION < 7
+#ifndef ZEND_ENGINE_3
 		zval **z_const_args = emalloc(2 * sizeof(zval *));
 
 		ZVAL_STRING(&z_const, "__construct", 0);
@@ -128,7 +128,6 @@ static zend_always_inline void php_handlebars_opcodes_to_zval(
 {
     size_t i;
     struct handlebars_opcode ** pos = opcodes;
-    short num;
     _DECLARE_ZVAL(tmp);
 
     array_init(current);
@@ -180,7 +179,7 @@ static void php_handlebars_program_to_zval(struct handlebars_program * program, 
 
 	do {
 		zval z_const, z_ret;
-#if PHP_MAJOR_VERSION < 7
+#ifndef ZEND_ENGINE_3
 		zval **z_const_args = emalloc(3 * sizeof(zval *));
 
 		ZVAL_STRING(&z_const, "__construct", 0);
@@ -246,7 +245,6 @@ static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval 
     HashTable * data_hash = NULL;
     long count = 0;
     char ** ptr;
-    const char ** ptr2;
     char ** known_helpers;
 
     if( !arr || Z_TYPE_P(arr) != IS_ARRAY ) {
@@ -260,15 +258,12 @@ static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval 
         return NULL;
     }
 
-    // Count builtins >.>
-    //for( ptr2 = handlebars_builtins_names(); *ptr2; ++ptr2, ++count );
-
     // Allocate array
     ptr = known_helpers = talloc_array(ctx, char *, count + 1);
 
     // Copy in known helpers
     do {
-#if PHP_MAJOR_VERSION < 7
+#ifndef ZEND_ENGINE_3
         HashPosition data_pointer = NULL;
         zval ** data_entry = NULL;
         zend_hash_internal_pointer_reset_ex(data_hash, &data_pointer);
@@ -296,15 +291,12 @@ static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval 
                 *ptr++ = (char *) handlebars_talloc_strndup(ctx, Z_STRVAL_P(entry), Z_STRLEN_P(entry));
             } else if( key ) {
                 *ptr++ = (char *) handlebars_talloc_strndup(ctx, ZSTR_VAL(key), ZSTR_LEN(key));
+            } else {
+                (void) index;
             }
         } ZEND_HASH_FOREACH_END();
 #endif
     } while(0);
-
-    // Copy in builtins
-    //for( ptr2 = handlebars_builtins_names(); *ptr2; ++ptr2 ) {
-    //    *ptr++ = (char *) handlebars_talloc_strdup(ctx, *ptr2);
-    //}
 
     // Null terminate
     *ptr++ = NULL;
@@ -314,14 +306,14 @@ static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval 
 /* }}} php_handlebars_compiler_known_helpers_from_zval */
 
 /* {{{ php_handlebars_process_options_zval */
-long php_handlebars_process_options_zval(struct handlebars_compiler * compiler, struct handlebars_vm * vm, zval * options TSRMLS_DC)
+PHPAPI void php_handlebars_process_options_zval(struct handlebars_compiler * compiler, struct handlebars_vm * vm, zval * options TSRMLS_DC)
 {
     zval * entry;
     HashTable * ht;
     long flags = 0;
 
     if( !options || Z_TYPE_P(options) != IS_ARRAY ) {
-        return 0;
+        return;
     }
 
     ht = Z_ARRVAL_P(options);
@@ -388,14 +380,13 @@ long php_handlebars_process_options_zval(struct handlebars_compiler * compiler, 
 /* {{{ proto mixed Handlebars\Compiler::compile(string tmpl[, long flags[, array knownHelpers]]) */
 static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short print)
 {
-    char * tmpl;
-    strsize_t tmpl_len;
+    char * tmpl = NULL;
+    strsize_t tmpl_len = 0;
     zval * options = NULL;
     TALLOC_CTX * mctx = NULL;
     struct handlebars_context * ctx;
     struct handlebars_parser * parser;
     struct handlebars_compiler * compiler;
-    struct handlebars_opcode_printer * printer;
     zend_long pool_size = HANDLEBARS_G(pool_size);
     jmp_buf buf;
 
@@ -411,7 +402,7 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
     ZEND_PARSE_PARAMETERS_END();
 #endif
 
-#if PHP_MAJOR_VERSION >= 7
+#ifdef ZEND_ENGINE_3
     // Dereference zval
     if (Z_TYPE_P(options) == IS_REFERENCE) {
         ZVAL_DEREF(options);
@@ -493,7 +484,6 @@ static zend_function_entry HandlebarsCompiler_methods[] = {
 PHP_MINIT_FUNCTION(handlebars_compiler)
 {
     zend_class_entry ce;
-    int flags = CONST_CS | CONST_PERSISTENT;
 
     INIT_CLASS_ENTRY(ce, "Handlebars\\Compiler", HandlebarsCompiler_methods);
     HandlebarsCompiler_ce_ptr = zend_register_internal_class(&ce TSRMLS_CC);
