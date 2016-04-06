@@ -48,11 +48,6 @@ extern zend_class_entry * HandlebarsTokenizer_ce_ptr;
 extern zend_class_entry * HandlebarsUtils_ce_ptr;
 extern zend_class_entry * HandlebarsVM_ce_ptr;
 
-struct php_handlebars_cache_entry {
-    struct handlebars_context * ctx;
-    struct handlebars_compiler * compiler;
-};
-
 ZEND_BEGIN_MODULE_GLOBALS(handlebars)
     zend_long pool_size;
     zend_bool cache_enabled;
