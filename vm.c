@@ -437,7 +437,7 @@ PHP_METHOD(HandlebarsVM, render)
 
         // Compile
         php_handlebars_try(HandlebarsCompileException_ce_ptr, compiler, &buf);
-        php_handlebars_process_options_zval(compiler, vm, z_options);
+        php_handlebars_process_options_zval(compiler, vm, z_options TSRMLS_CC);
         /*if( z_helpers ) {
             php_handlebars_fetch_known_helpers(compiler, z_helpers TSRMLS_CC);
         }*/
@@ -539,7 +539,7 @@ PHP_METHOD(HandlebarsVM, renderFile)
         if( HANDLEBARS_G(cache_stat) ) {
             zval zstat;
             ZVAL_LONG(&zstat, 0);
-            php_stat(filename_str, filename_len, FS_MTIME, &zstat);
+            php_stat(filename_str, filename_len, FS_MTIME, &zstat TSRMLS_CC);
             if( Z_LVAL(zstat) > module->ts ) { // possibly not portable
                 cache->release(cache, filename, module);
                 from_cache = false;
@@ -596,7 +596,7 @@ PHP_METHOD(HandlebarsVM, renderFile)
 
         // Compile
         php_handlebars_try(HandlebarsCompileException_ce_ptr, compiler, &buf);
-        php_handlebars_process_options_zval(compiler, vm, z_options);
+        php_handlebars_process_options_zval(compiler, vm, z_options TSRMLS_CC);
         /*if( z_helpers ) {
             php_handlebars_fetch_known_helpers(compiler, z_helpers TSRMLS_CC);
         }*/
