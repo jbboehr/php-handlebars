@@ -8,6 +8,7 @@
 #include "Zend/zend_exceptions.h"
 #include "main/php.h"
 #include "ext/standard/basic_functions.h"
+#include "ext/standard/php_filestat.h"
 
 #include "handlebars.h"
 #include "handlebars_private.h"
@@ -410,7 +411,7 @@ PHP_METHOD(HandlebarsVM, render)
     ctx = handlebars_context_ctor_ex(mctx);
 
     struct handlebars_vm * vm = handlebars_vm_ctor(ctx);
-    cache = HANDLEBARS_G(cache_enabled) ? HANDLEBARS_G(cache) : NULL;
+    cache = HANDLEBARS_G(cache);
 
     vm->cache = cache;
     vm->helpers = intern->helpers;
@@ -522,7 +523,7 @@ PHP_METHOD(HandlebarsVM, renderFile)
     ctx = handlebars_context_ctor_ex(mctx);
 
     struct handlebars_vm * vm = handlebars_vm_ctor(ctx);
-    cache = HANDLEBARS_G(cache_enabled) ? HANDLEBARS_G(cache) : NULL;
+    cache = HANDLEBARS_G(cache);
 
     vm->cache = cache;
     vm->helpers = intern->helpers;
@@ -533,10 +534,24 @@ PHP_METHOD(HandlebarsVM, renderFile)
     struct handlebars_string * filename = handlebars_string_ctor(HBSCTX(vm), filename_str, filename_len);
 
     // Lookup cache entry
-    if( cache && (module = handlebars_cache_find(HANDLEBARS_G(cache), filename)) ) {
+    if( cache && (module = handlebars_cache_find(cache, filename)) ) {
+        // Check if too old
+        if( HANDLEBARS_G(cache_stat) ) {
+            zval zstat;
+            ZVAL_LONG(&zstat, 0);
+            php_stat(filename_str, filename_len, FS_MTIME, &zstat);
+            if( Z_LVAL(zstat) > module->ts ) { // possibly not portable
+                cache->release(cache, filename, module);
+                from_cache = false;
+                module = NULL;
+            }
+        }
+
         // Use cached
         from_cache = true;
-    } else {
+    }
+
+    if( !module ) {
         // Read file
         php_stream *stream;
         struct handlebars_string * tmpl;

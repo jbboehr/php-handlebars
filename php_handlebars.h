@@ -52,10 +52,14 @@ extern zend_class_entry * HandlebarsVM_ce_ptr;
 
 ZEND_BEGIN_MODULE_GLOBALS(handlebars)
     zend_long pool_size;
-    zend_bool cache_enabled;
+    zend_bool cache_enable;
+    zend_bool cache_enable_cli;
+    const char * cache_backend;
+    const char * cache_save_path;
     zend_long cache_max_size;
     zend_long cache_max_entries;
     zend_long cache_max_age;
+    zend_bool cache_stat;
 
     void * root;
     struct handlebars_context * context;
