@@ -104,7 +104,11 @@ static PHP_MINIT_FUNCTION(handlebars)
         HANDLEBARS_G(cache)->max_age = (double) HANDLEBARS_G(cache_max_age);
         REGISTER_STRING_CONSTANT("Handlebars\\CACHE_BACKEND", (char *) backend, flags);
     } else {
+#ifdef REGISTER_NULL_CONSTANT
         REGISTER_NULL_CONSTANT("Handlebars\\CACHE_BACKEND", flags);
+#else
+        REGISTER_LONG_CONSTANT("Handlebars\\CACHE_BACKEND", 0, flags);
+#endif
     }
 
     // Call other MINIT functions
