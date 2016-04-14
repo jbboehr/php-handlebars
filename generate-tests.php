@@ -1,7 +1,17 @@
 #!/usr/bin/env php
 <?php
 
-/* vim: tabstop=4:softtabstop=4:shiftwidth=4:expandtab */
+require __DIR__ . '/tests/utils.inc';
+
+if( !extension_loaded('psr') ) {
+    eval("namespace Psr\Log;\ninterface LoggerInterface {}\ninterface LoggerAwareInterface {}");
+}
+if( !extension_loaded('handlebars') ) {
+    require 'handlebars.stub.php';
+}
+
+$startTime = microtime(true);
+$nTests = 0;
 
 // Utils
 
@@ -17,119 +27,168 @@ function handlebarsc($tmpl, $op) {
     return array(($return_var == 0), join("\n", $output), $command);
 }
 
-function patch_opcodes(array &$opcodes) {
-    $childrenFn = function(&$children) {
-        foreach( $children as $k => $v ) {
-            patch_opcodes($children[$k]);
-        }
-        return $children;
-    };
-    $mainFn = function(&$main) use ($childrenFn) {
-        foreach( $main as $k => $v ) {
-            if( $k === 'options' ) {
-                unset($main[$k]);
-            } else if( $k === 'isSimple' || $k === 'guid' ) {
-                // @todo add?
-                unset($main[$k]);
-            } else if( $k === 'children' ) {
-                $childrenFn($main[$k]);
-            } else if( $k === 'sourceNode' ) {
-                // @todo add this back?
-                unset($main[$k]);
-            } else if( $k === 'opcodes' ) {
-                // Patch opcodes
-                foreach( $main[$k] as &$opcode ) {
-                    // @todo we could fix this by adding a distinct null operand type
-                    if( $opcode['opcode'] === 'emptyHash' ) {
-                        // Add null operand - currently only supports fixed number of operands
-                        if( count($opcode['args']) === 0 ) {
-                            $opcode['args'] = array(null);
-                        }
-                    } else if( $opcode['opcode'] === 'pushId' ) {
-                        // Add null operand - currently only supports fixed number of operands
-                        if( count($opcode['args']) === 2 ) {
-                            $opcode['args'][] = null;
-                        }
-                        // Stringify - array operands only support strings
-                        if( is_array($opcode['args'][1]) ) {
-                            $opcode['args'][1][0] = (string) $opcode['args'][1][0];
-                            $opcode['args'][1][1] = (string) $opcode['args'][1][1];
-                        }
-                    } else if( $opcode['opcode'] === 'lookupBlockParam' ) {
-                        // Stringify - array operands only support strings
-                        if( is_array($opcode['args'][0]) ) {
-                            settype($opcode['args'][0][0], 'string');
-                            settype($opcode['args'][0][1], 'string');
-                        }
-                    } else if( $opcode['opcode'] === 'pushLiteral' ) {
-                        // Stringify - operands don't support floats/decimals
-                        if( is_float($opcode['args'][0]) ) {
-                            settype($opcode['args'][0], 'string');
-                        }
-                    }
-                    unset($opcode['loc']);                
-                }
-            }
-        }
-        // Make sure the keys are always in the same order
-        uksort($main, function($a, $b) {
-            $keys = array(
-                'opcodes', 'children', 'stringParams', 'trackIds',
-                'useDepths', 'usePartial', 'useDecorators', 'blockParams'
-            );
-            $ai = array_search($a, $keys);
-            $bi = array_search($b, $keys);
-            if( $ai === false && $bi === false ) {
-                return 0;
-            } else if( $ai === false ) {
-                return -1;
-            } else if( $bi === false ) {
-                return 1;
-            }
-            return ($ai == $bi ? 0 : ($ai > $bi ? 1 : -1));
-        });
-        return $main;
-    };
+function isIntArray($array)
+{
+    if( !is_array($array) ) {
+        return false;
+    }
     
-    
-    return $mainFn($opcodes);
+    $i = 0;
+    foreach( $array as $k => $v ) {
+        if( is_string($k) ) {
+            return false;
+        } else if( $k !== $i++ ) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
-function makeCompilerFlags(array $options = null)
+function indent($n, $str = '')
 {
-    // Make flags
-    $flags = 0;
-    if( !empty($options['compat']) ) {
-        $flags |= (1 << 0); //Handlebars\COMPILER_FLAG_COMPAT;
+    return str_pad($str, $n * 4, ' ', STR_PAD_LEFT);
+}
+
+function indentVarExport($n, $var)
+{
+    return str_replace("\n", "\n" . indent($n), varExport($var));
+}
+
+class ClosureHolder
+{
+    private $closureText;
+    
+    public function __construct($closureText)
+    {
+        $this->closureText = $closureText;
     }
-    if( !empty($options['useDepths']) ) {
-        $flags |= (1 << 0); //Handlebars\COMPILER_FLAG_USE_DEPTHS;
+    
+    public function __toString()
+    {
+        return $this->closureText;
     }
-    if( !empty($options['stringParams']) ) {
-        $flags |= (1 << 1); //Handlebars\COMPILER_FLAG_STRING_PARAMS;
+}
+
+function convertLambdas(&$data)
+{
+    if( !is_array($data) ) {
+        return;
     }
-    if( !empty($options['trackIds']) ) {
-        $flags |= (1 << 2); //Handlebars\COMPILER_FLAG_TRACK_IDS;
+    foreach( $data as $k => $v ) {
+        if( !is_array($v) ) {
+            continue;
+        }
+        if( !empty($v['!code']) ) {
+            $js = isset($v['javascript']) ? $v['javascript'] : null;
+            $data[$k] = new ClosureHolder($v['php'] . '/*' . $js . '*/');
+        } else {
+            convertLambdas($data[$k]);
+        }
     }
-    if( !empty($options['noEscape']) ) {
-        $flags |= (1 << 3); //Handlebars\COMPILER_FLAG_NO_ESCAPE;
+}
+
+function varExport($var, $indent = 0)
+{
+    convertLambdas($var);
+
+    if( $var instanceof ClosureHolder ) {
+        return (string) $var;
+    } else if( is_array($var) ) {
+        if( empty($var) ) {
+            return 'array()';
+        } else {
+            $output = "array(\n";
+            $isNormalArray = isIntArray($var);
+            foreach( $var as $k => $v ) {
+                if( $k === '!sparsearray' ) {
+                    continue;
+                }
+                $output .= indent($indent + 1)
+                        . (!$isNormalArray ? var_export($k, true)
+                        . ' => ' : '' )
+                        . varExport($v, $indent + 1) . ",\n";
+            }
+            $output .= indent($indent) . ')';
+            return $output;
+        }
+    } else {
+        $v = var_export($var, true);
+        if( is_string($var) ) {
+            $v = str_replace("\n", $v[0] . ' . "\n" . ' . $v[0], $v);
+            $v = str_replace("\r", $v[0] . ' . "\r" . ' . $v[0], $v);
+        }
+        return $v;
     }
-    if( !empty($options['knownHelpersOnly']) ) {
-        $flags |= (1 << 4); //Handlebars\COMPILER_FLAG_KNOWN_HELPERS_ONLY;
+}
+
+function patch_tokens(array &$tokens) {
+    foreach( $tokens as $k => $token ) {
+        $tokens[$k] = new Handlebars\Token($token['name'], $token['text']);
     }
-    if( !empty($options['preventIndent']) ) {
-        $flags |= (1 << 5); //Handlebars\COMPILER_FLAG_PREVENT_INDENT;
+    return $tokens;
+}
+
+function patch_opcode(array $opcode) {
+    // @todo we could fix this by adding a distinct null operand type
+    if( $opcode['opcode'] === 'emptyHash' ) {
+        // Add null operand - currently only supports fixed number of operands
+        if( count($opcode['args']) === 0 ) {
+            $opcode['args'] = array(null);
+        }
+    } else if( $opcode['opcode'] === 'pushId' ) {
+        // Add null operand - currently only supports fixed number of operands
+        if( count($opcode['args']) === 2 ) {
+            $opcode['args'][] = null;
+        }
+        // Stringify - array operands only support strings
+        if( is_array($opcode['args'][1]) ) {
+            $opcode['args'][1][0] = (string) $opcode['args'][1][0];
+            $opcode['args'][1][1] = (string) $opcode['args'][1][1];
+        }
+    } else if( $opcode['opcode'] === 'lookupBlockParam' ) {
+        // Stringify - array operands only support strings
+        if( is_array($opcode['args'][0]) ) {
+            settype($opcode['args'][0][0], 'string');
+            settype($opcode['args'][0][1], 'string');
+        }
+    } else if( $opcode['opcode'] === 'pushLiteral' ) {
+        // Stringify - operands don't support floats/decimals
+        if( is_float($opcode['args'][0]) ) {
+            settype($opcode['args'][0], 'string');
+        }
     }
-    if( !empty($options['useData']) ) {
-        $flags |= (1 << 6); //Handlebars\COMPILER_FLAG_USE_DATA;
+    unset($opcode['loc']);
+    return new Handlebars\Opcode($opcode['opcode'], $opcode['args']);
+}
+
+function patch_opcodes(array $opcodes) {
+    foreach( $opcodes as $k => $opcode ) {
+        $opcodes[$k] = patch_opcode($opcode);
     }
-    if( !empty($options['explicitPartialContext']) ) {
-        $flags |= (1 << 7); //Handlebars\COMPILER_FLAG_EXPLICIT_PARTIAL_CONTEXT;
+    return $opcodes;
+}
+
+function patch_context(array $context) {
+    $opcodes = patch_opcodes($context['opcodes']);
+    $children = array();
+    foreach( $context['children'] as $k => $v ) {
+        $children[$k] = patch_context($v);
     }
-    if( !empty($options['ignoreStandalone']) ) {
-        $flags |= (1 << 8); //Handlebars\COMPILER_FLAG_IGNORE_STANDALONE;
+    $blockParams = isset($context['blockParams']) ? $context['blockParams'] : null;
+    
+    $obj = new Handlebars\Program($opcodes, $children, $blockParams);
+    
+    foreach( array('useDepths', 'usePartial', 'useDecorators') as $k ) {
+        if( !empty($context[$k]) ) {
+            $obj->$k = true;
+        }
     }
-    return $flags;
+    foreach( array('stringParams', 'trackIds') as $k ) {
+            $obj->$k = !empty($context[$k]);
+    }
+    
+    return $obj;
 }
 
 function token_print($tokens) {
@@ -143,43 +202,111 @@ function token_print($tokens) {
 function hbs_test_file(array $test) {
     //$name = $test['it'] . '-' . $test['description'];
     //$safeName = strtolower(trim(preg_replace('/[^a-z0-9]+/i', '-', $name), '-'));
+    if( $test['suiteType'] === 'mustache' ) {
+        $st = 'mustache';
+    } else {
+        $st = 'handlebars/' . $test['suiteType'];
+    }
     $testFile = __DIR__ . '/tests' 
-        . '/handlebars-' . $test['suiteType'] 
+        . '/' . $st
         . '/' . $test['suiteName'] 
         . '/' . sprintf("%03d", $test['number']) /*. '-' . $safeName */ . '.phpt';
     return $testFile;
 }
 
-function hbs_generate_test_head(array $test) {
+function hbs_generate_test_head(array &$test) {
     // Skip this test for now
     $skip = "!extension_loaded('handlebars')";
     $reason = '';
+    $utilsPrefix = $test['suiteType'] === 'mustache' ? '' : '../';
     
     switch( $test['description'] . '-' . $test['it'] ) {
-		case 'basic context-escaping':
-		    if( $test['number'] != 3 ) {
-		        break;
-		    }
-		case 'helpers-helper for nested raw block gets raw content':
-	        $skip = 'true';
-	        $reason = 'skip for now'; 
-        break;
+        case 'basic context-escaping':
+            if( $test['number'] != 3 ) {
+                break;
+            }
+            $skip = 'true';
+            $reason = 'skip for now';
+            break;
+    	case 'Standalone Indentation-Each line of the partial should be indented before rendering.':
+            if( $test['number'] != 10 ) {
+                break;
+            }
+            $skip = 'true';
+            $reason = 'skip for now';
+            break;
+        case 'helpers-helper for nested raw block gets raw content':
+            $skip = 'true';
+            $reason = 'skip for now'; 
+            break;
     }
-    
-    $output = '';
-    $output .= '--TEST--' . "\n";
-    $output .= $test['suiteName'] . ' #' . $test['number'] . ' - ' . $test['it'] . "\n";
-    $output .= '--DESCRIPTION--' . "\n";
-    $output .= $test['description'] . "\n";
-    $output .= '--SKIPIF--' . "\n";
-    $output .= "<?php if( $skip ) die('skip $reason'); ?>" . "\n";
-    $output .= '--FILE--' . "\n";
-    $output .= '<?php' . "\n";
-    $output .= 'use Handlebars\Compiler;' . "\n";
-    $output .= 'use Handlebars\Parser;' . "\n";
-    $output .= 'use Handlebars\Tokenizer;' . "\n";
-    //$output .= '$test = ' . var_export($test, true) . ';' . "\n";
-    return $output;
+    if( $test['suiteType'] == 'spec' ) {
+        if( $test['suiteName'] == 'string-params' ) {
+            $skip = 'true';
+            $reason = 'string params are not supported by the VM';
+        } else if( $test['suiteName'] == 'track-ids' ) {
+            $skip = 'true';
+            $reason = 'track ids are not supported by the VM';
+        } else if( $test['description'] == 'partial blocks' ) {
+            $skip = 'true';
+            $reason = 'partial blocks are not supported by the VM';
+        } else if( $test['description'] == 'inline partials' ) {
+            $skip = 'true';
+            $reason = 'inline partials are not supported by the VM';
+        }
+        switch( $test['suiteName'] . '-' . $test['description'] . '-' . $test['it'] ) {
+            case 'basic-basic context-compiling with a string context':
+                $skip = 'true';
+                $reason = 'PHP does not have string methods';
+                break;
+            case 'blocks-decorators-should apply mustache decorators':
+            case 'blocks-decorators-should apply allow undefined return':
+            case 'blocks-decorators-should apply block decorators':
+            case 'blocks-decorators-should support nested decorators':
+            case 'blocks-decorators-should apply multiple decorators':
+            case 'blocks-decorators-should access parent variables':
+            case 'blocks-decorators-should work with root program':
+            case 'blocks-decorators-should fail when accessing variables from root':
+                $skip = 'true';
+                $reason = 'decorators are not currently supported';
+                break;
+            case 'helpers-block params-should take presednece over parent block params':
+                $test['expected'] = '15foo';
+                break;
+            case 'subexpressions-subexpressions-in string params mode,':
+            case 'subexpressions-subexpressions-as hashes in string params mode':
+                $skip = 'true';
+                $reason = 'string params are not supported by the VM';
+                break;
+            case 'subexpressions-subexpressions-subexpressions can\'t just be property lookups':
+                $skip = 'true';
+                $reason = 'skip for now'; 
+                break;
+            case 'regressions-Regressions-should support multiple levels of inline partials':
+            case 'regressions-Regressions-GH-1089: should support failover content in multiple levels of inline partials':
+            case 'regressions-Regressions-GH-1099: should support greater than 3 nested levels of inline partials':
+                $skip = 'true';
+                $reason = 'inline partials are not supported by the VM';
+                break;
+        }
+    }
+
+    return join("\n", array(
+        '--TEST--',
+        $test['suiteName'] . ' #' . $test['number'] . ' - ' . $test['description'] /* . ' - ' . $test['it']*/,
+        '--DESCRIPTION--',
+        $test['description'] . ' - ' . $test['it'],
+        '--SKIPIF--',
+        "<?php if( $skip ) die('skip $reason'); ?>",
+        '--FILE--',
+        '<?php',
+        'use Handlebars\Compiler;',
+        'use Handlebars\Parser;',
+        'use Handlebars\Tokenizer;',
+        'use Handlebars\Utils;',
+        'use Handlebars\VM;',
+        'require __DIR__ . "/' . $utilsPrefix . '../../utils.inc";',
+    ));
 }
 
 function hbs_write_file($file, $contents) {
@@ -203,43 +330,78 @@ function hbs_generate_export_test_body(array $test) {
     $compileOptions = isset($test['compileOptions']) ? $test['compileOptions'] : array();
     $options += $compileOptions;
     
-    $compileFlags = makeCompilerFlags($options);
-    $knownHelpers = isset($options['knownHelpers']) ? $options['knownHelpers'] : array();
-    /*if( isset($test['helpers']) ) {
-        $knownHelpers = array_merge($knownHelpers, array_keys($test['helpers']));
-    }
-    if( isset($test['globalHelpers']) ) {
-        $knownHelpers = array_merge($knownHelpers, array_keys($test['globalHelpers']));
-    }*/
-    if( empty($knownHelpers) ) {
-        $knownHelpers = null;
-    } else {
-        $knownHelpers = array_keys($knownHelpers);
-    }
-    $expectedOpcodes = patch_opcodes($test['opcodes']);
+    $expectedOpcodes = patch_context($test['opcodes']);
     
     $output = '';
     $output .= '$options = ' . var_export($options, true) . ';' . PHP_EOL;
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
-    $output .= '$compileFlags = ' . var_export($compileFlags, true) . ';' . PHP_EOL;
-    $output .= '$knownHelpers = ' . var_export($knownHelpers, true) . ';' . PHP_EOL;
-    $output .= 'var_export(Compiler::compile($tmpl, $compileFlags, $knownHelpers));' . PHP_EOL;
-    $output .= 'var_export(gettype(Compiler::compilePrint($tmpl, $compileFlags, $knownHelpers)));' . PHP_EOL;
+    $output .= 'myprint(Compiler::compile($tmpl, $options), true);' . PHP_EOL;
+    $output .= 'myprint(gettype(Compiler::compilePrint($tmpl, $options)), true);' . PHP_EOL;
     $output .= '--EXPECT--' . PHP_EOL;
-    $output .= var_export($expectedOpcodes, true) . var_export('string', true) . PHP_EOL;
+    $output .= myprint($expectedOpcodes) . myprint('string') . PHP_EOL;
     return $output;
+}
+
+function hbs_generate_spec_test_body_generic(array $test) {
+    $options = isset($test['options']) ? $test['options'] : array();
+    $compileOptions = isset($test['compileOptions']) ? $test['compileOptions'] : array();
+    $options += $compileOptions;
+    $helpers = (array) @$test['helpers'];
+    $partials = (array) @$test['partials'];
+    $context = isset($test['data']) ? $test['data'] : null;
+    $expectHead = null;
+    $message = null;
+    if( !empty($test['globalHelpers']) ) {
+        $helpers += $test['globalHelpers'];
+    }
+    if( !empty($test['globalPartials']) ) {
+        $partials += $test['globalPartials'];
+    }
+    if( array_key_exists('expected', $test) ) {
+        $expected = $test['expected'];
+    } else if( !empty($test['exception']) ) {
+    $expectHead = 'EXPECTF';
+        // @todo improve this
+        $expected = '%AUncaught%A';
+        if( !empty($test['message']) ) {
+            /*$expected =*/ $message = $test['message'];
+        } else {
+            //$expected = 'exception';
+        }
+    } else {
+        echo "Whoops\n";
+        exit(1);
+    }
+    
+    return PHP_EOL . join(PHP_EOL, array_filter(array(
+        'use Handlebars\DefaultRegistry;',
+        'use Handlebars\SafeString;',
+        '$tmpl = ' . var_export($test['template'], true) . ';',
+        '$context = ' . varExport($context, true) . ';',
+        $helpers ? '$helpers = new DefaultRegistry(' . varExport($helpers, true) . ');' : null,
+        $partials ? '$partials = new DefaultRegistry(' . varExport($partials, true) . ');' : null,
+        '$options = ' . varExport($options, true) . ';',
+        //'$knownHelpers = ' . var_export($knownHelpers, true) . ';',
+        '$vm = new VM();',
+        $helpers ? '$vm->setHelpers($helpers);' : null,
+        $partials ? '$vm->setPartials($partials);' : null,
+        'echo $vm->render($tmpl, $context, $options);',
+    $message ? '/* Error message: ' . addcslashes($message, "\r\n") . ' */' : null,
+        '--'. ($expectHead ?: 'EXPECT') . '--',
+        $expected
+    )));
 }
 
 function hbs_generate_spec_test_body_tokenizer(array $test) {
     $output = '';
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
-    $output .= 'var_export(Tokenizer::lexPrint($tmpl));' . PHP_EOL;
+    $output .= 'myprint(Tokenizer::lexPrint($tmpl), true);' . PHP_EOL;
     $output .= 'echo PHP_EOL;' . PHP_EOL;
-    $output .= 'var_export(Tokenizer::lex($tmpl));' . PHP_EOL;
+    $output .= 'myprint(Tokenizer::lex($tmpl), true);' . PHP_EOL;
     $output .= '--EXPECT--' . PHP_EOL;
-    $output .= var_export(token_print($test['expected']), true);
+    $output .= myprint(token_print($test['expected']));
     $output .= PHP_EOL;
-    $output .= var_export($test['expected'], true);
+    $output .= myprint(patch_tokens($test['expected']));
     return $output;
 }
 
@@ -263,11 +425,11 @@ try {
     $output .= 'echo PHP_EOL;' . PHP_EOL;
     $output .= '' . PHP_EOL;
     if( empty($test['exception']) ) {
-    	$output .= '--EXPECT--' . PHP_EOL;
+        $output .= '--EXPECT--' . PHP_EOL;
         $output .= var_export($expected, true);
         $output .= var_export('array', true);
     } else {
-    	$output .= '--EXPECTF--' . PHP_EOL;
+        $output .= '--EXPECTF--' . PHP_EOL;
         $output .= 'exception%s'; 
         //$output .= $test['message'];
     }
@@ -283,8 +445,7 @@ function hbs_generate_spec_test_body(array $test) {
             return hbs_generate_spec_test_body_tokenizer($test);
             break;
         default:
-            echo "Unknown spec: ", $test['suiteName'], PHP_EOL;
-            exit(1);
+            return hbs_generate_spec_test_body_generic($test);
             break;
     }
 }
@@ -304,13 +465,33 @@ function hbs_generate_export_test(array $test) {
 
 function hbs_generate_spec_test(array $test) {
     $file = hbs_test_file($test);
+    $head = hbs_generate_test_head($test);
     $body = hbs_generate_spec_test_body($test);
     if( !$body ) {
         return;
     }
     
     $output = '';
-    $output .= hbs_generate_test_head($test);
+    $output .= $head; //hbs_generate_test_head($test);
+    $output .= $body;
+    hbs_write_file($file, $output);
+}
+
+function hbs_generate_mustache_spec_test(array $test) {
+    // Convert format to handlebars
+    $test['description'] = $test['name'];
+    $test['it'] = $test['desc'];
+    $test['options'] = array('compat' => true);
+
+    $file = hbs_test_file($test);
+    $head = hbs_generate_test_head($test);
+    $body = hbs_generate_spec_test_body($test);
+    if( !$body ) {
+        return;
+    }
+    
+    $output = '';
+    $output .= $head; //hbs_generate_test_head($test);
     $output .= $body;
     hbs_write_file($file, $output);
 }
@@ -319,14 +500,15 @@ function hbs_generate_spec_test(array $test) {
 
 // Main
 
-// Parser/Tokenizer
-$specDir = __DIR__ . '/spec/handlebars/spec';
-$parserSpecFile = $specDir . '/parser.json';
-$tokenizerSpecFile = $specDir. '/tokenizer.json';
-
-foreach( array($tokenizerSpecFile, $parserSpecFile) as $file ) {
-    $suiteName = substr(basename($file), 0, strpos(basename($file), '.'));
-    $tests = json_decode(file_get_contents($file), true);
+// Handlebars Spec
+$specDir = __DIR__ . '/spec/handlebars/spec/';
+foreach( scandir($specDir) as $file ) {
+    if( $file[0] === '.' || substr($file, -5) !== '.json' ) {
+        continue;
+    }
+    $filePath = $specDir . $file;
+    $suiteName = substr(basename($filePath), 0, strpos(basename($filePath), '.'));
+    $tests = json_decode(file_get_contents($filePath), true);
     $number = 0;
     foreach( $tests as $test ) {
         ++$number;
@@ -337,7 +519,7 @@ foreach( array($tokenizerSpecFile, $parserSpecFile) as $file ) {
     }
 }
 
-// Export
+// Handlebars Export
 $exportDir = __DIR__ . '/spec/handlebars/export/';
 foreach( scandir($exportDir) as $file ) {
     if( $file[0] === '.' || substr($file, -5) !== '.json' ) {
@@ -362,3 +544,26 @@ foreach( scandir($exportDir) as $file ) {
         hbs_generate_export_test($test);
     }
 }
+
+// Mustache Spec
+$mustacheSpecDir = __DIR__ . '/spec/mustache/specs/';
+foreach( scandir($mustacheSpecDir) as $file ) {
+    if( $file[0] === '.' || $file[0] === '~' || substr($file, -5) !== '.json' ) {
+        continue;
+    }
+    $filePath = $mustacheSpecDir . $file;
+    $suiteName = substr(basename($filePath), 0, strpos(basename($filePath), '.'));
+    if( $suiteName === 'delimiters' ) continue;
+
+    $tests = json_decode(file_get_contents($filePath), true);
+    $number = 0;
+
+    foreach( $tests['tests'] as $test ) {
+        ++$number;
+        $test['suiteType'] = 'mustache';
+        $test['suiteName'] = $suiteName;
+        $test['number'] = $number;
+        hbs_generate_mustache_spec_test($test);
+    }
+}
+

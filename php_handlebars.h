@@ -2,13 +2,20 @@
 #ifndef PHP_HANDLEBARS_H
 #define PHP_HANDLEBARS_H
 
-#include "php.h"
+#include "main/php.h"
 
 #define PHP_HANDLEBARS_NAME "handlebars"
-#define PHP_HANDLEBARS_VERSION "0.6.1"
+#define PHP_HANDLEBARS_VERSION "0.7.0-dev"
 #define PHP_HANDLEBARS_RELEASE "2015-10-31"
 #define PHP_HANDLEBARS_AUTHORS "John Boehr <jbboehr@gmail.com> (lead)"
-#define PHP_HANDLEBARS_SPEC "4.0.4"
+#define PHP_HANDLEBARS_SPEC "4.0.5"
+
+struct handlebars_cache;
+struct handlebars_compiler;
+struct handlebars_context;
+struct handlebars_options;
+struct handlebars_token;
+struct handlebars_vm;
 
 extern zend_module_entry handlebars_module_entry;
 #define phpext_handlebars_ptr &handlebars_module_entry
@@ -23,16 +30,107 @@ extern zend_module_entry handlebars_module_entry;
 #define HANDLEBARS_G(v) (handlebars_globals.v)
 #endif
 
+extern zend_class_entry * HandlebarsImpl_ce_ptr;
+extern zend_class_entry * HandlebarsBaseImpl_ce_ptr;
 extern zend_class_entry * HandlebarsCompiler_ce_ptr;
 extern zend_class_entry * HandlebarsException_ce_ptr;
-extern zend_class_entry * HandlebarsLexException_ce_ptr;
 extern zend_class_entry * HandlebarsParseException_ce_ptr;
 extern zend_class_entry * HandlebarsCompileException_ce_ptr;
 extern zend_class_entry * HandlebarsInvalidArgumentException_ce_ptr;
+extern zend_class_entry * HandlebarsOpcode_ce_ptr;
+extern zend_class_entry * HandlebarsOptions_ce_ptr;
+extern zend_class_entry * HandlebarsParser_ce_ptr;
+extern zend_class_entry * HandlebarsProgram_ce_ptr;
+extern zend_class_entry * HandlebarsRegistry_ce_ptr;
+extern zend_class_entry * HandlebarsDefaultRegistry_ce_ptr;
 extern zend_class_entry * HandlebarsRuntimeException_ce_ptr;
 extern zend_class_entry * HandlebarsSafeString_ce_ptr;
+extern zend_class_entry * HandlebarsToken_ce_ptr;
 extern zend_class_entry * HandlebarsTokenizer_ce_ptr;
 extern zend_class_entry * HandlebarsUtils_ce_ptr;
+extern zend_class_entry * HandlebarsVM_ce_ptr;
+
+ZEND_BEGIN_MODULE_GLOBALS(handlebars)
+    zend_long pool_size;
+    zend_bool cache_enable;
+    zend_bool cache_enable_cli;
+    const char * cache_backend;
+    const char * cache_save_path;
+    zend_long cache_max_size;
+    zend_long cache_max_entries;
+    zend_long cache_max_age;
+    zend_bool cache_stat;
+
+    void * root;
+    struct handlebars_context * context;
+    struct handlebars_cache * cache;
+ZEND_END_MODULE_GLOBALS(handlebars)
+
+ZEND_EXTERN_MODULE_GLOBALS(handlebars);
+
+extern zend_bool handlebars_has_psr;
+
+zend_bool inline php_handlebars_is_callable(zval * var TSRMLS_DC);
+zend_bool inline php_handlebars_is_int_array(zval * arr TSRMLS_DC);
+
+PHPAPI void php_handlebars_options_ctor(struct handlebars_options * options, zval * z_options TSRMLS_DC);
+PHPAPI void php_handlebars_token_ctor(struct handlebars_token * token, zval * z_token TSRMLS_DC);
+PHPAPI void php_handlebars_process_options_zval(struct handlebars_compiler * compiler, struct handlebars_vm * vm, zval * options TSRMLS_DC);
+
+PHPAPI struct handlebars_value * handlebars_value_from_zval(struct handlebars_context * context, zval * val TSRMLS_DC);
+PHPAPI zval * handlebars_value_to_zval(struct handlebars_value * value, zval * val TSRMLS_DC);
+
+#define php_handlebars_throw(ce, ctx) \
+    do { \
+        int num = handlebars_error_num(HBSCTX(ctx)); \
+        if( num != HANDELBARS_EXTERNAL_ERROR ) { \
+            zend_throw_exception(ce, handlebars_error_message(HBSCTX(ctx)), num TSRMLS_CC); \
+        } \
+        goto done; \
+    } while(0)
+#define php_handlebars_try(ce, ctx, buf) \
+    do { \
+        if( handlebars_setjmp_ex(ctx, (buf)) ) { \
+            php_handlebars_throw(ce, ctx); \
+        } \
+    } while(0)
+#define php_handlebars_try_rethrow(ce, ctx1, ctx2, buf) \
+    do { \
+        if( handlebars_setjmp_ex(ctx2, (buf)) ) { \
+            php_handlebars_throw(ce, ctx1); \
+        } \
+    } while(0)
+
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_getHelpers_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_setHelpers_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_OBJ_INFO(0, helpers, Handlebars\\Registry, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_setPartials_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_OBJ_INFO(0, partials, Handlebars\\Registry, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_setDecorators_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_OBJ_INFO(0, partials, Handlebars\\Registry, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_setLogger_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_OBJ_INFO(0, logger, Psr\\Log\\LoggerInterface, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_render_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_INFO(0, tmpl)
+    ZEND_ARG_INFO(0, context)
+    ZEND_ARG_ARRAY_INFO(0, options, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_renderFile_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_INFO(0, filename)
+    ZEND_ARG_INFO(0, context)
+    ZEND_ARG_ARRAY_INFO(0, options, 1)
+ZEND_END_ARG_INFO()
 
 #endif	/* PHP_HANDLEBARS_H */
 

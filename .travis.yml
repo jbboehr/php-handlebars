@@ -1,13 +1,26 @@
 language: php
 
 php:
-  - 5.3
+# not supported on trusty
+#  - 5.3
   - 5.4
   - 5.5
   - 5.6
   - 7.0
 
-env: LIBHANDLEBARS_VERSION=0.4.2
+sudo: required
+
+dist: trusty
+
+env:
+  global:
+    - LIBHANDLEBARS_VERSION=v0.5.0
+    - PHP_PSR_VERSION=v0.2.2
+    - PREFIX="$HOME/build"
+    - PATH="$PREFIX/bin:$PATH"
+    - CFLAGS="-L$PREFIX/lib"
+    - CPPFLAGS="-I$PREFIX/include"
+    - PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
 
 branches:
   only:
@@ -16,30 +29,17 @@ branches:
     - master
     - travis
 
-# autoconf automake gawk gcc git-core libtool m4 make
-addons:
-  apt:
-    packages:
-      - bison
-      - flex
-      - lcov
-      - libjson0-dev
-      - libpcre3-dev
-      - libtalloc-dev
-      - pkg-config
-
-cache:
-  directories:
-    - $HOME/build
+cache: false
 
 before_install:
+  - travis_retry sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test
+  - travis_retry sudo apt-add-repository -y ppa:jbboehr/ppa
+  - travis_retry sudo apt-add-repository -y ppa:jbboehr/handlebars
+  - travis_retry sudo apt-get update -y
+  - travis_retry sudo apt-get install -y automake bison check flex gcc-4.9 gperf lcov libjson-c-dev liblmdb-dev libpcre3-dev libtalloc-dev libyaml-dev pkg-config re2c valgrind
   - travis_retry gem install coveralls-lcov
 
 install:
-  - export PATH="$HOME/build/bin:$PATH"
-  - export CFLAGS="-L$HOME/build/lib"
-  - export CPPFLAGS="-I$HOME/build/include"
-  - export PKG_CONFIG_PATH="$HOME/build/lib/pkgconfig"
   - ./.travis.sh
   - phpize
   - ./configure --enable-handlebars CFLAGS="--coverage -fprofile-arcs -ftest-coverage $CFLAGS" LDFLAGS="--coverage"
@@ -58,9 +58,11 @@ script:
 
 after_success:
   - lcov --no-checksum --directory . --capture --compat-libtool --output-file coverage.info
-  - lcov --remove coverage.info "/usr*" --remove coverage.info "*/.phpenv/*" --compat-libtool --output-file coverage.info
+  - lcov --remove coverage.info "/usr*" --remove coverage.info "*/.phpenv/*" --remove coverage.info "/home/travis/build/include/*" --compat-libtool --output-file coverage.info
   - coveralls-lcov coverage.info
 
 after_failure:
   - for i in `find tests -name "*.out" 2>/dev/null`; do echo "-- START ${i}"; cat $i; echo "-- END"; done
+  - for i in `find tests -name "*.mem" 2>/dev/null`; do echo "-- START ${i}"; cat $i; echo "-- END"; done
+
 

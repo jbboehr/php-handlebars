@@ -3,6 +3,7 @@
 .c9
 .deps
 .dirstamp
+.idea
 .libs
 .php-version
 .settings
@@ -48,3 +49,4 @@ mkinstalldirs
 run-tests.php
 tmp-php.ini
 specs
+CMakeLists.txt

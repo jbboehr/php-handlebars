@@ -3,8 +3,10 @@
 
 # HANDLEBARS -------------------------------------------------------------------
 PHP_ARG_ENABLE(handlebars, whether to enable handlebars support,
-# Make sure that the comment is aligned:
-[  --enable-handlebars Enable handlebars support])
+[  --enable-handlebars     Enable handlebars support])
+
+PHP_ARG_ENABLE(handlebars-psr, whether to enable handlebars support,
+[  --enable-handlebars-psr Enable handlebars PSR support])
 
 AC_DEFUN([PHP_HANDLEBARS_ADD_SOURCES], [
   PHP_HANDLEBARS_SOURCES="$PHP_HANDLEBARS_SOURCES $1"
@@ -14,16 +16,24 @@ AC_DEFUN([PHP_HANDLEBARS_ADD_SOURCES], [
 if test "$PHP_HANDLEBARS" != "no"; then
 	PHP_HANDLEBARS_ADD_SOURCES([
 		php_handlebars.c
-		handlebars_compiler.c
-		handlebars_exceptions.c
-		handlebars_parser.c
-		handlebars_safe_string.c
-		handlebars_tokenizer.c
-		handlebars_utils.c
+		impl.c
+		compiler.c
+		exceptions.c
+		opcode.c
+		options.c
+		parser.c
+		program.c
+		registry.c
+		safe_string.c
+		token.c
+		tokenizer.c
+		utils.c
+		vm.c
+		value.c
 	])
     PHP_INSTALL_HEADERS([ext/handlebars], [php_handlebars.h])
     PHP_ADD_LIBRARY(handlebars, 1, HANDLEBARS_SHARED_LIBADD)
-    PHP_NEW_EXTENSION(handlebars, $PHP_HANDLEBARS_SOURCES, $ext_shared, , $PHP_HANDLEBARS_FLAGS)
+    PHP_NEW_EXTENSION(handlebars, $PHP_HANDLEBARS_SOURCES, $ext_shared, , -I$psr_cv_inc_path $PHP_HANDLEBARS_FLAGS)
+    PHP_ADD_EXTENSION_DEP(handlebars, psr, true)
     PHP_SUBST(HANDLEBARS_SHARED_LIBADD)
 fi
-
