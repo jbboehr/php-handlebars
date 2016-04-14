@@ -1,10 +1,5 @@
 <?php
 
-namespace Psr\Log;
-
-interface LoggerInterface {}
-interface LoggerAwareInterface {}
-
 namespace Handlebars;
 
 use ArrayAccess;

@@ -1,10 +1,11 @@
 #!/usr/bin/env php
 <?php
 
-/* vim: tabstop=4:softtabstop=4:shiftwidth=4:expandtab */
-
 require __DIR__ . '/tests/utils.inc';
 
+if( !extension_loaded('psr') ) {
+    eval("namespace Psr\Log;\ninterface LoggerInterface {}\ninterface LoggerAwareInterface {}");
+}
 if( !extension_loaded('handlebars') ) {
     require 'handlebars.stub.php';
 }
