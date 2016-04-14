@@ -1,10 +1,17 @@
-<?php 
+<?php
+
+namespace Psr\Log;
+
+interface LoggerInterface {}
+interface LoggerAwareInterface {}
 
 namespace Handlebars;
 
 use ArrayAccess;
 use IteratorAggregate;
 use ArrayObject;
+use Psr\Log\LoggerInterface;
+use Psr\Log\LoggerAwareInterface;
 
 /**
  * extension version
@@ -15,6 +22,16 @@ const VERSION = "x.y.z";
  * libhandlebars version
  */
 const LIBVERSION = "x.y.z";
+
+/**
+ * If PSR extension is available
+ */
+const PSR = true;
+
+/**
+ * The cache backend name
+ */
+const CACHE_BACKEND = 'mmap';
 
 interface Exception {}
 class ParseException extends \Exception implements Exception {}
@@ -328,22 +345,22 @@ class Program
 interface Registry extends ArrayAccess, IteratorAggregate {}
 class DefaultRegistry extends ArrayObject implements Registry {}
 
-interface Impl {
-    const MODE_COMPILER = 'compiler';
-    const MODE_VM = 'vm';
-    const MODE_CVM = 'cvm';
-
+interface Impl extends LoggerAwareInterface
+{
     public function getHelpers();
     public function getPartials();
     public function getDecorators();
+    public function getLogger();
     public function setHelpers(Registry $helpers);
     public function setPartials(Registry $partials);
     public function setDecorators(Registry $decorators);
+    public function setLogger(LoggerInterface $logger);
     public function render($tmpl, $context = null, array $options = null);
     public function renderFile($filename, $context = null, array $options = null);
 }
 
-abstract class BaseImpl implements Impl {
+abstract class BaseImpl implements Impl
+{
 	/**
 	 * @var Registry
 	 */
@@ -358,6 +375,11 @@ abstract class BaseImpl implements Impl {
 	 * @var Registry
 	 */
     protected $decorators;
+
+	/**
+	 * @var LoggerInterface
+	 */
+    protected $logger;
 
     /**
      * @return Registry
@@ -381,6 +403,13 @@ abstract class BaseImpl implements Impl {
     }
 
     /**
+     * @return LoggerInterface
+     */
+    public function getLogger() {
+        return $this->logger;
+    }
+
+    /**
      * @param Registry $helpers
      */
     public function setHelpers(Registry $helpers) {
@@ -400,6 +429,13 @@ abstract class BaseImpl implements Impl {
     public function setDecorators(Registry $decorators) {
         $this->decorators = $decorators;
     }
+
+    /**
+     * @param LoggerInterface $logger
+     */
+    public function setLogger(LoggerInterface $logger) {
+        $this->logger = $logger;
+    }
 }
 
 class VM extends BaseImpl
@@ -407,6 +443,8 @@ class VM extends BaseImpl
     public function setHelpers(Registry $helpers) {}
 
     public function setPartials(Registry $partials) {}
+
+    public function setLogger(LoggerInterface $partials) {}
 
     public function render($tmpl, $context = null, array $options = null) {}
 

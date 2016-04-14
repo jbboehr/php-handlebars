@@ -73,7 +73,7 @@ static PHP_MINIT_FUNCTION(handlebars)
         handlebars_has_psr = 1;
     }
 #endif
-    REGISTER_LONG_CONSTANT("HANDLEBARS_USE_PSR", handlebars_has_psr, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("Handlebars\\PSR", handlebars_has_psr, flags);
 
     REGISTER_STRING_CONSTANT("Handlebars\\VERSION", (char *) PHP_HANDLEBARS_VERSION, flags);
     REGISTER_STRING_CONSTANT("Handlebars\\LIBVERSION", (char *) version, flags);

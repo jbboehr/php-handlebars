@@ -209,22 +209,18 @@ PHP_MINIT_FUNCTION(handlebars_impl)
     INIT_CLASS_ENTRY(ce, "Handlebars\\Impl", HandlebarsImpl_methods);
     HandlebarsImpl_ce_ptr = zend_register_internal_interface(&ce TSRMLS_CC);
 
-    zend_declare_class_constant_string(HandlebarsImpl_ce_ptr, ZEND_STRL("MODE_COMPILER"), "compiler" TSRMLS_CC);
-    zend_declare_class_constant_string(HandlebarsImpl_ce_ptr, ZEND_STRL("MODE_VM"), "vm" TSRMLS_CC);
-    zend_declare_class_constant_string(HandlebarsImpl_ce_ptr, ZEND_STRL("MODE_CVM"), "cvm" TSRMLS_CC);
-
-    INIT_CLASS_ENTRY(ce, "Handlebars\\BaseImpl", HandlebarsBaseImpl_methods);
-    HandlebarsBaseImpl_ce_ptr = zend_register_internal_class(&ce TSRMLS_CC);
-    zend_class_implements(HandlebarsBaseImpl_ce_ptr TSRMLS_CC, 1, HandlebarsImpl_ce_ptr);
-
     if( handlebars_has_psr ) {
         zend_class_entry *tmp = lookup_class("Psr\\Log\\LoggerAwareInterface" TSRMLS_CC);
         if( tmp ) {
-            zend_class_implements(HandlebarsBaseImpl_ce_ptr TSRMLS_CC, 1, tmp);
+            zend_class_implements(HandlebarsImpl_ce_ptr TSRMLS_CC, 1, tmp);
         } else { // LCOV_EXCL_START
             return FAILURE;
         } // LCOV_EXCL_STOP
     }
+
+    INIT_CLASS_ENTRY(ce, "Handlebars\\BaseImpl", HandlebarsBaseImpl_methods);
+    HandlebarsBaseImpl_ce_ptr = zend_register_internal_class(&ce TSRMLS_CC);
+    zend_class_implements(HandlebarsBaseImpl_ce_ptr TSRMLS_CC, 1, HandlebarsImpl_ce_ptr);
 
     zend_declare_property_null(HandlebarsBaseImpl_ce_ptr, ZEND_STRL("helpers"), ZEND_ACC_PROTECTED TSRMLS_CC);
     zend_declare_property_null(HandlebarsBaseImpl_ce_ptr, ZEND_STRL("partials"), ZEND_ACC_PROTECTED TSRMLS_CC);
