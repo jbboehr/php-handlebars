@@ -5,7 +5,7 @@
 [![Coverage Status](https://coveralls.io/repos/jbboehr/php-handlebars/badge.svg?branch=master&service=github)](https://coveralls.io/github/jbboehr/php-handlebars?branch=master)
 [![License](https://img.shields.io/badge/license-LGPLv3-brightgreen.svg)](LICENSE.md)
 
-PHP bindings for [handlebars.c](https://github.com/jbboehr/handlebars.c). Use with [handlebars.php](https://github.com/jbboehr/handlebars.php).
+PHP bindings for [handlebars.c](https://github.com/jbboehr/handlebars.c). See also [handlebars.php](https://github.com/jbboehr/handlebars.php).
 
 
 ## Installation
@@ -16,13 +16,14 @@ PHP bindings for [handlebars.c](https://github.com/jbboehr/handlebars.c). Use wi
 ```bash
 sudo apt-add-repository ppa:jbboehr/handlebars
 sudo apt-get update
-sudo apt-get install handlebarsc libhandlebars-dev
+sudo apt-get install php-handlebars
 ```
 
 
 ### Source
 
 Install [handlebars.c](https://github.com/jbboehr/handlebars.c)
+
 
 #### Ubuntu
 
@@ -35,13 +36,19 @@ phpize
 make
 make test
 sudo make install
-
-# precise
-echo extension=handlebars.so | sudo tee /etc/php5/conf.d/handlebars.ini
-
-# trusty
 echo extension=handlebars.so | sudo tee /etc/php5/mods-available/handlebars.ini
 sudo php5enmod handlebars
+```
+
+
+## Usage
+
+```php
+$vm = new Handlebars\VM();
+
+echo $vm->render('{{foo}}', array('foo' => 'bar'));
+
+echo $vm->renderFile('/path/to/foo.hbs', array('foo' => 'bar'));
 ```
 
 
