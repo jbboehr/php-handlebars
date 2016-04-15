@@ -146,7 +146,6 @@ static PHP_MSHUTDOWN_FUNCTION(handlebars)
 static PHP_MINFO_FUNCTION(handlebars)
 {
     char buf[64];
-    struct handlebars_cache_stat stat = handlebars_cache_stat(HANDLEBARS_G(cache));
 
     php_info_print_table_start();
     php_info_print_table_row(2, "Version", PHP_HANDLEBARS_VERSION);
@@ -163,6 +162,8 @@ static PHP_MINFO_FUNCTION(handlebars)
     php_info_print_table_end();
 
     if( HANDLEBARS_G(cache) ) {
+        struct handlebars_cache_stat stat = handlebars_cache_stat(HANDLEBARS_G(cache));
+
         php_info_print_table_start();
         php_info_print_table_colspan_header(2, "Cache");
 
