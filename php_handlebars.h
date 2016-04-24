@@ -70,8 +70,8 @@ ZEND_EXTERN_MODULE_GLOBALS(handlebars);
 
 extern zend_bool handlebars_has_psr;
 
-zend_bool inline php_handlebars_is_callable(zval * var TSRMLS_DC);
-zend_bool inline php_handlebars_is_int_array(zval * arr TSRMLS_DC);
+zend_bool php_handlebars_is_callable(zval * var TSRMLS_DC);
+zend_bool php_handlebars_is_int_array(zval * arr TSRMLS_DC);
 
 PHPAPI void php_handlebars_options_ctor(struct handlebars_options * options, zval * z_options TSRMLS_DC);
 PHPAPI void php_handlebars_token_ctor(struct handlebars_token * token, zval * z_token TSRMLS_DC);

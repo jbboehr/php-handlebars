@@ -308,7 +308,7 @@ PHP_METHOD(HandlebarsUtils, indent)
 /* }}} Handlebars\Utils::indent */
 
 /* {{{ proto boolean Handlebars\Utils::isCallable(mixed name) */
-zend_bool inline php_handlebars_is_callable(zval * var TSRMLS_DC)
+zend_bool php_handlebars_is_callable(zval * var TSRMLS_DC)
 {
     zend_bool retval = 0;
     int check_flags = 0; //IS_CALLABLE_CHECK_SYNTAX_ONLY;
@@ -351,7 +351,7 @@ PHP_METHOD(HandlebarsUtils, isCallable)
 
 /* {{{ proto boolean Handlebars\Utils::isIntArray(mixed value) */
 #ifndef ZEND_ENGINE_3
-zend_bool inline php_handlebars_is_int_array(zval * arr TSRMLS_DC)
+zend_bool php_handlebars_is_int_array(zval * arr TSRMLS_DC)
 {
     HashTable * data_hash = NULL;
     HashPosition data_pointer = NULL;
