@@ -14,8 +14,8 @@ dist: trusty
 
 env:
   global:
-    - LIBHANDLEBARS_VERSION=v0.5.0
-    - PHP_PSR_VERSION=v0.2.2
+    - LIBHANDLEBARS_VERSION=v0.5.1
+    - PHP_PSR_VERSION=v0.2.3
     - PREFIX="$HOME/build"
     - PATH="$PREFIX/bin:$PATH"
     - CFLAGS="-L$PREFIX/lib"
@@ -33,7 +33,7 @@ cache: false
 
 before_install:
   - travis_retry sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test
-  - travis_retry sudo apt-add-repository -y ppa:jbboehr/ppa
+  - travis_retry sudo apt-add-repository -y ppa:jbboehr/build-deps
   - travis_retry sudo apt-add-repository -y ppa:jbboehr/handlebars
   - travis_retry sudo apt-get update -y
   - travis_retry sudo apt-get install -y automake bison check flex gcc-4.9 gperf lcov libjson-c-dev liblmdb-dev libpcre3-dev libtalloc-dev libyaml-dev pkg-config re2c valgrind
