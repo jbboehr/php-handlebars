@@ -3,7 +3,7 @@
 
 [![Build Status](https://travis-ci.org/jbboehr/php-handlebars.svg?branch=master)](https://travis-ci.org/jbboehr/php-handlebars)
 [![Coverage Status](https://coveralls.io/repos/jbboehr/php-handlebars/badge.svg?branch=master&service=github)](https://coveralls.io/github/jbboehr/php-handlebars?branch=master)
-[![License](https://img.shields.io/badge/license-LGPLv3-brightgreen.svg)](LICENSE.md)
+[![License](https://img.shields.io/badge/license-BSD-brightgreen.svg)](LICENSE.md)
 
 PHP bindings for [handlebars.c](https://github.com/jbboehr/handlebars.c). See also [handlebars.php](https://github.com/jbboehr/handlebars.php).
 
@@ -54,4 +54,5 @@ echo $vm->renderFile('/path/to/foo.hbs', array('foo' => 'bar'));
 
 ## License
 
-This project is licensed under the [LGPLv3](http://www.gnu.org/licenses/lgpl-3.0.txt).
+This project is licensed under the [Simplified BSD License](LICENSE.md).
+
