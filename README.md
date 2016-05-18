@@ -51,6 +51,8 @@ echo $vm->render('{{foo}}', array('foo' => 'bar'));
 echo $vm->renderFile('/path/to/foo.hbs', array('foo' => 'bar'));
 ```
 
+See the [examples](examples) folder for more examples.
+
 
 ## License
 
