@@ -410,8 +410,6 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
 
     zend_fcall_info fci;
     fci.size = sizeof(fci);
-    fci.function_table = &Z_OBJCE_P(intern)->function_table;
-    fci.symbol_table = NULL;
     fci.object = Z_OBJ_P(intern);
     fci.retval = &_z_ret;
     fci.params = z_args;
