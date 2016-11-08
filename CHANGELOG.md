@@ -7,6 +7,9 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ## [Unreleased]
 
 
+### Changed
+- Target handlebars.c version to 0.6.0
+
 ## [0.7.4] - 2016-09-21
 
 ### Added
