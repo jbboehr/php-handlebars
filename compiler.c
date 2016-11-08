@@ -371,6 +371,20 @@ PHPAPI void php_handlebars_process_options_zval(struct handlebars_compiler * com
             flags |= handlebars_compiler_flag_track_ids;
         }
     }
+#ifdef handlebars_compiler_flag_strict
+    if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("strict"))) ) {
+        if( PHP5TO7_Z_IS_TRUE_P(entry) ) {
+            flags |= handlebars_compiler_flag_strict;
+        }
+    }
+#endif
+#ifdef handlebars_compiler_flag_assume_objects
+    if( NULL != (entry = php5to7_zend_hash_find(ht, ZEND_STRL("assumeObjects"))) ) {
+        if( PHP5TO7_Z_IS_TRUE_P(entry) ) {
+            flags |= handlebars_compiler_flag_assume_objects;
+        }
+    }
+#endif
 
     handlebars_compiler_set_flags(compiler, flags);
 
@@ -498,6 +512,12 @@ PHP_MINIT_FUNCTION(handlebars_compiler)
     zend_declare_class_constant_long(HandlebarsCompiler_ce_ptr, ZEND_STRL("EXPLICIT_PARTIAL_CONTEXT"), handlebars_compiler_flag_explicit_partial_context TSRMLS_CC);
     zend_declare_class_constant_long(HandlebarsCompiler_ce_ptr, ZEND_STRL("IGNORE_STANDALONE"), handlebars_compiler_flag_ignore_standalone TSRMLS_CC);
     zend_declare_class_constant_long(HandlebarsCompiler_ce_ptr, ZEND_STRL("ALTERNATE_DECORATORS"), handlebars_compiler_flag_alternate_decorators TSRMLS_CC);
+#ifdef handlebars_compiler_flag_strict
+    zend_declare_class_constant_long(HandlebarsCompiler_ce_ptr, ZEND_STRL("STRICT"), handlebars_compiler_flag_strict TSRMLS_CC);
+#endif
+#ifdef handlebars_compiler_flag_assume_objects
+    zend_declare_class_constant_long(HandlebarsCompiler_ce_ptr, ZEND_STRL("ASSUME_OBJECTS"), handlebars_compiler_flag_assume_objects TSRMLS_CC);
+#endif
     zend_declare_class_constant_long(HandlebarsCompiler_ce_ptr, ZEND_STRL("COMPAT"), handlebars_compiler_flag_compat TSRMLS_CC);
     zend_declare_class_constant_long(HandlebarsCompiler_ce_ptr, ZEND_STRL("ALL"), handlebars_compiler_flag_all TSRMLS_CC);
 

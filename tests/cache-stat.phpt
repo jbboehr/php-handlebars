@@ -5,7 +5,7 @@ Test cache stat
 --INI--
 handlebars.cache.enable=1
 handlebars.cache.enable_cli=1
-handlebars.cache.backend=simple
+handlebars.cache.backend=mmap
 handlebars.cache.stat=1
 --FILE--
 <?php
@@ -20,6 +20,6 @@ touch($tmpFile, time() + 1);
 clearstatcache();
 var_dump($vm->renderFile($tmpFile, array('foo' => 'baz')));
 --EXPECT--
-string(6) "simple"
+string(4) "mmap"
 string(3) "bar"
 string(0) ""
