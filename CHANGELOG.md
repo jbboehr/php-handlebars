@@ -6,11 +6,11 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ## [Unreleased]
 
-### Added
-- Added `strict` and `assumeObjects` flag support
+## [0.8.0] - 2016-11-07
 
-### Changed
-- Target handlebars.c version to 0.6.0
+### Added
+- `strict` and `assumeObjects` flag support
+- `handlebars_cache_reset()` to completely empty the cache
 
 ### Changed
 - Target handlebars.c version to 0.6.0
@@ -48,7 +48,8 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 - New handlebars VM
 
 
-[Unreleased]: https://github.com/jbboehr/php-handlebars/compare/v0.7.4...HEAD
+[Unreleased]: https://github.com/jbboehr/php-handlebars/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/jbboehr/php-handlebars/compare/v0.7.4...v0.8.0
 [0.7.4]: https://github.com/jbboehr/php-handlebars/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/jbboehr/php-handlebars/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/jbboehr/php-handlebars/compare/v0.7.1...v0.7.2
