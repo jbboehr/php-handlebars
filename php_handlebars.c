@@ -59,6 +59,23 @@ PHP_INI_BEGIN()
 PHP_INI_END()
 /* }}} */
 
+/* {{{ Argument Info */
+ZEND_BEGIN_ARG_INFO_EX(handlebars_cache_reset_args, ZEND_SEND_BY_VAL, 0, 0)
+ZEND_END_ARG_INFO()
+/* }}} Argument Info */
+
+/* {{{ proto void handlebars_cache_reset(void) */
+PHP_FUNCTION(handlebars_cache_reset)
+{
+    if( HANDLEBARS_G(cache_enable) ) {
+        handlebars_cache_reset(HANDLEBARS_G(cache));
+        RETURN_TRUE;
+    } else {
+        RETURN_FALSE;
+    }
+}
+/* }}} */
+
 /* {{{ PHP_MINIT_FUNCTION */
 static PHP_MINIT_FUNCTION(handlebars)
 {
@@ -229,6 +246,14 @@ static PHP_GINIT_FUNCTION(handlebars)
 }
 /* }}} */
 
+/* {{{ handlebars_functions
+ */
+const zend_function_entry handlebars_functions[] = {
+    PHP_FE(handlebars_cache_reset, handlebars_cache_reset_args)
+    PHP_FE_END
+};
+/* }}} */
+
 /* {{{ handlebars_deps
  */
 static const zend_module_dep handlebars_deps[] = {
@@ -242,7 +267,7 @@ zend_module_entry handlebars_module_entry = {
     STANDARD_MODULE_HEADER_EX, NULL,
     handlebars_deps,                    /* Deps */
     PHP_HANDLEBARS_NAME,                /* Name */
-    NULL,                               /* Functions */
+    handlebars_functions,               /* Functions */
     PHP_MINIT(handlebars),              /* MINIT */
     PHP_MSHUTDOWN(handlebars),          /* MSHUTDOWN */
     NULL,                               /* RINIT */
@@ -255,8 +280,8 @@ zend_module_entry handlebars_module_entry = {
     NULL,
     STANDARD_MODULE_PROPERTIES_EX
 };
-#ifdef COMPILE_DL_HANDLEBARS 
-    ZEND_GET_MODULE(handlebars)      // Common for all PHP extensions which are build as shared modules  
+#ifdef COMPILE_DL_HANDLEBARS
+    ZEND_GET_MODULE(handlebars)      // Common for all PHP extensions which are build as shared modules
 #endif
 /* }}} */
 

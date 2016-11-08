@@ -16,7 +16,10 @@ file_put_contents($tmpFile, '{{foo}}');
 var_dump($vm->renderFile($tmpFile, array('foo' => 'bar')));
 file_put_contents($tmpFile, '{{bar}}');
 var_dump($vm->renderFile($tmpFile, array('foo' => 'baz')));
+handlebars_cache_reset();
+var_dump($vm->renderFile($tmpFile, array('bar' => 'bar')));
 --EXPECT--
 string(6) "simple"
 string(3) "bar"
 string(3) "baz"
+string(3) "bar"

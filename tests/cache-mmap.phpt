@@ -6,6 +6,7 @@ MMAP Cache
 handlebars.cache.enable=1
 handlebars.cache.enable_cli=1
 handlebars.cache.backend=mmap
+handlebars.cache.stat=0
 --FILE--
 <?php
 use Handlebars\VM;
@@ -16,7 +17,10 @@ file_put_contents($tmpFile, '{{foo}}');
 var_dump($vm->renderFile($tmpFile, array('foo' => 'bar')));
 file_put_contents($tmpFile, '{{bar}}');
 var_dump($vm->renderFile($tmpFile, array('foo' => 'baz')));
+handlebars_cache_reset();
+var_dump($vm->renderFile($tmpFile, array('bar' => 'bar')));
 --EXPECT--
 string(4) "mmap"
 string(3) "bar"
 string(3) "baz"
+string(3) "bar"
