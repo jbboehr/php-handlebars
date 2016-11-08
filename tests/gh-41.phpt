@@ -1,5 +1,5 @@
 --TEST--
-Invalid helper type
+GH #41 - Invalid helper type
 --SKIPIF--
 <?php if( !extension_loaded('handlebars') ) die('skip '); ?>
 --FILE--
