@@ -6,6 +6,8 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ## [Unreleased]
 
+## [0.8.1] - 2016-11-08
+
 ### Fixed
 - SIGABORT on invalid helper type
 - Segfault during callable object call, caused by uninitialized value from [0d38317](https://github.com/jbboehr/php-handlebars/commit/0d38317b983cf7411adc9d93f2f43e0ecab69642u)
@@ -52,7 +54,8 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 - New handlebars VM
 
 
-[Unreleased]: https://github.com/jbboehr/php-handlebars/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/jbboehr/php-handlebars/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/jbboehr/php-handlebars/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/jbboehr/php-handlebars/compare/v0.7.4...v0.8.0
 [0.7.4]: https://github.com/jbboehr/php-handlebars/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/jbboehr/php-handlebars/compare/v0.7.2...v0.7.3
