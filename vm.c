@@ -414,8 +414,14 @@ PHP_METHOD(HandlebarsVM, render)
     cache = HANDLEBARS_G(cache);
 
     vm->cache = cache;
-    vm->helpers = intern->helpers;
-    vm->partials = intern->partials;
+    if( intern->helpers ) {
+        vm->helpers = intern->helpers;
+        vm->helpers->ctx = ctx;
+    }
+    if( intern->partials ) {
+        vm->partials = intern->partials;
+        vm->partials->ctx = ctx;
+    }
     vm->log_func = &php_handlebars_log;
     vm->log_ctx = _this_zval;
 
@@ -468,6 +474,12 @@ PHP_METHOD(HandlebarsVM, render)
     }
 
 done:
+    if( intern->helpers ) {
+        intern->helpers->ctx = NULL;
+    }
+    if( intern->partials ) {
+        intern->partials->ctx = NULL;
+    }
     if( from_cache ) {
         cache->release(cache, tmpl, module);
     }
@@ -526,8 +538,14 @@ PHP_METHOD(HandlebarsVM, renderFile)
     cache = HANDLEBARS_G(cache);
 
     vm->cache = cache;
-    vm->helpers = intern->helpers;
-    vm->partials = intern->partials;
+    if( intern->helpers ) {
+        vm->helpers = intern->helpers;
+        vm->helpers->ctx = ctx;
+    }
+    if( intern->partials ) {
+        vm->partials = intern->partials;
+        vm->partials->ctx = ctx;
+    }
     vm->log_func = &php_handlebars_log;
     vm->log_ctx = _this_zval;
 
@@ -624,6 +642,12 @@ PHP_METHOD(HandlebarsVM, renderFile)
     }
 
 done:
+    if( intern->helpers ) {
+        intern->helpers->ctx = NULL;
+    }
+    if( intern->partials ) {
+        intern->partials->ctx = NULL;
+    }
     if( from_cache ) {
         cache->release(cache, filename, module);
     }

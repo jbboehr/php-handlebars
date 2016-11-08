@@ -6,6 +6,8 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ## [Unreleased]
 
+### Fixed
+- SIGABORT on invalid helper type
 
 ## [0.7.4] - 2016-09-21
 
