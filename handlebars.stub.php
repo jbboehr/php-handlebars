@@ -66,7 +66,7 @@ class Parser
 
     /**
      * Parse a template and return a readable string representation of the AST
-     * 
+     *
      * @param string $tmpl
      * @return string
      * @throws \Handlebars\ParseException
@@ -77,7 +77,7 @@ class Parser
 class Compiler
 {
 	const NONE = 0;
-	
+
 	const USE_DEPTHS = 1;
 	const STRING_PARAMS = 2;
 	const TRACK_IDS = 4;
@@ -88,17 +88,19 @@ class Compiler
 	const EXPLICIT_PARTIAL_CONTEXT = 128;
 	const IGNORE_STANDALONE = 256;
 	const ALTERNATE_DECORATORS = 512;
+	const STRICT = 1024;
+	const ASSUME_OBJECTS = 2048;
 	const COMPAT = 1;
-	const ALL = 1023;
-	
+	const ALL = 4095;
+
 	const USE_PARTIAL = 2;
 	const IS_SIMPLE = 4;
 	const USE_DECORATORS = 8;
 	const RESULT_ALL = 15;
-	
+
     /**
-     * Compile a template and return the opcodes 
-     * 
+     * Compile a template and return the opcodes
+     *
      * @param string $tmpl
      * @param integer $flags
      * @param array $knownHelpers
@@ -108,8 +110,8 @@ class Compiler
     public static function compile($tmpl, $flags = 0, array $knownHelpers = null) {}
 
     /**
-     * Compile a template and return a readable string representation of the opcodes 
-     * 
+     * Compile a template and return a readable string representation of the opcodes
+     *
      * @param string $tmpl
      * @param integer $flags
      * @param array $knownHelpers
@@ -177,7 +179,7 @@ class Utils
 
     /**
      * Similar to is_callable(), but only allows closures and objects
-     * with an __invoke method, and removes the second and third 
+     * with an __invoke method, and removes the second and third
      * arguments.
      *
      * @param array $array
@@ -196,7 +198,7 @@ class Utils
     /**
      * Looks up a field in an object or array without
      * causing a notice
-     * 
+     *
      * @param mixed $objOrArray
      * @param string $field
      * @return mixed
@@ -284,12 +286,12 @@ class Program
 	 * @var Opcode[]
 	 */
 	public $opcodes;
-	
+
 	/**
 	 * @var Program[]
 	 */
 	public $children;
-	
+
 	/**
 	 * @var Program[]
 	 */
@@ -299,7 +301,7 @@ class Program
 	 * @var boolean
 	 */
 	public $isSimple;
-	
+
 	/**
 	 * @var boolean
 	 */
@@ -309,12 +311,12 @@ class Program
 	 * @var boolean
 	 */
 	public $usePartial;
-	
+
 	/**
 	 * @var boolean
 	 */
 	public $useDecorators;
-	
+
 	/**
 	 * @var integer
 	 */
@@ -329,7 +331,7 @@ class Program
 	 * @var boolean
 	 */
 	public $trackIds;
-	
+
 	public function __construct(array $opcodes, array $children, $blockParams) {
 		$this->opcodes = $opcodes;
 		$this->children = $children;

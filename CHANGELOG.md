@@ -9,6 +9,15 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ### Fixed
 - SIGABORT on invalid helper type
 
+## [0.8.0] - 2016-11-07
+
+### Added
+- `strict` and `assumeObjects` flag support
+- `handlebars_cache_reset()` to completely empty the cache
+
+### Changed
+- Target handlebars.c version to 0.6.0
+
 ## [0.7.4] - 2016-09-21
 
 ### Added
@@ -16,7 +25,6 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ### Fixed
 - Compilation fails on PHP 7.1 ([#35](https://github.com/jbboehr/php-handlebars/pull/35))
-
 
 ## [0.7.3] - 2016-05-05
 
@@ -43,7 +51,8 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 - New handlebars VM
 
 
-[Unreleased]: https://github.com/jbboehr/php-handlebars/compare/v0.7.4...HEAD
+[Unreleased]: https://github.com/jbboehr/php-handlebars/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/jbboehr/php-handlebars/compare/v0.7.4...v0.8.0
 [0.7.4]: https://github.com/jbboehr/php-handlebars/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/jbboehr/php-handlebars/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/jbboehr/php-handlebars/compare/v0.7.1...v0.7.2
