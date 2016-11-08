@@ -408,7 +408,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     zval _z_ret;
     z_ret = &_z_ret;
 
-    zend_fcall_info fci;
+    zend_fcall_info fci = {0};
     fci.size = sizeof(fci);
     fci.object = Z_OBJ_P(intern);
     fci.retval = &_z_ret;

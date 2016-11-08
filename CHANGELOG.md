@@ -8,6 +8,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ### Fixed
 - SIGABORT on invalid helper type
+- Segfault during callable object call, caused by uninitialized value from [0d38317](https://github.com/jbboehr/php-handlebars/commit/0d38317b983cf7411adc9d93f2f43e0ecab69642u)
 
 ## [0.8.0] - 2016-11-07
 
