@@ -5,7 +5,7 @@
 #include "main/php.h"
 
 #define PHP_HANDLEBARS_NAME "handlebars"
-#define PHP_HANDLEBARS_VERSION "0.8.1"
+#define PHP_HANDLEBARS_VERSION "0.8.2RC1"
 #define PHP_HANDLEBARS_RELEASE "2016-11-08"
 #define PHP_HANDLEBARS_AUTHORS "John Boehr <jbboehr@gmail.com> (lead)"
 #define PHP_HANDLEBARS_SPEC "4.0.5"

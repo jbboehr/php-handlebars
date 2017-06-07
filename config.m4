@@ -33,7 +33,10 @@ if test "$PHP_HANDLEBARS" != "no"; then
 	])
     PHP_INSTALL_HEADERS([ext/handlebars], [php_handlebars.h])
     PHP_ADD_LIBRARY(handlebars, 1, HANDLEBARS_SHARED_LIBADD)
-    PHP_NEW_EXTENSION(handlebars, $PHP_HANDLEBARS_SOURCES, $ext_shared, , -I$psr_cv_inc_path $PHP_HANDLEBARS_FLAGS)
-    PHP_ADD_EXTENSION_DEP(handlebars, psr, true)
+    PHP_NEW_EXTENSION(handlebars, $PHP_HANDLEBARS_SOURCES, $ext_shared)
+    if test "$PHP_HANDLEBARS_PSR" != "no"; then
+        PHP_ADD_EXTENSION_DEP(handlebars, psr, true)
+    fi
     PHP_SUBST(HANDLEBARS_SHARED_LIBADD)
 fi
+

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package packagerversion="1.10.1" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
+ <name>handlebars</name>
+ <channel>pecl.php.net</channel>
+ <summary>Handlebars templating language</summary>
+ <description>This extension embeds a Handlebars interpreter into PHP, allowing the execution of Handlebars templates.</description>
+ <lead>
+  <name>John Boehr</name>
+  <user>jbboehr</user>
+  <email>jbboehr@php.net</email>
+  <active>yes</active>
+ </lead>
+ <date>2017-06-07</date>
+ <time>21:33:24</time>
+ <version>
+  <release>0.8.2RC1</release>
+  <api>0.8.2RC1</api>
+ </version>
+ <stability>
+  <release>beta</release>
+  <api>beta</api>
+ </stability>
+ <license uri="https://opensource.org/licenses/BSD-2-Clause">BSD-2-Clause</license>
+ <notes>
+Initial PECL release
+ </notes>
+ <contents>
+  <dir name="/">
+   <file name="CHANGELOG.md" role="doc" />
+   <file name="LICENSE.md" role="doc" />
+   <file name="README.md" role="doc" />
+   <file name="config.m4" role="src" />
+   <file name="compiler.c" role="src" />
+   <file name="exceptions.c" role="src" />
+   <file name="impl.c" role="src" />
+   <file name="opcode.c" role="src" />
+   <file name="options.c" role="src" />
+   <file name="parser.c" role="src" />
+   <file name="php5to7.h" role="src" />
+   <file name="php_handlebars.c" role="src" />
+   <file name="php_handlebars.h" role="src" />
+   <file name="program.c" role="src" />
+   <file name="registry.c" role="src" />
+   <file name="safe_string.c" role="src" />
+   <file name="token.c" role="src" />
+   <file name="tokenizer.c" role="src" />
+   <file name="utils.c" role="src" />
+   <file name="value.c" role="src" />
+   <file name="vm.c" role="src" />
+   <file name="tests/cache-lmdb.phpt" role="test" />
+   <file name="tests/cache-mmap.phpt" role="test" />
+   <file name="tests/cache-none.phpt" role="test" />
+   <file name="tests/cache-nostat.phpt" role="test" />
+   <file name="tests/cache-simple.phpt" role="test" />
+   <file name="tests/cache-stat.phpt" role="test" />
+   <file name="tests/fixture1.hbs" role="test" />
+   <file name="tests/gh-40.phpt" role="test" />
+   <file name="tests/gh-41.phpt" role="test" />
+   <file name="tests/HandlebarsBaseImpl_getDecorators.phpt" role="test" />
+   <file name="tests/HandlebarsBaseImpl_getHelpers.phpt" role="test" />
+   <file name="tests/HandlebarsBaseImpl_getPartials.phpt" role="test" />
+   <file name="tests/HandlebarsOpcode_construct.phpt" role="test" />
+   <file name="tests/HandlebarsOptions_construct.phpt" role="test" />
+   <file name="tests/HandlebarsOptions_fn.phpt" role="test" />
+   <file name="tests/HandlebarsSafeString_construct.phpt" role="test" />
+   <file name="tests/HandlebarsSafeString_toString.phpt" role="test" />
+   <file name="tests/HandlebarsUtils_appendContextPath.phpt" role="test" />
+   <file name="tests/HandlebarsUtils_createFrame.phpt" role="test" />
+   <file name="tests/HandlebarsUtils_escapeExpressionCompat.phpt" role="test" />
+   <file name="tests/HandlebarsUtils_escapeExpression.phpt" role="test" />
+   <file name="tests/HandlebarsUtils_expression.phpt" role="test" />
+   <file name="tests/HandlebarsUtils_isCallable.phpt" role="test" />
+   <file name="tests/HandlebarsUtils_isIntArray.phpt" role="test" />
+   <file name="tests/HandlebarsUtils_nameLookup.phpt" role="test" />
+   <file name="tests/HandlebarsVM_getDecorators.phpt" role="test" />
+   <file name="tests/HandlebarsVM_getHelpers.phpt" role="test" />
+   <file name="tests/HandlebarsVM_getPartials.phpt" role="test" />
+   <file name="tests/HandlebarsVM_renderFile.phpt" role="test" />
+   <file name="tests/HandlebarsVM_render-helper-with-exception.phpt" role="test" />
+   <file name="tests/HandlebarsVM_setLogger.phpt" role="test" />
+   <file name="tests/phpinfo-no-cache.phpt" role="test" />
+   <file name="tests/phpinfo.phpt" role="test" />
+   <file name="tests/utils.inc" role="test" />
+  </dir>
+ </contents>
+ <dependencies>
+  <required>
+   <php>
+    <min>5.6.0</min>
+    <max>7.1.99</max>
+   </php>
+   <pearinstaller>
+    <min>1.4.1</min>
+   </pearinstaller>
+  </required>
+ </dependencies>
+ <providesextension>handlebars</providesextension>
+ <extsrcrelease />
+</package>
