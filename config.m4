@@ -14,6 +14,20 @@ AC_DEFUN([PHP_HANDLEBARS_ADD_SOURCES], [
 
 # MAIN -------------------------------------------------------------------------
 if test "$PHP_HANDLEBARS" != "no"; then
+    AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+
+    AC_MSG_CHECKING([for libhandlebars])
+    if test -x "$PKG_CONFIG" && $PKG_CONFIG --exists handlebars; then
+        LIBHANDLEBARS_CFLAGS=`$PKG_CONFIG handlebars --cflags`
+        LIBHANDLEBARS_LIBS=`$PKG_CONFIG handlebars --libs`
+        LIBHANDLEBARS_VERSION=`$PKG_CONFIG handlebars --modversion`
+        AC_MSG_RESULT(version $LIBHANDLEBARS_VERSION found using pkg-config)
+        PHP_EVAL_LIBLINE($LIBHANDLEBARS_LIBS, HANDLEBARS_SHARED_LIBADD)
+        PHP_EVAL_INCLINE($LIBHANDLEBARS_CFLAGS)
+    else
+        AC_MSG_ERROR([libhandlebars not found])
+    fi
+
 	PHP_HANDLEBARS_ADD_SOURCES([
 		php_handlebars.c
 		impl.c
@@ -32,7 +46,6 @@ if test "$PHP_HANDLEBARS" != "no"; then
 		value.c
 	])
     PHP_INSTALL_HEADERS([ext/handlebars], [php_handlebars.h])
-    PHP_ADD_LIBRARY(handlebars, 1, HANDLEBARS_SHARED_LIBADD)
     PHP_NEW_EXTENSION(handlebars, $PHP_HANDLEBARS_SOURCES, $ext_shared)
     if test "$PHP_HANDLEBARS_PSR" != "no"; then
         PHP_ADD_EXTENSION_DEP(handlebars, psr, true)
