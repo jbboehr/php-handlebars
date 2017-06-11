@@ -20,13 +20,22 @@ sudo apt-get install php-handlebars
 ```
 
 
-### Fedora
+### RPM repository
 
-The extension is available in [Remi's repository](https://rpms.remirepo.net/) (change 24 to match your Fedora version)
+The extension is available in [Remi's repository](https://rpms.remirepo.net/):
+
+**Fedora** (change 24 to match your Fedora version)
 
 ```bash
 dnf install https://rpms.remirepo.net/fedora/remi-release-24.rpm
 dnf install --enablerepo=remi php-pecl-handlebars
+```
+
+**RHEL/CentOS** (for default PHP in base repository)
+
+```bash
+yum install https://rpms.remirepo.net/enterprise/remi-release-7.rpm
+yum install php-pecl-handlebars
 ```
 
 
