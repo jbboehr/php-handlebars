@@ -1,5 +1,5 @@
-Simplified BSD License
-======================
+BSD 2-Clause License
+====================
 
 _Copyright © `2016`, `John Boehr`_
 _All rights reserved._
