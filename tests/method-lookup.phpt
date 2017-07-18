@@ -1,7 +1,7 @@
 --TEST--
 method lookup (GH-34)
 --SKIPIF--
-<?php if( !extension_loaded('handlebars') ) die('skip '); ?>
+<?php if( !extension_loaded('handlebars') || version_compare(PHP_VERSION, "7", "<") ) die('skip '); ?>
 --FILE--
 <?php
 use Handlebars\DefaultRegistry;
