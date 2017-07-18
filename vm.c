@@ -436,19 +436,32 @@ PHP_METHOD(HandlebarsVM, render)
         parser = handlebars_parser_ctor(ctx);
         compiler = handlebars_compiler_ctor(ctx);
 
-        // Parse
-        php_handlebars_try(HandlebarsParseException_ce_ptr, parser, &buf);
-        parser->tmpl = tmpl;
-        handlebars_parse(parser);
-
-        // Compile
-        php_handlebars_try(HandlebarsCompileException_ce_ptr, compiler, &buf);
+        // Set compiler options
         php_handlebars_process_options_zval(compiler, vm, z_options TSRMLS_CC);
         /*if( z_helpers ) {
             php_handlebars_fetch_known_helpers(compiler, z_helpers TSRMLS_CC);
         }*/
+
+        // Preprocess template
+#if defined(HANDLEBARS_VERSION_INT) && HANDLEBARS_VERSION_INT >= 604
+        if( compiler->flags & handlebars_compiler_flag_compat ) {
+            parser->tmpl = handlebars_preprocess_delimiters(HBSCTX(ctx), tmpl, NULL, NULL);
+        } else {
+            parser->tmpl = tmpl;
+        }
+#else
+        parser->tmpl = tmpl;
+#endif
+
+        // Parse
+        php_handlebars_try(HandlebarsParseException_ce_ptr, parser, &buf);
+        handlebars_parse(parser);
+
+        // Compile
+        php_handlebars_try(HandlebarsCompileException_ce_ptr, compiler, &buf);
         handlebars_compiler_compile(compiler, parser->program);
 
+        // Serialize
         module = handlebars_program_serialize(HBSCTX(vm), compiler->program);
 
         // Save cache entry
@@ -607,17 +620,29 @@ PHP_METHOD(HandlebarsVM, renderFile)
         parser = handlebars_parser_ctor(ctx);
         compiler = handlebars_compiler_ctor(ctx);
 
-        // Parse
-        php_handlebars_try(HandlebarsParseException_ce_ptr, parser, &buf);
-        parser->tmpl = tmpl;
-        handlebars_parse(parser);
-
-        // Compile
-        php_handlebars_try(HandlebarsCompileException_ce_ptr, compiler, &buf);
+        // Set compiler options
         php_handlebars_process_options_zval(compiler, vm, z_options TSRMLS_CC);
         /*if( z_helpers ) {
             php_handlebars_fetch_known_helpers(compiler, z_helpers TSRMLS_CC);
         }*/
+
+        // Preprocess template
+#if defined(HANDLEBARS_VERSION_INT) && HANDLEBARS_VERSION_INT >= 604
+        if( compiler->flags & handlebars_compiler_flag_compat ) {
+            parser->tmpl = handlebars_preprocess_delimiters(HBSCTX(ctx), tmpl, NULL, NULL);
+        } else {
+            parser->tmpl = tmpl;
+        }
+#else
+        parser->tmpl = tmpl;
+#endif
+
+        // Parse
+        php_handlebars_try(HandlebarsParseException_ce_ptr, parser, &buf);
+        handlebars_parse(parser);
+
+        // Compile
+        php_handlebars_try(HandlebarsCompileException_ce_ptr, compiler, &buf);
         handlebars_compiler_compile(compiler, parser->program);
 
         module = handlebars_program_serialize(HBSCTX(vm), compiler->program);
