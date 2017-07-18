@@ -15,7 +15,7 @@ dist: trusty
 
 env:
   global:
-    - LIBHANDLEBARS_VERSION=v0.6.0
+    - LIBHANDLEBARS_VERSION=master
     - PHP_PSR_VERSION=v0.2.3
     - PREFIX="$HOME/build"
     - PATH="$PREFIX/bin:$PATH"

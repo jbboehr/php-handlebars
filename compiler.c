@@ -401,6 +401,7 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
     struct handlebars_context * ctx;
     struct handlebars_parser * parser;
     struct handlebars_compiler * compiler;
+    struct handlebars_string * tmpl_str;
     zend_long pool_size = HANDLEBARS_G(pool_size);
     jmp_buf buf;
 
@@ -436,14 +437,7 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
     parser = handlebars_parser_ctor(ctx);
     compiler = handlebars_compiler_ctor(ctx);
 
-    // Parse
-    php_handlebars_try(HandlebarsParseException_ce_ptr, parser, &buf);
-    parser->tmpl = handlebars_string_ctor(HBSCTX(parser), tmpl, tmpl_len);
-    handlebars_parse(parser);
-
-    // Compile
-    php_handlebars_try(HandlebarsCompileException_ce_ptr, compiler, &buf);
-
+    // Set compiler flags
     if( options ) {
         if( Z_TYPE_P(options) == IS_LONG ) {
             handlebars_compiler_set_flags(compiler, Z_LVAL_P(options));
@@ -451,6 +445,23 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
             php_handlebars_process_options_zval(compiler, NULL, options TSRMLS_CC);
         }
     }
+
+    // Initialize and preprocess template
+    tmpl_str = handlebars_string_ctor(HBSCTX(parser), tmpl, tmpl_len);
+#if defined(HANDLEBARS_VERSION_INT) && HANDLEBARS_VERSION_INT >= 603
+    php_handlebars_try(HandlebarsParseException_ce_ptr, parser, &buf);
+    if( compiler->flags & handlebars_compiler_flag_compat ) {
+        tmpl_str = handlebars_preprocess_delimiters(HBSCTX(ctx), tmpl_str, NULL, NULL);
+    }
+#endif
+    parser->tmpl = tmpl_str;
+
+    // Parse
+    php_handlebars_try(HandlebarsParseException_ce_ptr, parser, &buf);
+    handlebars_parse(parser);
+
+    // Compile
+    php_handlebars_try(HandlebarsCompileException_ce_ptr, compiler, &buf);
 
     handlebars_compiler_compile(compiler, parser->program);
 
