@@ -10,4 +10,4 @@ var_dump($vm->render('{{lookup a null}}', array(
     'a' => array('c' => null),
 )));
 --EXPECT--
-string(4) "true"
+string(0) ""
