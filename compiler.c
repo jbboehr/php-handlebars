@@ -446,9 +446,9 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
         }
     }
 
-    // Initialize and preprocess template
+    // Preprocess template
     tmpl_str = handlebars_string_ctor(HBSCTX(parser), tmpl, tmpl_len);
-#if defined(HANDLEBARS_VERSION_INT) && HANDLEBARS_VERSION_INT >= 603
+#if defined(HANDLEBARS_VERSION_INT) && HANDLEBARS_VERSION_INT >= 604
     php_handlebars_try(HandlebarsParseException_ce_ptr, parser, &buf);
     if( compiler->flags & handlebars_compiler_flag_compat ) {
         tmpl_str = handlebars_preprocess_delimiters(HBSCTX(ctx), tmpl_str, NULL, NULL);
