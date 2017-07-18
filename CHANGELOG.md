@@ -6,6 +6,12 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ## [Unreleased]
 
+### Added
+- Mustache delimiter preprocessing support behind the compat flag
+
+### Changed
+- Changed target handlebars.c version to 0.6.4
+
 ## [0.8.1] - 2016-11-08
 
 ### Fixed

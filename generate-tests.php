@@ -553,7 +553,6 @@ foreach( scandir($mustacheSpecDir) as $file ) {
     }
     $filePath = $mustacheSpecDir . $file;
     $suiteName = substr(basename($filePath), 0, strpos(basename($filePath), '.'));
-    if( $suiteName === 'delimiters' ) continue;
 
     $tests = json_decode(file_get_contents($filePath), true);
     $number = 0;
