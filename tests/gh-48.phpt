@@ -1,5 +1,5 @@
 --TEST--
-GH #40 - lookup segfault
+GH #48 - lookup segfault
 --SKIPIF--
 <?php if( !extension_loaded('handlebars') ) die('skip '); ?>
 --FILE--
