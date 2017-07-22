@@ -340,6 +340,8 @@ static void php_handlebars_parse(INTERNAL_FUNCTION_PARAMETERS, short print)
 
     ctx = handlebars_context_ctor();
 
+    // Note: there is no flags argument here, so we can't preprocess the delimiters
+
     php_handlebars_try(HandlebarsRuntimeException_ce_ptr, ctx, &buf);
     parser = handlebars_parser_ctor(ctx);
 

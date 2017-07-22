@@ -9,6 +9,7 @@
 #include "main/php.h"
 
 #include <talloc.h>
+#include <zend_compile.h>
 
 #include "handlebars.h"
 #include "handlebars_private.h"
@@ -141,6 +142,7 @@ static struct handlebars_value * handlebars_std_zval_map_find(struct handlebars_
     zval * intern = get_intern_zval(value);
     zval * entry = NULL;
     struct handlebars_value * ret = NULL;
+    zval rval = {0};
     TSRMLS_FETCH();
 
     switch( Z_TYPE_P(intern) ) {
@@ -182,6 +184,24 @@ static struct handlebars_value * handlebars_std_zval_map_find(struct handlebars_
             } else {
                 entry = php5to7_zend_read_property2(Z_OBJCE_P(intern), intern, key->val, key->len, 1);
             }
+#ifdef ZEND_ENGINE_3
+            if( !entry || Z_TYPE_P(entry) == IS_NULL ) {
+                char *error;
+                zend_fcall_info_cache fcc;
+                zend_function *mptr;
+                zval callable;
+
+                array_init(&callable);
+                add_next_index_zval(&callable, intern);
+                add_next_index_stringl(&callable, key->val, key->len);
+
+                if( zend_is_callable_ex(&callable, NULL, 0, NULL, &fcc, &error) ) {
+                    mptr = fcc.function_handler;
+                    zend_create_fake_closure(&rval, mptr, mptr->common.scope, fcc.called_scope, intern);
+                    entry = &rval;
+                }
+            }
+#endif
             break;
     }
 

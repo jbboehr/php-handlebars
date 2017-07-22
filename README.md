@@ -75,5 +75,5 @@ See the [examples](examples) folder for more examples.
 
 ## License
 
-This project is licensed under the [Simplified BSD License](LICENSE.md).
+This project is licensed under the [Simplified BSD License](LICENSE.md) (BSD-2-Clause).
 
