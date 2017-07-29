@@ -1281,6 +1281,11 @@
     <min>1.4.1</min>
    </pearinstaller>
   </required>
+  <optional>
+   <extension>
+    <name>psr</name>
+   </extension>
+  </optional>
  </dependencies>
  <providesextension>handlebars</providesextension>
  <extsrcrelease />
