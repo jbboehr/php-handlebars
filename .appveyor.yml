@@ -195,13 +195,13 @@ build_script:
 
     xcopy C:\projects\php-handlebars C:\projects\php-src\ext\handlebars /s /e /y /q
 
-    REM FIXME no PHP 7.2 deps downloads available yet - wget http://windows.php.net/downloads/php-sdk/deps-%PHP_VER%-%VC_VER%-%ARCH%.7z -q
+    REM FIXME no PHP 7.2 deps downloads available yet - wget http://windows.php.net/downloads/php-sdk/deps-%PHP_VER%-%VC_VER%-%PLATFORM%.7z -q
     
-    wget http://windows.php.net/downloads/php-sdk/deps-%PHP_DEPS_VER%-%VC_VER%-%ARCH%.7z -q
+    wget http://windows.php.net/downloads/php-sdk/deps-%PHP_DEPS_VER%-%VC_VER%-%PLATFORM%.7z -q
 
-    REM FIXME no PHP 7.2 deps downloads available yet - 7z x -y deps-%PHP_VER%-%VC_VER%-%ARCH%.7z -oC:\projects\php-src
+    REM FIXME no PHP 7.2 deps downloads available yet - 7z x -y deps-%PHP_VER%-%VC_VER%-%PLATFORM%.7z -oC:\projects\php-src
     
-    7z x -y deps-%PHP_DEPS_VER%-%VC_VER%-%ARCH%.7z -oC:\projects\php-src
+    7z x -y deps-%PHP_DEPS_VER%-%VC_VER%-%PLATFORM%.7z -oC:\projects\php-src
 
     cd C:\projects\php-src
 
