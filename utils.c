@@ -21,7 +21,7 @@
 #include "php_handlebars.h"
 
 /* {{{ Variables & Prototypes */
-zend_class_entry * HandlebarsUtils_ce_ptr;
+PHP_HANDLEBARS_API zend_class_entry * HandlebarsUtils_ce_ptr;
 /* }}} Variables & Prototypes */
 
 /* {{{ proto mixed Handlebars\Utils::appendContextPath(mixed contextPath, string id) */
@@ -308,7 +308,7 @@ PHP_METHOD(HandlebarsUtils, indent)
 /* }}} Handlebars\Utils::indent */
 
 /* {{{ proto boolean Handlebars\Utils::isCallable(mixed name) */
-zend_bool php_handlebars_is_callable(zval * var TSRMLS_DC)
+PHP_HANDLEBARS_API zend_bool php_handlebars_is_callable(zval * var TSRMLS_DC)
 {
     zend_bool retval = 0;
     int check_flags = 0; //IS_CALLABLE_CHECK_SYNTAX_ONLY;
@@ -351,7 +351,7 @@ PHP_METHOD(HandlebarsUtils, isCallable)
 
 /* {{{ proto boolean Handlebars\Utils::isIntArray(mixed value) */
 #ifndef ZEND_ENGINE_3
-zend_bool php_handlebars_is_int_array(zval * arr TSRMLS_DC)
+PHP_HANDLEBARS_API zend_bool php_handlebars_is_int_array(zval * arr TSRMLS_DC)
 {
     HashTable * data_hash = NULL;
     HashPosition data_pointer = NULL;
@@ -387,7 +387,7 @@ zend_bool php_handlebars_is_int_array(zval * arr TSRMLS_DC)
     return 1;
 }
 #else
-zend_bool php_handlebars_is_int_array(zval * arr TSRMLS_DC)
+PHP_HANDLEBARS_API zend_bool php_handlebars_is_int_array(zval * arr TSRMLS_DC)
 {
     HashTable * data_hash = NULL;
     zend_string * key;

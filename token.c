@@ -13,7 +13,7 @@
 #include "handlebars_token.h"
 
 /* {{{ Variables & Prototypes */
-zend_class_entry * HandlebarsToken_ce_ptr;
+PHP_HANDLEBARS_API zend_class_entry * HandlebarsToken_ce_ptr;
 /* }}} Variables & Prototypes */
 
 /* {{{ Argument Info */
@@ -23,7 +23,7 @@ ZEND_BEGIN_ARG_INFO_EX(HandlebarsToken_construct_args, ZEND_SEND_BY_VAL, 0, 2)
 ZEND_END_ARG_INFO()
 /* }}} Argument Info */
 
-PHPAPI void php_handlebars_token_ctor(struct handlebars_token * token, zval * z_token TSRMLS_DC)
+PHP_HANDLEBARS_API void php_handlebars_token_ctor(struct handlebars_token * token, zval * z_token TSRMLS_DC)
 {
     zval z_const;
     zval z_ret;

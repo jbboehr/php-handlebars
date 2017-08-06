@@ -19,6 +19,8 @@
 #include "handlebars_opcodes.h"
 #include "handlebars_string.h"
 #include "handlebars_vm.h"
+
+#define BOOLEAN HBS_BOOLEAN
 #include "handlebars.tab.h"
 #include "handlebars.lex.h"
 
@@ -26,7 +28,7 @@
 #include "php_handlebars.h"
 
 /* {{{ Variables & Prototypes */
-zend_class_entry * HandlebarsCompiler_ce_ptr;
+PHP_HANDLEBARS_API zend_class_entry * HandlebarsCompiler_ce_ptr;
 
 static void php_handlebars_program_to_zval(struct handlebars_program * program, zval * current TSRMLS_DC);
 /* }}} Variables & Prototypes */
@@ -306,7 +308,7 @@ static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval 
 /* }}} php_handlebars_compiler_known_helpers_from_zval */
 
 /* {{{ php_handlebars_process_options_zval */
-PHPAPI void php_handlebars_process_options_zval(struct handlebars_compiler * compiler, struct handlebars_vm * vm, zval * options TSRMLS_DC)
+PHP_HANDLEBARS_API void php_handlebars_process_options_zval(struct handlebars_compiler * compiler, struct handlebars_vm * vm, zval * options TSRMLS_DC)
 {
     zval * entry;
     HashTable * ht;

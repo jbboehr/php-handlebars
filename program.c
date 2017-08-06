@@ -10,7 +10,7 @@
 #include "php_handlebars.h"
 
 /* {{{ Variables & Prototypes */
-zend_class_entry * HandlebarsProgram_ce_ptr;
+PHP_HANDLEBARS_API zend_class_entry * HandlebarsProgram_ce_ptr;
 /* }}} Variables & Prototypes */
 
 /* {{{ Argument Info */

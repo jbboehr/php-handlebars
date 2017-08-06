@@ -19,7 +19,7 @@
 #include "handlebars_vm.h"
 
 /* {{{ Variables & Prototypes */
-zend_class_entry * HandlebarsOptions_ce_ptr;
+PHP_HANDLEBARS_API zend_class_entry * HandlebarsOptions_ce_ptr;
 static zend_object_handlers HandlebarsOptions_obj_handlers;
 static HashTable HandlebarsOptions_prop_handlers;
 /* }}} Variables & Prototypes */
@@ -156,7 +156,7 @@ zend_object_value php_handlebars_options_obj_create(zend_class_entry *ce TSRMLS_
 /* }}} */
 
 /* {{{ php_handlebars_options_ctor */
-PHPAPI void php_handlebars_options_ctor(
+PHP_HANDLEBARS_API void php_handlebars_options_ctor(
         struct handlebars_options * options,
         zval * z_options TSRMLS_DC
 ) {

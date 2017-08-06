@@ -1,7 +1,7 @@
 --TEST--
 MMAP Cache
 --SKIPIF--
-<?php if( !extension_loaded('handlebars') ) die('skip '); ?>
+<?php if( !extension_loaded('handlebars') || substr(PHP_OS, 0, 3) === "WIN" ) die('skip '); ?>
 --INI--
 handlebars.cache.enable=1
 handlebars.cache.enable_cli=1

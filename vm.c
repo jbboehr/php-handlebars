@@ -22,6 +22,8 @@
 #include "handlebars_string.h"
 #include "handlebars_value.h"
 #include "handlebars_vm.h"
+
+#define BOOLEAN HBS_BOOLEAN
 #include "handlebars.tab.h"
 #include "handlebars.lex.h"
 
@@ -31,7 +33,7 @@
 
 
 /* {{{ Variables & Prototypes */
-zend_class_entry * HandlebarsVM_ce_ptr;
+PHP_HANDLEBARS_API zend_class_entry * HandlebarsVM_ce_ptr;
 static zend_object_handlers HandlebarsVM_obj_handlers;
 
 struct php_handlebars_vm_obj {

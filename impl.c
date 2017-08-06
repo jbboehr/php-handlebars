@@ -16,8 +16,8 @@
 #include "php_handlebars.h"
 
 /* {{{ Variables & Prototypes */
-zend_class_entry * HandlebarsImpl_ce_ptr;
-zend_class_entry * HandlebarsBaseImpl_ce_ptr;
+PHP_HANDLEBARS_API zend_class_entry * HandlebarsImpl_ce_ptr;
+PHP_HANDLEBARS_API zend_class_entry * HandlebarsBaseImpl_ce_ptr;
 /* }}} Variables & Prototypes */
 
 static zend_class_entry *lookup_class(const char *name TSRMLS_DC)

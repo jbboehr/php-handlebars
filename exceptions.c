@@ -12,11 +12,11 @@
 #include "php_handlebars.h"
 
 /* {{{ Variables & Prototypes */
-zend_class_entry * HandlebarsException_ce_ptr;
-zend_class_entry * HandlebarsParseException_ce_ptr;
-zend_class_entry * HandlebarsCompileException_ce_ptr;
-zend_class_entry * HandlebarsInvalidArgumentException_ce_ptr;
-zend_class_entry * HandlebarsRuntimeException_ce_ptr;
+PHP_HANDLEBARS_API zend_class_entry * HandlebarsException_ce_ptr;
+PHP_HANDLEBARS_API zend_class_entry * HandlebarsParseException_ce_ptr;
+PHP_HANDLEBARS_API zend_class_entry * HandlebarsCompileException_ce_ptr;
+PHP_HANDLEBARS_API zend_class_entry * HandlebarsInvalidArgumentException_ce_ptr;
+PHP_HANDLEBARS_API zend_class_entry * HandlebarsRuntimeException_ce_ptr;
 /* }}} Variables & Prototypes */
 
 /* {{{ PHP_MINIT_FUNCTION */

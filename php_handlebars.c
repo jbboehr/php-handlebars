@@ -3,7 +3,20 @@
 #include "config.h"
 #endif
 
+/*
+#ifdef _MSC_VER
+#define BOOLEAN MSBOOLEAN
+#define WIN32_LEAN_AND_MEAN
+#define _ATL_DISABLE_NOTHROW_NEW
+#include <winsock2.h>
+#include <windows.h>
+#include <malloc.h>
+#undef BOOLEAN
+#endif
+*/
+
 #include <stdio.h>
+#include <setjmp.h>
 #include <talloc.h>
 #include <handlebars.h>
 
@@ -20,7 +33,6 @@
 #include "php5to7.h"
 #include "php_handlebars.h"
 
-#include "handlebars.h"
 #include "handlebars_cache.h"
 
 /* {{{ Prototypes */
@@ -42,7 +54,7 @@ extern PHP_MSHUTDOWN_FUNCTION(handlebars_options);
 
 ZEND_DECLARE_MODULE_GLOBALS(handlebars);
 
-zend_bool handlebars_has_psr = 0;
+PHP_HANDLEBARS_API zend_bool handlebars_has_psr = 0;
 /* }}} Prototypes */
 
 /* {{{ php.ini directive registration */
@@ -103,6 +115,13 @@ static PHP_MINIT_FUNCTION(handlebars)
     if( !HANDLEBARS_G(cache_enable_cli) && 0 == strcmp(sapi_module.name, "cli") ) {
         HANDLEBARS_G(cache_enable) = false;
     }
+	
+	// Save jmp
+	jmp_buf buf;
+	
+	if( handlebars_setjmp_ex(HANDLEBARS_G(context), &buf) ) {
+	    HANDLEBARS_G(cache_enable) = 0;
+	}
 
     if( HANDLEBARS_G(cache_enable) ) {
         const char * backend = HANDLEBARS_G(cache_backend);
