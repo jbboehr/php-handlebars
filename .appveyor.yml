@@ -229,7 +229,7 @@ build_script:
     php -m
 
 test_script:
-- cmd: nmake test
+- cmd: php.exe /projects/php-src/run-tests.php /projects/php-src/ext/handlebars -q --show-diff
 
 artifacts:
   - path: artifacts
