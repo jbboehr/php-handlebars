@@ -18,6 +18,7 @@ environment:
   PHP_SDK_BINARY_TOOLS_VER: php-sdk-2.0.9
   PHP_VER: 7.2
   PHP_DEPS_VER: master
+  VC_VER: vc15
 
 install:
 - cmd: cinst wget
