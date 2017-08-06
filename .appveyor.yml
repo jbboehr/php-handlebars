@@ -214,7 +214,7 @@ build_script:
 
     nmake install
 
-    C:\projects\php-handlebars\artifacts\bin
+    cd C:\projects\php-handlebars\artifacts\bin
 
     echo [PHP] > php.ini
 
