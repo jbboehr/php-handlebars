@@ -465,6 +465,7 @@ PHP_METHOD(HandlebarsVM, render)
 
         // Serialize
         module = handlebars_program_serialize(HBSCTX(vm), compiler->program);
+        module->flags = compiler->flags; // @todo is this correct?
 
         // Save cache entry
         if( cache ) {
@@ -648,6 +649,7 @@ PHP_METHOD(HandlebarsVM, renderFile)
         handlebars_compiler_compile(compiler, parser->program);
 
         module = handlebars_program_serialize(HBSCTX(vm), compiler->program);
+        module->flags = compiler->flags; // @todo is this correct?
 
         // Save cache entry
         if( cache ) {

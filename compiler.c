@@ -315,6 +315,7 @@ PHP_HANDLEBARS_API void php_handlebars_process_options_zval(struct handlebars_co
     long flags = 0;
 
     if( !options || Z_TYPE_P(options) != IS_ARRAY ) {
+        handlebars_compiler_set_flags(compiler, flags);
         return;
     }
 
