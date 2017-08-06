@@ -206,6 +206,8 @@ build_script:
     7z x -y deps-%PHP_DEPS_VER%-%VC_VER%-%PLATFORM%.7z -oC:\projects\php-src
 
     cd C:\projects\php-src
+    
+    git apply ext\handlebars\run-tests.win32.patch
 
     buildconf.bat
 
