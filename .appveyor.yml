@@ -19,6 +19,7 @@ environment:
   PHP_VER: 7.2
   PHP_DEPS_VER: master
   VC_VER: vc15
+  REPORT_EXIT_STATUS: 1
 
 install:
 - cmd: cinst wget
