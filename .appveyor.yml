@@ -6,6 +6,10 @@ branches:
   - w32
   - windows
 
+skip_commits:
+  files:
+    - *.md
+
 platform:
 - x86
 - x64
@@ -206,8 +210,6 @@ build_script:
 
     cd C:\projects\php-src
     
-    git apply ext\handlebars\run-tests.win32.patch
-
     buildconf.bat
 
     configure.bat --disable-all --enable-cli --enable-cgi --enable-zts --enable-json --enable-handlebars=shared --with-libhandlebars=C:\projects\php-handlebars\artifacts --with-prefix=C:\projects\php-handlebars\artifacts\bin --with-php-build=deps

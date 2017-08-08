@@ -2,6 +2,7 @@
 # php-handlebars
 
 [![Build Status](https://travis-ci.org/jbboehr/php-handlebars.svg?branch=master)](https://travis-ci.org/jbboehr/php-handlebars)
+[![Build Status](https://ci.appveyor.com/api/projects/status/r2jjw6bvx16vsnoq?svg=true)](https://ci.appveyor.com/project/jbboehr/php-handlebars)
 [![Coverage Status](https://coveralls.io/repos/jbboehr/php-handlebars/badge.svg?branch=master&service=github)](https://coveralls.io/github/jbboehr/php-handlebars?branch=master)
 [![License](https://img.shields.io/badge/license-BSD-brightgreen.svg)](LICENSE.md)
 
