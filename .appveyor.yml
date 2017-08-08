@@ -20,6 +20,11 @@ environment:
   PHP_SDK_BINARY_TOOLS_VER: php-sdk-2.0.9
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      PHP_VER: 7.0
+      PHP_DEPS_VER: 7.0
+      VC_VER: vc14
+      VS: C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       PHP_VER: 7.1
       PHP_DEPS_VER: 7.1
       VC_VER: vc14
