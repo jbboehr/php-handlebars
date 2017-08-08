@@ -104,12 +104,12 @@ static PHP_MINIT_FUNCTION(handlebars)
         HANDLEBARS_G(cache_enable) = false;
     }
 	
-	// Save jmp
-	jmp_buf buf;
-	
-	if( handlebars_setjmp_ex(HANDLEBARS_G(context), &buf) ) {
-	    HANDLEBARS_G(cache_enable) = 0;
-	}
+    // Save jmp
+    jmp_buf buf;
+    
+    if( handlebars_setjmp_ex(HANDLEBARS_G(context), &buf) ) {
+        HANDLEBARS_G(cache_enable) = 0;
+    }
 
     if( HANDLEBARS_G(cache_enable) ) {
         const char * backend = HANDLEBARS_G(cache_backend);
