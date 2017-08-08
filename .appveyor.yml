@@ -6,25 +6,28 @@ branches:
   - w32
   - windows
 
-image:
-#- Visual Studio 2015
-- Visual Studio 2017
-
 platform:
 - x86
 - x64
 
 environment:
-  PHP_SDK_BINARY_TOOLS_VER: php-sdk-2.0.9
-  PHP_VER: 7.2
-  PHP_DEPS_VER: master
-  VC_VER: vc15
   REPORT_EXIT_STATUS: 1
+  PHP_SDK_BINARY_TOOLS_VER: php-sdk-2.0.9
+  matrix:
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      PHP_VER: 7.1
+      PHP_DEPS_VER: 7.1
+      VC_VER: vc14
+      VS: C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      PHP_VER: 7.2
+      PHP_DEPS_VER: master
+      VC_VER: vc15
+      VS: C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat
 
 install:
 - cmd: cinst wget
-- cmd: >-
-    "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" %PLATFORM%
+- if defined VS call "%VS%" %PLATFORM%
 - cmd: set ARTIFACT_DIR=%APPVEYOR_BUILD_FOLDER%\artifacts
 - cmd: mkdir %ARTIFACT_DIR%\include
 - cmd: mkdir %ARTIFACT_DIR%\lib
@@ -196,12 +199,8 @@ build_script:
     mkdir C:\projects\php-src\ext\handlebars
 
     xcopy C:\projects\php-handlebars C:\projects\php-src\ext\handlebars /s /e /y /q
-
-    REM FIXME no PHP 7.2 deps downloads available yet - wget http://windows.php.net/downloads/php-sdk/deps-%PHP_VER%-%VC_VER%-%PLATFORM%.7z -q
     
     wget http://windows.php.net/downloads/php-sdk/deps-%PHP_DEPS_VER%-%VC_VER%-%PLATFORM%.7z -q
-
-    REM FIXME no PHP 7.2 deps downloads available yet - 7z x -y deps-%PHP_VER%-%VC_VER%-%PLATFORM%.7z -oC:\projects\php-src
     
     7z x -y deps-%PHP_DEPS_VER%-%VC_VER%-%PLATFORM%.7z -oC:\projects\php-src
 
