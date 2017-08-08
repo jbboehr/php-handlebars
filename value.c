@@ -414,8 +414,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
 
     // Convert paramsma
     int n_args = argc + 1;
-    //zval z_args[argc + 1];
-	zval *z_args = alloca(sizeof(zval) * n_args);
+    zval *z_args = alloca(sizeof(zval) * n_args);
     memset(z_args, 0, sizeof(z_args));
 
     int i;
@@ -456,8 +455,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
 
     // Convert params
     int n_args = argc + 1;
-    //zval * z_args[n_args];
-	zval **z_args = alloca(sizeof(zval *) * n_args);
+    zval **z_args = alloca(sizeof(zval *) * n_args);
     memset(z_args, 0, sizeof(z_args));
 
     int i;
