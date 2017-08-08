@@ -1,7 +1,5 @@
 --TEST--
 Handlebars\VM::setLogger()
---EXTENSIONS--
-psr
 --SKIPIF--
 <?php if( !extension_loaded('handlebars') || !extension_loaded('psr') ) die('skip '); ?>
 --FILE--
