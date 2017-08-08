@@ -3,15 +3,6 @@
 #include "config.h"
 #endif
 
-/*
-#ifdef _MSC_VER
-#define BOOLEAN MSBOOLEAN
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#undef BOOLEAN
-#endif
-*/
-
 #include "Zend/zend_API.h"
 #include "Zend/zend_exceptions.h"
 #include "main/php.h"
