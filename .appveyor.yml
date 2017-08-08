@@ -8,7 +8,7 @@ branches:
 
 skip_commits:
   files:
-    - *.md
+    - "*.md"
 
 platform:
 - x86
