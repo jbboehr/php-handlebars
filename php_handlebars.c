@@ -3,18 +3,6 @@
 #include "config.h"
 #endif
 
-/*
-#ifdef _MSC_VER
-#define BOOLEAN MSBOOLEAN
-#define WIN32_LEAN_AND_MEAN
-#define _ATL_DISABLE_NOTHROW_NEW
-#include <winsock2.h>
-#include <windows.h>
-#include <malloc.h>
-#undef BOOLEAN
-#endif
-*/
-
 #include <stdio.h>
 #include <setjmp.h>
 #include <talloc.h>
