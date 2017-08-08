@@ -54,7 +54,7 @@ script:
   - export NO_INTERACTION=1
   - export REPORT_EXIT_STATUS=1
   - export TEST_PHP_EXECUTABLE=`which php`
-  - php run-tests.php -d extension=handlebars.so -d extension_dir=modules -n ./tests/
+  - php run-tests.php -d extension=psr.so -d extension=handlebars.so -d extension_dir=modules -n ./tests/
 
 after_success:
   - lcov --no-checksum --directory . --capture --compat-libtool --output-file coverage.info
