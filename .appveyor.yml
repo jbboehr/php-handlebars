@@ -208,7 +208,7 @@ build_script:
 
     mkdir C:\projects\php-src\ext\handlebars
 
-    xcopy C:\projects\php-handlebars C:\projects\php-src\ext\handlebars /s /e /y /q
+    xcopy %APPVEYOR_BUILD_FOLDER% C:\projects\php-src\ext\handlebars /s /e /y /q
     
     wget http://windows.php.net/downloads/php-sdk/deps-%PHP_DEPS_VER%-%VC_VER%-%PLATFORM%.7z -q
     
@@ -218,13 +218,13 @@ build_script:
     
     buildconf.bat
 
-    configure.bat --disable-all --enable-cli --enable-cgi --enable-zts --enable-json --enable-handlebars=shared --with-libhandlebars=C:\projects\php-handlebars\artifacts --with-prefix=C:\projects\php-handlebars\artifacts\bin --with-php-build=deps
+    configure.bat --disable-all --enable-cli --enable-cgi --enable-zts --enable-json --enable-handlebars=shared --with-libhandlebars=%ARTIFACT_DIR%\artifacts --with-prefix=%ARTIFACT_DIR%\bin --with-php-build=deps
 
     nmake
 
     nmake install
 
-    cd C:\projects\php-handlebars\artifacts\bin
+    cd %ARTIFACT_DIR%\bin
 
     echo [PHP] > php.ini
 
