@@ -202,7 +202,7 @@ static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * f
 #else
 static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * field, zval * return_value TSRMLS_DC)
 {
-    zend_long index = -1;
+    long index = -1;
     zval * entry = NULL;
     zval result;
     zval *retval = NULL;
@@ -227,7 +227,7 @@ static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * f
 
     switch( Z_TYPE_P(value) ) {
         case IS_ARRAY:
-            if( index > -1 && (entry = php5to7_zend_hash_index_find(Z_ARRVAL_P(value), index)) ) {
+            if( index > -1 && (entry = php5to7_zend_hash_index_find(Z_ARRVAL_P(value), (zend_long) index)) ) {
                 // nothing
             } else {
                 entry = php5to7_zend_hash_find(Z_ARRVAL_P(value), Z_STRVAL_P(field), Z_STRLEN_P(field));

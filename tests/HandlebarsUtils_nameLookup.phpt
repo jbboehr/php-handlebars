@@ -23,30 +23,28 @@ class HandlebarsLookupArrayAccessFixture implements ArrayAccess {
 }
 error_reporting(E_ALL);
 
-var_dump(Utils::nameLookup(array('foo' => 'bar'), 'foo'));
-var_dump(Utils::nameLookup((object) array('foo' => 'bar'), 'foo'));
-var_dump(Utils::nameLookup(new \ArrayObject(array('foo' => 'bar')), 'foo'));
-var_dump(Utils::nameLookup(new HandlebarsLookupArrayAccessFixture(array('foo' => 'bar')), 'foo'));
+var_dump(Utils::nameLookup(array('foo' => 'bar1'), 'foo'));
+var_dump(Utils::nameLookup((object) array('foo' => 'bar2'), 'foo'));
+var_dump(Utils::nameLookup(new \ArrayObject(array('foo' => 'bar3')), 'foo'));
+var_dump(Utils::nameLookup(new HandlebarsLookupArrayAccessFixture(array('foo' => 'bar4')), 'foo'));
 var_dump(Utils::nameLookup(null, 'foo'));
 var_dump((array) Utils::nameLookup((object) array('foo' => (object) array('bar' => 'baz')), 'foo'));
-var_dump(Utils::nameLookup(array(404 => 'bar'), 404));
-var_dump(Utils::nameLookup(array(404 => 'bar'), '404'));
+var_dump(Utils::nameLookup(array(404 => 'bar5'), 404));
 // Make sure it doesn't cause a notice
 var_dump(Utils::nameLookup((object) array(), 'missing'));
 var_dump(Utils::nameLookup(new ArrayObject(), 'missing'));
 var_dump(Utils::nameLookup(new HandlebarsLookupArrayAccessFixture(), 'missing'));
 --EXPECT--
-string(3) "bar"
-string(3) "bar"
-string(3) "bar"
-string(3) "bar"
+string(4) "bar1"
+string(4) "bar2"
+string(4) "bar3"
+string(4) "bar4"
 NULL
 array(1) {
   ["bar"]=>
   string(3) "baz"
 }
-string(3) "bar"
-string(3) "bar"
+string(4) "bar5"
 NULL
 NULL
 NULL
