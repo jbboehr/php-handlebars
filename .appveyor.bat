@@ -1,4 +1,8 @@
 
+if not exist "%BUILD_CACHE_DIR%" (
+	mkdir %BUILD_CACHE_DIR%
+)
+
 if "%1" == "install" (
 	REM dirent.h
 	set DIRENT_REPO_DIR="%BUILD_CACHE_DIR%\dirent"
