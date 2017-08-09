@@ -9,6 +9,15 @@ set CHECK_BUILD_DIR="%BUILD_CACHE_DIR%\check\build"
 set JSONC_REPO_DIR="%BUILD_CACHE_DIR%\json-c"
 set JSONC_REPO_BRANCH="windows"
 set JSONC_BUILD_DIR="%BUILD_CACHE_DIR%\json-c\build"
+set PCRE_REPO_DIR="%BUILD_CACHE_DIR%\pcre"
+set PCRE_REPO_BRANCH="master"
+set PCRE_BUILD_DIR="%BUILD_CACHE_DIR%\pcre\build"
+set TALLOC_REPO_DIR="%BUILD_CACHE_DIR%\talloc"
+set TALLOC_REPO_BRANCH="master"
+set TALLOC_BUILD_DIR="%BUILD_CACHE_DIR%\talloc\build"
+set YAML_REPO_DIR="%BUILD_CACHE_DIR%\yaml"
+set YAML_REPO_BRANCH="master"
+set YAML_BUILD_DIR="%BUILD_CACHE_DIR%\yaml\build"
 
 if "%1" == "install" (
 	if not exist "%BUILD_CACHE_DIR%" (
@@ -62,5 +71,46 @@ if "%1" == "install" (
 	cd %JSONC_BUILD_DIR%
 	cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%ARTIFACT_DIR% ..
 	nmake all install
+
+	REM pcre
+	if not exist "%PCRE_REPO_DIR%" (
+		git clone -b %PCRE_REPO_BRANCH% https://github.com/jbboehr/pcre.git %PCRE_REPO_DIR%
+	) else (
+		cd %PCRE_REPO_DIR%
+		git fetch origin
+		git checkout --force origin/%PCRE_REPO_BRANCH%
+	)
+	mkdir %PCRE_BUILD_DIR%
+	cd %PCRE_BUILD_DIR%
+	cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%ARTIFACT_DIR% ..
+	nmake all install
+
+	REM talloc
+	if not exist "%TALLOC_REPO_DIR%" (
+		git clone -b %TALLOC_REPO_BRANCH% https://github.com/jbboehr/talloc-win.git %TALLOC_REPO_DIR%
+	) else (
+		cd %TALLOC_REPO_DIR%
+		git fetch origin
+		git checkout --force origin/%TALLOC_REPO_BRANCH%
+	)
+	mkdir %TALLOC_BUILD_DIR%
+	cd %TALLOC_BUILD_DIR%
+	cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%ARTIFACT_DIR% ..
+	nmake all install
+
+	REM yaml
+	if not exist "%YAML_REPO_DIR%" (
+		git clone -b %YAML_REPO_BRANCH% https://github.com/yaml/libyaml.git %YAML_REPO_DIR%
+	) else (
+		cd %YAML_REPO_DIR%
+		git fetch origin
+		git checkout --force origin/%YAML_REPO_BRANCH%
+	)
+	mkdir %YAML_BUILD_DIR%
+	cd %YAML_BUILD_DIR%
+	cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%ARTIFACT_DIR% ..
+	nmake
+	copy /Y *.lib %ARTIFACT_DIR%\lib
+	copy /Y ..\include\yaml.h %ARTIFACT_DIR%\include
 )
 
