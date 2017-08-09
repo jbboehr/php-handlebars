@@ -14,6 +14,8 @@
 #include "handlebars_compiler.h"
 #include "handlebars_memory.h"
 #include "handlebars_string.h"
+
+#define BOOLEAN HBS_BOOLEAN
 #include "handlebars.tab.h"
 #include "handlebars.lex.h"
 
@@ -21,7 +23,7 @@
 #include "php_handlebars.h"
 
 /* {{{ Variables & Prototypes */
-zend_class_entry * HandlebarsParser_ce_ptr;
+PHP_HANDLEBARS_API zend_class_entry * HandlebarsParser_ce_ptr;
 
 static void php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node, zval * current TSRMLS_DC);
 static void php_handlebars_ast_list_to_zval(struct handlebars_ast_list * list, zval * current TSRMLS_DC);

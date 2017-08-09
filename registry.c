@@ -13,8 +13,8 @@
 #include "php_handlebars.h"
 
 /* {{{ Variables & Prototypes */
-zend_class_entry * HandlebarsRegistry_ce_ptr;
-zend_class_entry * HandlebarsDefaultRegistry_ce_ptr;
+PHP_HANDLEBARS_API zend_class_entry * HandlebarsRegistry_ce_ptr;
+PHP_HANDLEBARS_API zend_class_entry * HandlebarsDefaultRegistry_ce_ptr;
 /* }}} Variables & Prototypes */
 
 /* {{{ PHP_MINIT_FUNCTION */

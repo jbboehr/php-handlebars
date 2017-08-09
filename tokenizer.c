@@ -12,6 +12,8 @@
 
 #include "handlebars_string.h"
 #include "handlebars_token.h"
+
+#define BOOLEAN HBS_BOOLEAN
 #include "handlebars.tab.h"
 #include "handlebars.lex.h"
 
@@ -19,7 +21,7 @@
 #include "php_handlebars.h"
 
 /* {{{ Variables & Prototypes */
-zend_class_entry * HandlebarsTokenizer_ce_ptr;
+PHP_HANDLEBARS_API zend_class_entry * HandlebarsTokenizer_ce_ptr;
 /* }}} Variables & Prototypes */
 
 /* {{{ proto mixed Handlebars\Tokenizer::lex(string tmpl) */

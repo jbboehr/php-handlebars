@@ -10,6 +10,12 @@
 #define PHP_HANDLEBARS_AUTHORS "John Boehr <jbboehr@gmail.com> (lead)"
 #define PHP_HANDLEBARS_SPEC "4.0.5"
 
+#if defined(PHP_WIN32) && defined(HANDLEBARS_EXPORTS)
+#define PHP_HANDLEBARS_API __declspec(dllexport)
+#else
+#define PHP_HANDLEBARS_API PHPAPI
+#endif
+
 struct handlebars_cache;
 struct handlebars_compiler;
 struct handlebars_context;
@@ -30,25 +36,25 @@ extern zend_module_entry handlebars_module_entry;
 #define HANDLEBARS_G(v) (handlebars_globals.v)
 #endif
 
-extern zend_class_entry * HandlebarsImpl_ce_ptr;
-extern zend_class_entry * HandlebarsBaseImpl_ce_ptr;
-extern zend_class_entry * HandlebarsCompiler_ce_ptr;
-extern zend_class_entry * HandlebarsException_ce_ptr;
-extern zend_class_entry * HandlebarsParseException_ce_ptr;
-extern zend_class_entry * HandlebarsCompileException_ce_ptr;
-extern zend_class_entry * HandlebarsInvalidArgumentException_ce_ptr;
-extern zend_class_entry * HandlebarsOpcode_ce_ptr;
-extern zend_class_entry * HandlebarsOptions_ce_ptr;
-extern zend_class_entry * HandlebarsParser_ce_ptr;
-extern zend_class_entry * HandlebarsProgram_ce_ptr;
-extern zend_class_entry * HandlebarsRegistry_ce_ptr;
-extern zend_class_entry * HandlebarsDefaultRegistry_ce_ptr;
-extern zend_class_entry * HandlebarsRuntimeException_ce_ptr;
-extern zend_class_entry * HandlebarsSafeString_ce_ptr;
-extern zend_class_entry * HandlebarsToken_ce_ptr;
-extern zend_class_entry * HandlebarsTokenizer_ce_ptr;
-extern zend_class_entry * HandlebarsUtils_ce_ptr;
-extern zend_class_entry * HandlebarsVM_ce_ptr;
+PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsImpl_ce_ptr;
+PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsBaseImpl_ce_ptr;
+PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsCompiler_ce_ptr;
+PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsException_ce_ptr;
+PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsParseException_ce_ptr;
+PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsCompileException_ce_ptr;
+PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsInvalidArgumentException_ce_ptr;
+PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsOpcode_ce_ptr;
+PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsOptions_ce_ptr;
+PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsParser_ce_ptr;
+PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsProgram_ce_ptr;
+PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsRegistry_ce_ptr;
+PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsDefaultRegistry_ce_ptr;
+PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsRuntimeException_ce_ptr;
+PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsSafeString_ce_ptr;
+PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsToken_ce_ptr;
+PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsTokenizer_ce_ptr;
+PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsUtils_ce_ptr;
+PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsVM_ce_ptr;
 
 ZEND_BEGIN_MODULE_GLOBALS(handlebars)
     zend_long pool_size;
@@ -68,17 +74,17 @@ ZEND_END_MODULE_GLOBALS(handlebars)
 
 ZEND_EXTERN_MODULE_GLOBALS(handlebars);
 
-extern zend_bool handlebars_has_psr;
+PHP_HANDLEBARS_API extern zend_bool handlebars_has_psr;
 
-zend_bool php_handlebars_is_callable(zval * var TSRMLS_DC);
-zend_bool php_handlebars_is_int_array(zval * arr TSRMLS_DC);
+PHP_HANDLEBARS_API zend_bool php_handlebars_is_callable(zval * var TSRMLS_DC);
+PHP_HANDLEBARS_API zend_bool php_handlebars_is_int_array(zval * arr TSRMLS_DC);
 
-PHPAPI void php_handlebars_options_ctor(struct handlebars_options * options, zval * z_options TSRMLS_DC);
-PHPAPI void php_handlebars_token_ctor(struct handlebars_token * token, zval * z_token TSRMLS_DC);
-PHPAPI void php_handlebars_process_options_zval(struct handlebars_compiler * compiler, struct handlebars_vm * vm, zval * options TSRMLS_DC);
+PHP_HANDLEBARS_API void php_handlebars_options_ctor(struct handlebars_options * options, zval * z_options TSRMLS_DC);
+PHP_HANDLEBARS_API void php_handlebars_token_ctor(struct handlebars_token * token, zval * z_token TSRMLS_DC);
+PHP_HANDLEBARS_API void php_handlebars_process_options_zval(struct handlebars_compiler * compiler, struct handlebars_vm * vm, zval * options TSRMLS_DC);
 
-PHPAPI struct handlebars_value * handlebars_value_from_zval(struct handlebars_context * context, zval * val TSRMLS_DC);
-PHPAPI zval * handlebars_value_to_zval(struct handlebars_value * value, zval * val TSRMLS_DC);
+PHP_HANDLEBARS_API struct handlebars_value * handlebars_value_from_zval(struct handlebars_context * context, zval * val TSRMLS_DC);
+PHP_HANDLEBARS_API zval * handlebars_value_to_zval(struct handlebars_value * value, zval * val TSRMLS_DC);
 
 #define php_handlebars_throw(ce, ctx) \
     do { \

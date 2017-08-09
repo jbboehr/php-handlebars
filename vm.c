@@ -22,6 +22,8 @@
 #include "handlebars_string.h"
 #include "handlebars_value.h"
 #include "handlebars_vm.h"
+
+#define BOOLEAN HBS_BOOLEAN
 #include "handlebars.tab.h"
 #include "handlebars.lex.h"
 
@@ -31,7 +33,7 @@
 
 
 /* {{{ Variables & Prototypes */
-zend_class_entry * HandlebarsVM_ce_ptr;
+PHP_HANDLEBARS_API zend_class_entry * HandlebarsVM_ce_ptr;
 static zend_object_handlers HandlebarsVM_obj_handlers;
 
 struct php_handlebars_vm_obj {
@@ -463,6 +465,7 @@ PHP_METHOD(HandlebarsVM, render)
 
         // Serialize
         module = handlebars_program_serialize(HBSCTX(vm), compiler->program);
+        module->flags = compiler->flags; // @todo is this correct?
 
         // Save cache entry
         if( cache ) {
@@ -646,6 +649,7 @@ PHP_METHOD(HandlebarsVM, renderFile)
         handlebars_compiler_compile(compiler, parser->program);
 
         module = handlebars_program_serialize(HBSCTX(vm), compiler->program);
+        module->flags = compiler->flags; // @todo is this correct?
 
         // Save cache entry
         if( cache ) {
