@@ -3,6 +3,9 @@
 
 set DIRENT_REPO_DIR="%BUILD_CACHE_DIR%\dirent"
 set GETOPT_REPO_DIR="%BUILD_CACHE_DIR%\getopt"
+set CHECK_REPO_DIR="%BUILD_CACHE_DIR%\check"
+set CHECK_REPO_BRANCH="windows"
+set CHECK_BUILD_DIR="%CHECK_SRC_DIR%\build"
 
 if "%1" == "install" (
 	if not exist "%BUILD_CACHE_DIR%" (
@@ -30,5 +33,19 @@ if "%1" == "install" (
 	)
 	echo %GETOPT_REPO_DIR%\getopt.h %ARTIFACT_DIR%\include
 	copy /Y %GETOPT_REPO_DIR%\getopt.h %ARTIFACT_DIR%\include
+
+	REM check
+	if not exist "%CHECK_REPO_DIR%" (
+		git clone -b %CHECK_REPO_BRANCH% https://github.com/jbboehr/check.git %CHECK_REPO_DIR%
+	) else (
+		cd %CHECK_REPO_DIR%
+		git fetch origin
+		git checkout --force origin/%CHECK_REPO_BRANCH%
+	)
+	mkdir %CHECK_BUILD_DIR%
+	cd %CHECK_BUILD_DIR%
+	cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%ARTIFACT_DIR% ..
+	nmake all install
+	
 )
 
