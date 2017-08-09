@@ -21,6 +21,7 @@ set YAML_BUILD_DIR="%BUILD_CACHE_DIR%\yaml\build"
 set HANDLEBARS_REPO_DIR="%BUILD_CACHE_DIR%\handlebars"
 set HANDLEBARS_REPO_BRANCH="master"
 set HANDLEBARS_BUILD_DIR="%BUILD_CACHE_DIR%\handlebars\cmake-build"
+set PHP_SDK_DIR="%BUILD_CACHE_DIR%\php-sdk-binary-tools-%PHP_SDK_BINARY_TOOLS_VER%"
 
 if "%1" == "install" (
 	if not exist "%BUILD_CACHE_DIR%" (
@@ -128,5 +129,36 @@ if "%1" == "install" (
 	cd %HANDLEBARS_BUILD_DIR%
 	cmake -G "NMake Makefiles" -D_CRT_SECURE_NO_WARNINGS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%ARTIFACT_DIR% -DCMAKE_LIBRARY_PATH=%ARTIFACT_DIR%\lib -DCMAKE_INCLUDE_PATH=%ARTIFACT_DIR%\include ..
 	nmake all install
+
+	REM php-sdk
+	cd C:\projects
+	wget https://github.com/OSTC/php-sdk-binary-tools/archive/%PHP_SDK_BINARY_TOOLS_VER%.zip --no-check-certificate -q -O php-sdk-binary-tools-%PHP_SDK_BINARY_TOOLS_VER%.zip
+	7z x -y php-sdk-binary-tools-%PHP_SDK_BINARY_TOOLS_VER%.zip -oC:\projects
+	move C:\projects\php-sdk-binary-tools-%PHP_SDK_BINARY_TOOLS_VER% C:\projects\php-sdk
+
+	REM php-src
+	cd C:\projects
+	wget https://github.com/php/php-src/archive/PHP-%PHP_VER%.zip --no-check-certificate -q -O php-src-%PHP_VER%.zip
+	7z x -y php-src-%PHP_VER%.zip -oC:\projects
+	move C:\projects\php-src-PHP-%PHP_VER% C:\projects\php-src
+
+	REM php-deps
+	cd C:\projects
+	wget http://windows.php.net/downloads/php-sdk/deps-%PHP_DEPS_VER%-%VC_VER%-%PLATFORM%.7z -q
+	7z x -y deps-%PHP_DEPS_VER%-%VC_VER%-%PLATFORM%.7z -oC:\projects\php-src
 )
 
+if "%1" == "build_script" (
+	cd C:\projects\php-src
+	C:\projects\php-sdk\bin\phpsdk_setvars.bat
+	mkdir C:\projects\php-src\ext\handlebars
+	xcopy %APPVEYOR_BUILD_FOLDER% C:\projects\php-src\ext\handlebars /s /e /y /q
+	buildconf.bat
+	configure.bat --disable-all --enable-cli --enable-cgi --enable-zts --enable-json --enable-handlebars=shared --with-libhandlebars=%ARTIFACT_DIR% --with-prefix=%ARTIFACT_DIR%\bin --with-php-build=deps
+	nmake
+	nmake install
+	cd %ARTIFACT_DIR%\bin
+	echo [PHP] > php.ini
+	echo extension_dir = "ext" >> php.ini
+	echo extension=php_handlebars.dll >> php.ini
+)

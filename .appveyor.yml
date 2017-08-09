@@ -15,7 +15,7 @@ cache:
   - c:\build-cache
 
 platform:
-- x86
+#- x86
 - x64
 
 environment:
@@ -28,16 +28,16 @@ environment:
       PHP_DEPS_VER: 7.0
       VC_VER: vc14
       VS: C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-      PHP_VER: 7.1
-      PHP_DEPS_VER: 7.1
-      VC_VER: vc14
-      VS: C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-      PHP_VER: 7.2
-      PHP_DEPS_VER: master
-      VC_VER: vc15
-      VS: C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat
+#    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+#      PHP_VER: 7.1
+#      PHP_DEPS_VER: 7.1
+#      VC_VER: vc14
+#      VS: C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat
+#    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+#      PHP_VER: 7.2
+#      PHP_DEPS_VER: master
+#      VC_VER: vc15
+#      VS: C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat
 
 install:
 - cmd: cinst wget
@@ -50,43 +50,9 @@ install:
 - .appveyor.bat install
 
 build_script:
-# php-handlebars
+- .appveyor.bat build_script
 - cmd: >-
-    wget https://github.com/OSTC/php-sdk-binary-tools/archive/%PHP_SDK_BINARY_TOOLS_VER%.zip --no-check-certificate -q -O php-sdk-binary-tools-%PHP_SDK_BINARY_TOOLS_VER%.zip
-
-    7z x -y php-sdk-binary-tools-%PHP_SDK_BINARY_TOOLS_VER%.zip -oC:\projects
-
-    move C:\projects\php-sdk-binary-tools-%PHP_SDK_BINARY_TOOLS_VER% C:\projects\php-sdk
-    
-    C:\projects\php-sdk\bin\phpsdk_setvars.bat
-
-    git clone https://github.com/php/php-src C:\projects\php-src -b PHP-%PHP_VER% --depth=1
-
-    mkdir C:\projects\php-src\ext\handlebars
-
-    xcopy %APPVEYOR_BUILD_FOLDER% C:\projects\php-src\ext\handlebars /s /e /y /q
-    
-    wget http://windows.php.net/downloads/php-sdk/deps-%PHP_DEPS_VER%-%VC_VER%-%PLATFORM%.7z -q
-    
-    7z x -y deps-%PHP_DEPS_VER%-%VC_VER%-%PLATFORM%.7z -oC:\projects\php-src
-
-    cd C:\projects\php-src
-    
-    buildconf.bat
-
-    configure.bat --disable-all --enable-cli --enable-cgi --enable-zts --enable-json --enable-handlebars=shared --with-libhandlebars=%ARTIFACT_DIR% --with-prefix=%ARTIFACT_DIR%\bin --with-php-build=deps
-
-    nmake
-
-    nmake install
-
     cd %ARTIFACT_DIR%\bin
-
-    echo [PHP] > php.ini
-
-    echo extension_dir = "ext" >> php.ini
-
-    echo extension=php_handlebars.dll >> php.ini
 
     set TEST_PHP_EXECUTABLE=%cd%\php.exe
 
