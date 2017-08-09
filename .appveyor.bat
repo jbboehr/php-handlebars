@@ -5,7 +5,10 @@ set DIRENT_REPO_DIR="%BUILD_CACHE_DIR%\dirent"
 set GETOPT_REPO_DIR="%BUILD_CACHE_DIR%\getopt"
 set CHECK_REPO_DIR="%BUILD_CACHE_DIR%\check"
 set CHECK_REPO_BRANCH="windows"
-set CHECK_BUILD_DIR="%CHECK_SRC_DIR%\build"
+set CHECK_BUILD_DIR="%BUILD_CACHE_DIR%\check\build"
+set JSONC_REPO_DIR="%BUILD_CACHE_DIR%\json-c"
+set JSONC_REPO_BRANCH="windows"
+set JSONC_BUILD_DIR="%BUILD_CACHE_DIR%\json-c\build"
 
 if "%1" == "install" (
 	if not exist "%BUILD_CACHE_DIR%" (
@@ -46,6 +49,18 @@ if "%1" == "install" (
 	cd %CHECK_BUILD_DIR%
 	cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%ARTIFACT_DIR% ..
 	nmake all install
-	
+
+	REM json-c
+	if not exist "%JSONC_REPO_DIR%" (
+		git clone -b %JSONC_REPO_BRANCH% https://github.com/jbboehr/json-c.git %JSONC_REPO_DIR%
+	) else (
+		cd %JSONC_REPO_DIR%
+		git fetch origin
+		git checkout --force origin/%JSONC_REPO_BRANCH%
+	)
+	mkdir %JSONC_BUILD_DIR%
+	cd %JSONC_BUILD_DIR%
+	cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%ARTIFACT_DIR% ..
+	nmake all install
 )
 
