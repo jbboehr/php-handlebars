@@ -1,11 +1,11 @@
 
-if not exist "%BUILD_CACHE_DIR%" (
-	mkdir %BUILD_CACHE_DIR%
-)
-
 if "%1" == "install" (
+	if not exist "%BUILD_CACHE_DIR%" (
+		mkdir %BUILD_CACHE_DIR%
+	)
+
 	REM dirent.h
-	set DIRENT_REPO_DIR="%BUILD_CACHE_DIR%\dirent"
+	set DIRENT_REPO_DIR=%BUILD_CACHE_DIR%\dirent
 	if not exist "%DIRENT_REPO_DIR%" (
 		git clone https://github.com/jbboehr/dirent.git %DIRENT_REPO_DIR%
 	) else (
@@ -16,7 +16,7 @@ if "%1" == "install" (
 	copy /Y %DIRENT_REPO_DIR%\include\dirent.h %ARTIFACT_DIR%\include
 
 	REM getopt.h
-	set GETOPT_REPO_DIR="%BUILD_CACHE_DIR%\getopt"
+	set GETOPT_REPO_DIR=%BUILD_CACHE_DIR%\getopt
 	if not exist "%GETOPT_REPO_DIR%" (
 		git clone https://github.com/jbboehr/Getopt-for-Visual-Studio.git %GETOPT_REPO_DIR%
 	) else (
