@@ -15,7 +15,7 @@ cache:
   - c:\build-cache
 
 platform:
-#- x86
+- x86
 - x64
 
 environment:
@@ -28,16 +28,16 @@ environment:
       PHP_DEPS_VER: 7.0
       VC_VER: vc14
       VS: C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat
-#    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-#      PHP_VER: 7.1
-#      PHP_DEPS_VER: 7.1
-#      VC_VER: vc14
-#      VS: C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat
-#    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-#      PHP_VER: 7.2
-#      PHP_DEPS_VER: master
-#      VC_VER: vc15
-#      VS: C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      PHP_VER: 7.1
+      PHP_DEPS_VER: 7.1
+      VC_VER: vc14
+      VS: C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      PHP_VER: 7.2
+      PHP_DEPS_VER: master
+      VC_VER: vc15
+      VS: C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat
 
 install:
 - cmd: cinst wget
