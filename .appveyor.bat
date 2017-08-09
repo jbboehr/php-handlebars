@@ -162,3 +162,5 @@ if "%1" == "build_script" (
 	echo extension_dir = "ext" >> php.ini
 	echo extension=php_handlebars.dll >> php.ini
 )
+
+cd %APPVEYOR_BUILD_FOLDER%
