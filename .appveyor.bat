@@ -15,6 +15,7 @@ if "%1" == "install" (
 		git fetch origin
 		git checkout --force origin/master
 	)
+	echo %DIRENT_REPO_DIR%\include\dirent.h %ARTIFACT_DIR%\include
 	copy /Y %DIRENT_REPO_DIR%\include\dirent.h %ARTIFACT_DIR%\include
 
 	REM getopt.h
@@ -26,6 +27,7 @@ if "%1" == "install" (
 		git fetch origin
 		git checkout --force origin/master
 	)
+	echo %GETOPT_REPO_DIR%\getopt.h %ARTIFACT_DIR%\include
 	copy /Y %GETOPT_REPO_DIR%\getopt.h %ARTIFACT_DIR%\include
 )
 
