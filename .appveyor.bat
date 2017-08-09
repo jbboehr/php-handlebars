@@ -1,4 +1,6 @@
 
+@ECHO ON
+
 if "%1" == "install" (
 	if not exist "%BUILD_CACHE_DIR%" (
 		mkdir %BUILD_CACHE_DIR%
