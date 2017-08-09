@@ -18,6 +18,9 @@ set TALLOC_BUILD_DIR="%BUILD_CACHE_DIR%\talloc\build"
 set YAML_REPO_DIR="%BUILD_CACHE_DIR%\yaml"
 set YAML_REPO_BRANCH="master"
 set YAML_BUILD_DIR="%BUILD_CACHE_DIR%\yaml\build"
+set HANDLEBARS_REPO_DIR="%BUILD_CACHE_DIR%\handlebars"
+set HANDLEBARS_REPO_BRANCH="master"
+set HANDLEBARS_BUILD_DIR="%BUILD_CACHE_DIR%\handlebars\cmake-build"
 
 if "%1" == "install" (
 	if not exist "%BUILD_CACHE_DIR%" (
@@ -112,5 +115,18 @@ if "%1" == "install" (
 	nmake
 	copy /Y *.lib %ARTIFACT_DIR%\lib
 	copy /Y ..\include\yaml.h %ARTIFACT_DIR%\include
+
+	REM handlebars
+	if not exist "%HANDLEBARS_REPO_DIR%" (
+		git clone -b %HANDLEBARS_REPO_BRANCH% https://github.com/jbboehr/handlebars.c.git %HANDLEBARS_REPO_DIR%
+	) else (
+		cd %HANDLEBARS_REPO_DIR%
+		git fetch origin
+		git checkout --force origin/%HANDLEBARS_REPO_BRANCH%
+	)
+	mkdir %HANDLEBARS_BUILD_DIR%
+	cd %HANDLEBARS_BUILD_DIR%
+	cmake -G "NMake Makefiles" -D_CRT_SECURE_NO_WARNINGS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%ARTIFACT_DIR% -DCMAKE_LIBRARY_PATH=%ARTIFACT_DIR%\lib -DCMAKE_INCLUDE_PATH=%ARTIFACT_DIR%\include ..
+	nmake all install
 )
 

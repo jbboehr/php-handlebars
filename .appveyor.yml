@@ -11,6 +11,9 @@ skip_commits:
     - "*.md"
     - ".travis*"
 
+cache:
+  - c:\build-cache
+
 platform:
 #- x86
 - x64
@@ -47,25 +50,6 @@ install:
 - .appveyor.bat install
 
 build_script:
-# handlebars
-- cmd: >-
-    set HANDLEBARS_SRC_DIR=\projects\handlebars-c
-
-    set HANDLEBARS_BUILD_DIR=%HANDLEBARS_SRC_DIR%\cmake-build
-
-    set HANDLEBARS_DIR=%APPVEYOR_BUILD_FOLDER%\artifacts
-    
-    git clone https://github.com/jbboehr/handlebars.c.git %HANDLEBARS_SRC_DIR%
-
-    mkdir %HANDLEBARS_BUILD_DIR%
-
-    cd %HANDLEBARS_BUILD_DIR%
-
-    cmake -G "NMake Makefiles" -D_CRT_SECURE_NO_WARNINGS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_LIBRARY_PATH=%ARTIFACT_DIR%\lib -DCMAKE_INCLUDE_PATH=%ARTIFACT_DIR%\include -DCMAKE_INSTALL_PREFIX=%ARTIFACT_DIR% ..
-
-    nmake
-
-    nmake install
 # php-handlebars
 - cmd: >-
     wget https://github.com/OSTC/php-sdk-binary-tools/archive/%PHP_SDK_BINARY_TOOLS_VER%.zip --no-check-certificate -q -O php-sdk-binary-tools-%PHP_SDK_BINARY_TOOLS_VER%.zip
