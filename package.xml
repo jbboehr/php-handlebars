@@ -10,15 +10,14 @@
   <email>jbboehr@php.net</email>
   <active>yes</active>
  </lead>
- <date>2017-07-18</date>
- <time>21:53:36</time>
+ <date>2018-03-05</date>
  <version>
-  <release>0.8.2RC2</release>
-  <api>0.8.2RC2</api>
+  <release>0.8.2</release>
+  <api>0.8.2</api>
  </version>
  <stability>
-  <release>beta</release>
-  <api>beta</api>
+  <release>stable</release>
+  <api>stable</api>
  </stability>
  <license uri="https://opensource.org/licenses/BSD-2-Clause">BSD-2-Clause</license>
  <notes>
@@ -189,7 +188,6 @@
    <file name="tests/handlebars/export/blocks/023.phpt" role="test" />
    <file name="tests/handlebars/export/blocks/024.phpt" role="test" />
    <file name="tests/handlebars/export/blocks/025.phpt" role="test" />
-   <file name="tests/handlebars/export/blocks/026.php" role="test" />
    <file name="tests/handlebars/export/blocks/026.phpt" role="test" />
    <file name="tests/handlebars/export/blocks/027.phpt" role="test" />
    <file name="tests/handlebars/export/blocks/028.phpt" role="test" />

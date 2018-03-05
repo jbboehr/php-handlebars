@@ -6,6 +6,8 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ## [Unreleased]
 
+## [0.8.2] - 2018-02-22
+
 ### Added
 - Mustache delimiter preprocessing support behind the compat flag
 - Property lookup now generates a closure from a method if the value of the property is null or does not exist to emulate the behaviour of javascript where functions and properties share a symbol table - only supported for PHP 7 or greater
@@ -44,7 +46,6 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 - Changed target handlebars.c version to 0.5.1
 - Changed target php-psr version to 0.2.3
 
-
 ## [0.7.2] - 2016-04-24
 
 ### Fixed
@@ -62,7 +63,8 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 - New handlebars VM
 
 
-[Unreleased]: https://github.com/jbboehr/php-handlebars/compare/v0.8.1...HEAD
+[Unreleased]: https://github.com/jbboehr/php-handlebars/compare/v0.8.2...HEAD
+[0.8.2]: https://github.com/jbboehr/php-handlebars/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/jbboehr/php-handlebars/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/jbboehr/php-handlebars/compare/v0.7.4...v0.8.0
 [0.7.4]: https://github.com/jbboehr/php-handlebars/compare/v0.7.3...v0.7.4
