@@ -31,8 +31,8 @@ PHP_MINIT_FUNCTION(handlebars_registry)
     zend_class_implements(HandlebarsDefaultRegistry_ce_ptr TSRMLS_CC, 1, HandlebarsRegistry_ce_ptr);
 
     // Add aliases for old class names
-    zend_register_class_alias_ex(ZEND_STRL("Handlebars\\Registry\\Registry"), HandlebarsRegistry_ce_ptr TSRMLS_CC);
-    zend_register_class_alias_ex(ZEND_STRL("Handlebars\\Registry\\DefaultRegistry"), HandlebarsDefaultRegistry_ce_ptr TSRMLS_CC);
+    zend_register_class_alias("Handlebars\\Registry\\Registry", HandlebarsRegistry_ce_ptr TSRMLS_CC);
+    zend_register_class_alias("Handlebars\\Registry\\DefaultRegistry", HandlebarsDefaultRegistry_ce_ptr TSRMLS_CC);
 
     return SUCCESS;
 }
