@@ -6,6 +6,9 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ## [Unreleased]
 
+### Removed
+- Class aliases `Handlebars\Registry\Registry` for `Handlebars\Registry` and `Handlebars\Registry\DefaultRegistry` for `Handlebars\DefaultRegistry`
+
 ## [0.8.2] - 2018-02-22
 
 ### Added
