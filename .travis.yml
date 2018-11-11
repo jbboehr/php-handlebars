@@ -10,12 +10,9 @@ php:
   - 7.3
   - master
 
-matrix:
-  fast_finish: true
-  allow_failures:
-    - php: 'master'
-
 sudo: required
+
+cache: false
 
 env:
   global:
@@ -26,15 +23,39 @@ env:
     - CFLAGS="-L$PREFIX/lib"
     - CPPFLAGS="-I$PREFIX/include"
     - PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
+    - secure: "FsLO9DoQipJjNT4/4uJH2w6kwiGscXzaKmC+nktR1/Y0fPF9a69qmqo6owxXcb0DXwq0kqQ9eCepYIz6iy3L/XK4bNfwXkq1x8LIG7/oPrwuzIjNBXdSvxtSDa8G6NNFAvWJHiw/HKMP4cMfIqAJqemmKnpvgGowK4mcZl252UU="
 
 branches:
   only:
-    - dev-0.4
-    - dev-0.5
     - master
     - travis
+    - ci
 
-cache: false
+matrix:
+  fast_finish: true
+  allow_failures:
+    - php: 'master'
+  include:
+    - language: nix
+      php:
+      before_install: nix-env -iA cachix -f https://github.com/NixOS/nixpkgs/tarball/889c72032f8595fcd7542c6032c208f6b8033db6
+      install:
+      before_script:
+      script: nix-build --argstr phpHandlebarsVersion $TRAVIS_BRANCH --arg php "(import <nixpkgs> {}).$NIX_PHP_ATTR" | tee result.txt
+      after_success: cat result.txt | cachix push jbboehr-ci
+      after_failure:
+      env:
+        - NIX_PHP_ATTR=php71
+    - language: nix
+      php:
+      before_install: nix-env -iA cachix -f https://github.com/NixOS/nixpkgs/tarball/889c72032f8595fcd7542c6032c208f6b8033db6
+      install:
+      before_script:
+      script: nix-build --argstr phpHandlebarsVersion $TRAVIS_BRANCH --arg php "(import <nixpkgs> {}).$NIX_PHP_ATTR" | tee result.txt
+      after_success: cat result.txt | cachix push jbboehr-ci
+      after_failure:
+      env:
+        - NIX_PHP_ATTR=php72
 
 before_install:
   - travis_retry sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test

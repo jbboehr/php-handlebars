@@ -12,6 +12,8 @@ if( !extension_loaded('handlebars') ) {
 
 $startTime = microtime(true);
 $nTests = 0;
+$handlebarsSpecDir = isset($_ENV['HANDLEBARS_SPEC_DIR']) ? $_ENV['HANDLEBARS_SPEC_DIR'] : __DIR__ . '/spec/handlebars';
+$mustacheSpecDir = isset($_ENV['MUSTACHE_SPEC_DIR']) ? $_ENV['MUSTACHE_SPEC_DIR'] : __DIR__ . '/spec/mustache';
 
 // Utils
 
@@ -501,7 +503,7 @@ function hbs_generate_mustache_spec_test(array $test) {
 // Main
 
 // Handlebars Spec
-$specDir = __DIR__ . '/spec/handlebars/spec/';
+$specDir = $handlebarsSpecDir . '/spec/';
 foreach( scandir($specDir) as $file ) {
     if( $file[0] === '.' || substr($file, -5) !== '.json' ) {
         continue;
@@ -520,7 +522,7 @@ foreach( scandir($specDir) as $file ) {
 }
 
 // Handlebars Export
-$exportDir = __DIR__ . '/spec/handlebars/export/';
+$exportDir = $handlebarsSpecDir . '/export/';
 foreach( scandir($exportDir) as $file ) {
     if( $file[0] === '.' || substr($file, -5) !== '.json' ) {
         continue;
@@ -546,7 +548,7 @@ foreach( scandir($exportDir) as $file ) {
 }
 
 // Mustache Spec
-$mustacheSpecDir = __DIR__ . '/spec/mustache/specs/';
+$mustacheSpecDir = $mustacheSpecDir . '/specs/';
 foreach( scandir($mustacheSpecDir) as $file ) {
     if( $file[0] === '.' || $file[0] === '~' || substr($file, -5) !== '.json' ) {
         continue;
