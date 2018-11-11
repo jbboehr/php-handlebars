@@ -12,12 +12,25 @@ PHP bindings for [handlebars.c](https://github.com/jbboehr/handlebars.c). See al
 ## Installation
 
 
-### PPA
+### Nix / NixOS
 
 ```bash
-sudo apt-add-repository ppa:jbboehr/handlebars
-sudo apt-get update
-sudo apt-get install php-handlebars
+nix-env -i -f https://github.com/jbboehr/php-handlebars/archive/master.tar.gz
+```
+
+with a custom version of PHP:
+
+```bash
+nix-env -i -f https://github.com/jbboehr/php-handlebars/archive/master.tar.gz --arg php '(import <nixpkgs> {}).php71'
+```
+
+or, in a `.nix` file:
+
+```nix
+(import <nixpkgs> {}).callPackage (import (fetchTarball {
+  url = https://github.com/jbboehr/php-handlebars/archive/73243f3c91491ab02e60f407fab0e98e3ce5702e.tar.gz;
+  sha256 = "0yfbwh2936qlnh8wkbpn5wnynm0p44b5zrlwx7n28qgdw7j8jwkl";
+})) {}
 ```
 
 
@@ -45,20 +58,49 @@ yum install php-pecl-handlebars
 Install [handlebars.c](https://github.com/jbboehr/handlebars.c)
 
 
-#### Ubuntu
+#### Linux / OSX
+
+Prerequisite packages are:
+
+- PHP development headers and tools
+- `gcc` >= 4.4 | `clang` >= 3.x | `vc` >= 11
+- GNU `make` >= 3.81
+- `automake`
+- `autoconf`
+- [`handlebars.c`](https://github.com/jbboehr/handlebars.c) and all of its dependencies (`talloc`, `json-c`, `libyaml`)
+- (optional) [`php-psr`](https://github.com/jbboehr/php-psr)
+
+You will need the PHP development headers. If PHP was manually installed, these should be available by default. Otherwise, you will need to fetch them from a repository.
 
 ```bash
-sudo apt-get install php5-dev
-git clone https://github.com/jbboehr/php-handlebars.git --recursive
+git clone https://github.com/jbboehr/php-handlebars.git
 cd php-handlebars
 phpize
 ./configure
 make
 make test
 sudo make install
-echo extension=handlebars.so | sudo tee /etc/php5/mods-available/handlebars.ini
-sudo php5enmod handlebars
 ```
+
+If you have specific PHP versions running:
+
+```bash
+git clone https://github.com/jbboehr/php-handlebars.git
+cd php-handlebars
+/usr/local/bin/phpize
+./configure --with-php-config=/usr/local/bin/php-config
+make
+make test
+sudo make install
+```
+
+Add the extension to your *php.ini*:
+
+```ini
+echo extension=handlebars.so | tee -a /path/to/your/php.ini
+```
+
+Finally, _restart the web server_.
 
 
 ## Usage

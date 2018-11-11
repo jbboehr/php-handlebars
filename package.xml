@@ -10,10 +10,10 @@
   <email>jbboehr@php.net</email>
   <active>yes</active>
  </lead>
- <date>2018-03-05</date>
+ <date>2018-11-11</date>
  <version>
-  <release>0.8.2</release>
-  <api>0.8.2</api>
+  <release>0.8.3</release>
+  <api>0.8.3</api>
  </version>
  <stability>
   <release>stable</release>
@@ -21,9 +21,8 @@
  </stability>
  <license uri="https://opensource.org/licenses/BSD-2-Clause">BSD-2-Clause</license>
  <notes>
- - Mustache delimiter preprocessing support behind the compat flag
- - Property lookup now generates a closure from a method if the value of the property is null or does not exist to emulate the behaviour of javascript where functions and properties share a symbol table - only supported for PHP 7 or greater
- - Changed target handlebars.c version to 0.6.4
+ - Allow installation on PHP 7.3
+ - Removed class aliases `Handlebars\Registry\Registry` for `Handlebars\Registry` and `Handlebars\Registry\DefaultRegistry` for `Handlebars\DefaultRegistry`
  </notes>
  <contents>
   <dir name="/">
@@ -1273,7 +1272,7 @@
   <required>
    <php>
     <min>5.6.0</min>
-    <max>7.2.99</max>
+    <max>7.3.99</max>
    </php>
    <pearinstaller>
     <min>1.4.1</min>

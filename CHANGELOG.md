@@ -6,6 +6,11 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ## [Unreleased]
 
+## [0.8.3] - 2018-11-11
+
+### Added
+- Allow installation on PHP 7.3
+
 ### Removed
 - Class aliases `Handlebars\Registry\Registry` for `Handlebars\Registry` and `Handlebars\Registry\DefaultRegistry` for `Handlebars\DefaultRegistry`
 
@@ -66,7 +71,8 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 - New handlebars VM
 
 
-[Unreleased]: https://github.com/jbboehr/php-handlebars/compare/v0.8.2...HEAD
+[Unreleased]: https://github.com/jbboehr/php-handlebars/compare/v0.8.3...HEAD
+[0.8.3]: https://github.com/jbboehr/php-handlebars/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/jbboehr/php-handlebars/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/jbboehr/php-handlebars/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/jbboehr/php-handlebars/compare/v0.7.4...v0.8.0
