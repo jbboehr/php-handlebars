@@ -10,10 +10,10 @@ in
 
 buildPecl rec {
   name = "handlebars-${version}";
-  version = orDefault phpHandlebarsVersion "v0.8.2";
+  version = orDefault phpHandlebarsVersion "v0.8.3";
   src = orDefault phpHandlebarsSrc (fetchurl {
     url = "https://github.com/jbboehr/php-handlebars/archive/${version}.tar.gz";
-    sha256 = orDefault phpHandlebarsSha256 "1xqkdppm066xdpnj3xxra3ps17riflp73a7cmb9nzac9sbkq97x4";
+    sha256 = orDefault phpHandlebarsSha256 "1w054335fzz8xs1kxacczsfcyswrs6bjjfm2ma4l9mdqnxdspjzg";
   });
 
   buildInputs = [ handlebarsc talloc pcre php_psr ];
