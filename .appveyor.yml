@@ -47,10 +47,10 @@ install:
 - cmd: mkdir %ARTIFACT_DIR%\include
 - cmd: mkdir %ARTIFACT_DIR%\lib
 - cmd: git submodule update --init
-- .appveyor.bat install
+- .ci\appveyor.bat install
 
 build_script:
-- .appveyor.bat build_script
+- .ci\appveyor.bat build_script
 - cmd: >-
     cd %ARTIFACT_DIR%\bin
 
