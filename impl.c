@@ -12,7 +12,6 @@
 //#include "ext/psr/psr_log.h"
 //#endif
 
-#include "php5to7.h"
 #include "php_handlebars.h"
 
 /* {{{ Variables & Prototypes */
@@ -20,45 +19,24 @@ PHP_HANDLEBARS_API zend_class_entry * HandlebarsImpl_ce_ptr;
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsBaseImpl_ce_ptr;
 /* }}} Variables & Prototypes */
 
-static zend_class_entry *lookup_class(const char *name TSRMLS_DC)
+static zend_class_entry *lookup_class(const char *name)
 {
     zend_class_entry * ce = NULL;
-    strsize_t len = strlen(name);
-#ifdef ZEND_ENGINE_3
+    size_t len = strlen(name);
     zend_string * key = zend_string_alloc(len, 0);
     zend_str_tolower_copy(ZSTR_VAL(key), name, len);
     ce = zend_hash_find_ptr(CG(class_table), key);
     zend_string_free(key);
-#else
-    char * key = emalloc(len + 1);
-    zend_str_tolower_copy(key, name, len);
-    zend_class_entry ** pce;
-    if( zend_hash_find(CG(class_table), key, len + 1, (void **) &pce) == SUCCESS ) {
-        ce = *pce;
-    }
-    efree(key);
-#endif
     if( NULL == ce ) { // LCOV_EXCL_START
         zend_error(E_ERROR, "Class %s not found", name);
     } // LCOV_EXCL_STOP
     return ce;
 }
 
-static inline void php_handlebars_impl_getter(INTERNAL_FUNCTION_PARAMETERS, const char * str, strsize_t len)
+static inline void php_handlebars_impl_getter(INTERNAL_FUNCTION_PARAMETERS, const char * str, size_t len)
 {
-    zval * _this_zval;
-    zval * val;
-
-#ifndef FAST_ZPP
-    if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), (char *) "O",
-            &_this_zval, HandlebarsBaseImpl_ce_ptr) == FAILURE ) {
-        return;
-    }
-#else
-    _this_zval = getThis();
-#endif
-
-    val = php5to7_zend_read_property2(Z_OBJCE_P(_this_zval), _this_zval, str, len, 1);
+    zval * _this_zval = getThis();
+    zval * val = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, str, len, 1, NULL);
     RETURN_ZVAL(val, 1, 0);
 }
 
@@ -85,89 +63,57 @@ PHP_METHOD(HandlebarsBaseImpl, getLogger)
 /* {{{ proto mixed Handlebars\BaseImpl::setHelpers(Handlebars\Registry $helpers) */
 PHP_METHOD(HandlebarsBaseImpl, setHelpers)
 {
-    zval * _this_zval;
+    zval * _this_zval = getThis();
     zval * helpers;
 
-#ifndef FAST_ZPP
-    if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), (char *) "OO",
-            &_this_zval, HandlebarsBaseImpl_ce_ptr, &helpers, HandlebarsRegistry_ce_ptr) == FAILURE ) {
-        return;
-    }
-#else
-    _this_zval = getThis();
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_OBJECT_OF_CLASS(helpers, HandlebarsRegistry_ce_ptr)
     ZEND_PARSE_PARAMETERS_END();
-#endif
 
-    zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("helpers"), helpers TSRMLS_CC);
+    zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("helpers"), helpers);
 }
 /* }}} */
 
 /* {{{ proto mixed Handlebars\BaseImpl::setPartials(Handlebars\Registry $partials) */
 PHP_METHOD(HandlebarsBaseImpl, setPartials)
 {
-    zval * _this_zval;
+    zval * _this_zval = getThis();
     zval * partials;
 
-#ifndef FAST_ZPP
-    if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), (char *) "OO",
-            &_this_zval, HandlebarsBaseImpl_ce_ptr, &partials, HandlebarsRegistry_ce_ptr) == FAILURE ) {
-        return;
-    }
-#else
-    _this_zval = getThis();
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_OBJECT_OF_CLASS(partials, HandlebarsRegistry_ce_ptr)
     ZEND_PARSE_PARAMETERS_END();
-#endif
 
-    zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("partials"), partials TSRMLS_CC);
+    zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("partials"), partials);
 }
 /* }}} */
 
 /* {{{ proto mixed Handlebars\BaseImpl::setDecorators(Handlebars\Registry $decorators) */
 PHP_METHOD(HandlebarsBaseImpl, setDecorators)
 {
-    zval * _this_zval;
+    zval * _this_zval = getThis();
     zval * decorators;
 
-#ifndef FAST_ZPP
-    if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), (char *) "OO",
-            &_this_zval, HandlebarsBaseImpl_ce_ptr, &decorators, HandlebarsRegistry_ce_ptr) == FAILURE ) {
-        return;
-    }
-#else
-    _this_zval = getThis();
     ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_OBJECT_OF_CLASS(decorators, HandlebarsRegistry_ce_ptr)
     ZEND_PARSE_PARAMETERS_END();
-#endif
 
-    zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("decorators"), decorators TSRMLS_CC);
+    zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("decorators"), decorators);
 }
 /* }}} */
 
 /* {{{ proto mixed Handlebars\BaseImpl::setLogger(Psr\Log\LoggerInterface $logger) */
 PHP_METHOD(HandlebarsBaseImpl, setLogger)
 {
-    zval * _this_zval;
+    zval * _this_zval = getThis();
     zval * logger;
-    zend_class_entry * PsrLogLoggerInterface_ce_ptr = lookup_class("Psr\\Log\\LoggerInterface" TSRMLS_CC);
+    zend_class_entry * PsrLogLoggerInterface_ce_ptr = lookup_class("Psr\\Log\\LoggerInterface");
 
-#ifndef FAST_ZPP
-    if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "OO",
-                                     &_this_zval, NULL, &logger, PsrLogLoggerInterface_ce_ptr) == FAILURE) {
-        return;
-    }
-#else
-    _this_zval = getThis();
 	ZEND_PARSE_PARAMETERS_START(1, 1)
         Z_PARAM_OBJECT_OF_CLASS(logger, PsrLogLoggerInterface_ce_ptr)
 	ZEND_PARSE_PARAMETERS_END();
-#endif
 
-    zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("logger"), logger TSRMLS_CC);
+    zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("logger"), logger);
 }
 /* }}} */
 
@@ -207,25 +153,25 @@ PHP_MINIT_FUNCTION(handlebars_impl)
     zend_class_entry ce;
 
     INIT_CLASS_ENTRY(ce, "Handlebars\\Impl", HandlebarsImpl_methods);
-    HandlebarsImpl_ce_ptr = zend_register_internal_interface(&ce TSRMLS_CC);
+    HandlebarsImpl_ce_ptr = zend_register_internal_interface(&ce);
 
     if( handlebars_has_psr ) {
-        zend_class_entry *tmp = lookup_class("Psr\\Log\\LoggerAwareInterface" TSRMLS_CC);
+        zend_class_entry *tmp = lookup_class("Psr\\Log\\LoggerAwareInterface");
         if( tmp ) {
-            zend_class_implements(HandlebarsImpl_ce_ptr TSRMLS_CC, 1, tmp);
+            zend_class_implements(HandlebarsImpl_ce_ptr, 1, tmp);
         } else { // LCOV_EXCL_START
             return FAILURE;
         } // LCOV_EXCL_STOP
     }
 
     INIT_CLASS_ENTRY(ce, "Handlebars\\BaseImpl", HandlebarsBaseImpl_methods);
-    HandlebarsBaseImpl_ce_ptr = zend_register_internal_class(&ce TSRMLS_CC);
-    zend_class_implements(HandlebarsBaseImpl_ce_ptr TSRMLS_CC, 1, HandlebarsImpl_ce_ptr);
+    HandlebarsBaseImpl_ce_ptr = zend_register_internal_class(&ce);
+    zend_class_implements(HandlebarsBaseImpl_ce_ptr, 1, HandlebarsImpl_ce_ptr);
 
-    zend_declare_property_null(HandlebarsBaseImpl_ce_ptr, ZEND_STRL("helpers"), ZEND_ACC_PROTECTED TSRMLS_CC);
-    zend_declare_property_null(HandlebarsBaseImpl_ce_ptr, ZEND_STRL("partials"), ZEND_ACC_PROTECTED TSRMLS_CC);
-    zend_declare_property_null(HandlebarsBaseImpl_ce_ptr, ZEND_STRL("decorators"), ZEND_ACC_PROTECTED TSRMLS_CC);
-    zend_declare_property_null(HandlebarsBaseImpl_ce_ptr, ZEND_STRL("logger"), ZEND_ACC_PROTECTED TSRMLS_CC);
+    zend_declare_property_null(HandlebarsBaseImpl_ce_ptr, ZEND_STRL("helpers"), ZEND_ACC_PROTECTED);
+    zend_declare_property_null(HandlebarsBaseImpl_ce_ptr, ZEND_STRL("partials"), ZEND_ACC_PROTECTED);
+    zend_declare_property_null(HandlebarsBaseImpl_ce_ptr, ZEND_STRL("decorators"), ZEND_ACC_PROTECTED);
+    zend_declare_property_null(HandlebarsBaseImpl_ce_ptr, ZEND_STRL("logger"), ZEND_ACC_PROTECTED);
 
     return SUCCESS;
 }

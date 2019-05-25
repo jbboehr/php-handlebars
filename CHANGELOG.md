@@ -6,6 +6,12 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ## [Unreleased]
 
+### Added
+- Preliminary PHP 8 support
+
+### Removed
+- PHP 5 support
+
 ## [0.8.3] - 2018-11-11
 
 ### Added

@@ -18,7 +18,6 @@
 #include "main/SAPI.h"
 #include "ext/standard/info.h"
 
-#include "php5to7.h"
 #include "php_handlebars.h"
 
 #include "handlebars_cache.h"
@@ -85,11 +84,9 @@ static PHP_MINIT_FUNCTION(handlebars)
     REGISTER_INI_ENTRIES();
 
     // Register constants
-#if PHP_API_VERSION >= 20100412
-    if (php5to7_zend_hash_exists(&module_registry, "psr", sizeof("psr") - 1)) {
+    if (zend_hash_str_exists(&module_registry, "psr", sizeof("psr") - 1)) {
         handlebars_has_psr = 1;
     }
-#endif
     REGISTER_LONG_CONSTANT("Handlebars\\PSR", handlebars_has_psr, flags);
 
     REGISTER_STRING_CONSTANT("Handlebars\\VERSION", (char *) PHP_HANDLEBARS_VERSION, flags);

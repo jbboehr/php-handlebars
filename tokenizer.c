@@ -17,7 +17,6 @@
 #include "handlebars.tab.h"
 #include "handlebars.lex.h"
 
-#include "php5to7.h"
 #include "php_handlebars.h"
 
 /* {{{ Variables & Prototypes */
@@ -28,23 +27,17 @@ PHP_HANDLEBARS_API zend_class_entry * HandlebarsTokenizer_ce_ptr;
 static inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
 {
     char * tmpl = NULL;
-    strsize_t tmpl_len = 0;
+    size_t tmpl_len = 0;
     struct handlebars_context * ctx;
     struct handlebars_parser * parser;
     struct handlebars_token ** tokens;
     struct handlebars_string * output;
     jmp_buf buf;
-    _DECLARE_ZVAL(child);
+    zval child = {0};
 
-#ifndef FAST_ZPP
-    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &tmpl, &tmpl_len) == FAILURE ) {
-        return;
-    }
-#else
     ZEND_PARSE_PARAMETERS_START(1, 1)
 	    Z_PARAM_STRING(tmpl, tmpl_len)
     ZEND_PARSE_PARAMETERS_END();
-#endif
 
     ctx = handlebars_context_ctor();
 
@@ -66,13 +59,13 @@ static inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
             output = handlebars_token_print_append(HBSCTX(parser), output, *tokens, 0);
         }
         output = handlebars_string_rtrim(output, HBS_STRL("\r\n "));
-        PHP5TO7_RETVAL_STRINGL(output->val, output->len);
+        RETVAL_STRINGL(output->val, output->len);
     } else {
         array_init(return_value);
         for( ; *tokens; tokens++ ) {
-            _ALLOC_INIT_ZVAL(child);
-            php_handlebars_token_ctor(*tokens, child TSRMLS_CC);
-            add_next_index_zval(return_value, child);
+            ZVAL_NULL(&child);
+            php_handlebars_token_ctor(*tokens, &child);
+            add_next_index_zval(return_value, &child);
         }
     }
 
@@ -111,7 +104,7 @@ PHP_MINIT_FUNCTION(handlebars_tokenizer)
     zend_class_entry ce;
 
     INIT_CLASS_ENTRY(ce, "Handlebars\\Tokenizer", HandlebarsTokenizer_methods);
-    HandlebarsTokenizer_ce_ptr = zend_register_internal_class(&ce TSRMLS_CC);
+    HandlebarsTokenizer_ce_ptr = zend_register_internal_class(&ce);
 
     return SUCCESS;
 }
