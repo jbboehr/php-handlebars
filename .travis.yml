@@ -4,11 +4,11 @@ matrix:
   fast_finish: true
   allow_failures:
   - php: 'master'
+  - language: nix
+    env:
+      - NIX_CHANNEL=unstable
+      - NIX_PHP_ATTR=php
   include:
-  - language: php
-    php: '5.6'
-  - language: php
-    php: '7.0'
   - language: php
     php: '7.1'
   - language: php
@@ -19,20 +19,16 @@ matrix:
     php: 'master'
   - language: nix
     env:
-    - NIX_CHANNEL=18.03
-    - NIX_PHP_ATTR=php56
-  - language: nix
-    env:
-    - NIX_CHANNEL=18.03
-    - NIX_PHP_ATTR=php70
-  - language: nix
-    env:
     - NIX_CHANNEL=18.09
     - NIX_PHP_ATTR=php71
   - language: nix
     env:
     - NIX_CHANNEL=18.09
     - NIX_PHP_ATTR=php72
+  - language: nix
+    env:
+    - NIX_CHANNEL=19.03
+    - NIX_PHP_ATTR=php73
   - language: nix
     env:
     - NIX_CHANNEL=unstable

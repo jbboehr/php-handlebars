@@ -6,7 +6,6 @@
 #include "Zend/zend_API.h"
 #include "main/php.h"
 
-#include "php5to7.h"
 #include "php_handlebars.h"
 
 /* {{{ Variables & Prototypes */
@@ -25,47 +24,23 @@ ZEND_END_ARG_INFO()
 /* {{{ proto Handlebars\SafeString::__construct(string value) */
 PHP_METHOD(HandlebarsSafeString, __construct)
 {
-    zval * _this_zval;
-    char * value;
-    strsize_t value_len;
+    zval * _this_zval = getThis();
+    zend_string * value;
 
-#ifndef FAST_ZPP
-    if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Os",
-            &_this_zval, HandlebarsSafeString_ce_ptr, &value, &value_len) == FAILURE) {
-        return;
-    }
-#else
-    _this_zval = getThis();
     ZEND_PARSE_PARAMETERS_START(1, 1)
-	    Z_PARAM_STRING(value, value_len)
+	    Z_PARAM_STR(value)
     ZEND_PARSE_PARAMETERS_END();
-#endif
 
-    zend_update_property_stringl(Z_OBJCE_P(_this_zval), _this_zval, "value", sizeof("value")-1, value, value_len TSRMLS_CC);
+    zend_update_property_str(Z_OBJCE_P(_this_zval), _this_zval, "value", sizeof("value")-1, value);
 }
 /* }}} Handlebars\SafeString::__construct */
 
 /* {{{ proto string Handlebars\SafeString::__toString() */
 PHP_METHOD(HandlebarsSafeString, __toString)
 {
-    zval * _this_zval;
-    zval * value;
-
-#ifndef FAST_ZPP
-    if( zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "O",
-            &_this_zval, HandlebarsSafeString_ce_ptr) == FAILURE) {
-        return;
-    }
-#else
-    _this_zval = getThis();
-#endif
-
-#ifdef ZEND_ENGINE_3
+    zval * _this_zval = getThis();
     zval rv;
-    value = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, "value", sizeof("value")-1, 1, &rv TSRMLS_CC);
-#else
-    value = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, "value", sizeof("value")-1, 1 TSRMLS_CC);
-#endif
+    zval * value = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("value"), 1, &rv);
     RETURN_ZVAL(value, 1, 0);
 }
 /* }}} HandlebarsSafeString::__toString */
@@ -74,7 +49,7 @@ PHP_METHOD(HandlebarsSafeString, __toString)
 static zend_function_entry HandlebarsSafeString_methods[] = {
     PHP_ME(HandlebarsSafeString, __construct, HandlebarsSafeString_construct_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsSafeString, __toString, HandlebarsSafeString_toString_args, ZEND_ACC_PUBLIC)
-    { NULL, NULL, NULL }
+    PHP_FE_END
 };
 /* }}} HandlebarsSafeString methods */
 
@@ -84,8 +59,8 @@ PHP_MINIT_FUNCTION(handlebars_safe_string)
     zend_class_entry ce;
 
     INIT_CLASS_ENTRY(ce, "Handlebars\\SafeString", HandlebarsSafeString_methods);
-    HandlebarsSafeString_ce_ptr = zend_register_internal_class(&ce TSRMLS_CC);
-    zend_declare_property_null(HandlebarsSafeString_ce_ptr, "value", sizeof("value")-1, ZEND_ACC_PROTECTED TSRMLS_CC);
+    HandlebarsSafeString_ce_ptr = zend_register_internal_class(&ce);
+    zend_declare_property_null(HandlebarsSafeString_ce_ptr, "value", sizeof("value")-1, ZEND_ACC_PROTECTED);
 
     return SUCCESS;
 }
