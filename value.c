@@ -134,9 +134,15 @@ static struct handlebars_value * handlebars_std_zval_map_find(struct handlebars_
                 zval prop;
                 ZVAL_STRINGL(&prop, key->val, key->len);
                 ZVAL_UNDEF(&rv);
+#if PHP_MAJOR_VERSION >= 8
+                if( Z_OBJ_HT_P(intern)->has_dimension(Z_OBJ_P(intern), &prop, 0) ) {
+                    entry = Z_OBJ_HT_P(intern)->read_dimension(Z_OBJ_P(intern), &prop, 0, &rv);
+                }
+#else
                 if( Z_OBJ_HT_P(intern)->has_dimension(intern, &prop, 0) ) {
                     entry = Z_OBJ_HT_P(intern)->read_dimension(intern, &prop, 0, &rv);
                 }
+#endif
                 zval_ptr_dtor(&prop);
                 if( entry ) {
                     ret = handlebars_value_from_zval(value->ctx, entry);
@@ -343,7 +349,11 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     ZVAL_STRING(&fci.function_name, "__invoke");
 
     if( zend_call_function(&fci, &obj->fcc) == FAILURE ) {
+#if PHP_MAJOR_VERSION >= 8
+        zend_throw_exception_ex(zend_ce_exception, 0, "Could not execute %s::%s()", ZSTR_VAL(Z_OBJCE_P(intern)->name), ZSTR_VAL(Z_OBJCE_P(intern)->constructor->common.function_name));
+#else
         zend_throw_exception_ex(zend_ce_exception, 0, "Could not execute %s::%s()", Z_OBJCE_P(intern)->name, Z_OBJCE_P(intern)->constructor->common.function_name);
+#endif
     }
 
     for( i = 0; i < n_args; i++ ) {

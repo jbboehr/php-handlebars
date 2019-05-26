@@ -146,7 +146,11 @@ void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, z
     if( Z_TYPE_P(helpers) == IS_ARRAY ) {
         data_hash = Z_ARRVAL_P(helpers);
     } else if( Z_TYPE_P(helpers) == IS_OBJECT && Z_OBJ_HT_P(helpers)->get_properties != NULL ) {
+#if PHP_MAJOR_VERSION >= 8
+        data_hash = Z_OBJ_HT_P(helpers)->get_properties(Z_OBJ_P(helpers));
+#else
         data_hash = Z_OBJ_HT_P(helpers)->get_properties(helpers);
+#endif
     } else {
         return;
     }

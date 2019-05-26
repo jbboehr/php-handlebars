@@ -40,7 +40,7 @@ PHP_METHOD(HandlebarsSafeString, __toString)
 {
     zval * _this_zval = getThis();
     zval rv;
-    zval * value = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, "value", sizeof("value")-1, 1, &rv);
+    zval * value = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("value"), 1, &rv);
     RETURN_ZVAL(value, 1, 0);
 }
 /* }}} HandlebarsSafeString::__toString */

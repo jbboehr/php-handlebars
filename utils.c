@@ -144,8 +144,13 @@ static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * f
             break;
         case IS_OBJECT:
             if( instanceof_function(Z_OBJCE_P(value), zend_ce_arrayaccess) ) {
+#if PHP_MAJOR_VERSION >= 8
+                if( Z_OBJ_HT_P(value)->has_dimension(Z_OBJ_P(value), field, 0) ) {
+                    retval = Z_OBJ_HT_P(value)->read_dimension(Z_OBJ_P(value), field, 0, &result);
+#else
                 if( Z_OBJ_HT_P(value)->has_dimension(value, field, 0) ) {
                     retval = Z_OBJ_HT_P(value)->read_dimension(value, field, 0, &result);
+#endif
                     if( retval ) {
                         if( &result != retval ) {
                             ZVAL_COPY(&result, retval);
@@ -156,7 +161,7 @@ static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * f
                     RETVAL_ZVAL(&result, 0, 0);
                 }
             } else {
-                entry = zend_read_property(Z_OBJCE_P(value), value, Z_STRVAL_P(field), Z_STRLEN_P(field), 1, NULL);
+                entry = zend_read_property_ex(Z_OBJCE_P(value), value, Z_STR_P(field), 1, NULL);
             }
             break;
     }
@@ -338,7 +343,7 @@ static zend_always_inline void php_handlebars_escape_expression(zval * val, zval
     zval rv;
 
     if( Z_TYPE_P(val) == IS_OBJECT && instanceof_function(Z_OBJCE_P(val), HandlebarsSafeString_ce_ptr) ) {
-        zval * value = zend_read_property(Z_OBJCE_P(val), val, "value", sizeof("value")-1, 1, &rv);
+        zval * value = zend_read_property(Z_OBJCE_P(val), val, ZEND_STRL("value"), 1, &rv);
         RETURN_ZVAL(value, 1, 0);
     }
 
@@ -432,7 +437,7 @@ static zend_always_inline void php_handlebars_escape_expression_compat(zval * va
 
     // @todo this should probably support inheritance
     if( Z_TYPE_P(val) == IS_OBJECT && instanceof_function(Z_OBJCE_P(val), HandlebarsSafeString_ce_ptr) ) {
-        zval * value = zend_read_property(Z_OBJCE_P(val), val, "value", sizeof("value")-1, 1, &rv);
+        zval * value = zend_read_property(Z_OBJCE_P(val), val, ZEND_STRL("value"), 1, &rv);
         RETURN_ZVAL(value, 1, 0);
     }
 

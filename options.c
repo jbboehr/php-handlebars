@@ -34,7 +34,13 @@ struct hbs_prop_handlers {
     zend_object_has_property_t has_property;
 };
 
+#if PHP_MAJOR_VERSION >= 8
+#define HAS_PROPERTY_ARGS zend_object *object, zend_string *member, int check_empty, void **cache_slot
+#define READ_PROPERTY_ARGS zend_object *object, zend_string *member, int type, void **cache_slot, zval *rv
+#else
+#define HAS_PROPERTY_ARGS zval *object, zval *member, int check_empty, void **cache_slot
 #define READ_PROPERTY_ARGS zval *object, zval *member, int type, void **cache_slot, zval *rv
+#endif
 #define READ_PROPERTY_ARGS_PASSTHRU object, member, type, cache_slot, rv
 
 static inline void register_prop_handler(const char * name, zend_object_read_property_t read_property)
@@ -123,33 +129,71 @@ PHP_HANDLEBARS_API void php_handlebars_options_ctor(
 /* {{{ Object handlers */
 static zval * hbs_read_name(READ_PROPERTY_ARGS)
 {
+#if PHP_MAJOR_VERSION >= 8
+    struct php_handlebars_options_obj * intern = php_handlebars_options_fetch_object(object);
+    if( intern->options.name ) {
+        zval tmp = {0};
+        ZVAL_STRINGL(&tmp, intern->options.name->val, intern->options.name->len);
+        object->handlers->write_property(object, member, &tmp, NULL);
+        intern->options.name = NULL;
+    }
+#else
     struct php_handlebars_options_obj * intern = Z_HBS_OPTIONS_P(object);
     if( intern->options.name ) {
         zend_update_property_stringl(Z_OBJCE_P(object), object, ZEND_STRL("name"), intern->options.name->val, intern->options.name->len);
         intern->options.name = NULL;
     }
+#endif
     return intern->std_hnd->read_property(READ_PROPERTY_ARGS_PASSTHRU);
 }
 static zval * hbs_read_program(READ_PROPERTY_ARGS)
 {
+#if PHP_MAJOR_VERSION >= 8
+    struct php_handlebars_options_obj * intern = php_handlebars_options_fetch_object(object);
+    if( intern->options.program >= 0 ) {
+        zval tmp = {0};
+        ZVAL_LONG(&tmp, intern->options.program);
+        object->handlers->write_property(object, member, &tmp, NULL);
+    }
+#else
     struct php_handlebars_options_obj * intern = Z_HBS_OPTIONS_P(object);
     if( intern->options.program >= 0 ) {
         zend_update_property_long(Z_OBJCE_P(object), object, ZEND_STRL("fn"), intern->options.program);
         // @todo clear?
     }
+#endif
     return intern->std_hnd->read_property(READ_PROPERTY_ARGS_PASSTHRU);
 }
 static zval * hbs_read_inverse(READ_PROPERTY_ARGS)
 {
+#if PHP_MAJOR_VERSION >= 8
+    struct php_handlebars_options_obj * intern = php_handlebars_options_fetch_object(object);
+    if( intern->options.inverse >= 0 ) {
+        zval tmp = {0};
+        ZVAL_LONG(&tmp, intern->options.inverse);
+        object->handlers->write_property(object, member, &tmp, NULL);
+    }
+#else
     struct php_handlebars_options_obj * intern = Z_HBS_OPTIONS_P(object);
     if( intern->options.inverse >= 0 ) {
         zend_update_property_long(Z_OBJCE_P(object), object, ZEND_STRL("inverse"), intern->options.inverse);
         // @todo clear?
     }
+#endif
     return intern->std_hnd->read_property(READ_PROPERTY_ARGS_PASSTHRU);
 }
 static zval * hbs_read_scope(READ_PROPERTY_ARGS)
 {
+#if PHP_MAJOR_VERSION >= 8
+    struct php_handlebars_options_obj * intern = php_handlebars_options_fetch_object(object);
+    if( intern->options.scope ) {
+        zval z_scope = {0};
+        handlebars_value_to_zval(intern->options.scope, &z_scope);
+        object->handlers->write_property(object, member, &z_scope, NULL);
+        zval_ptr_dtor(&z_scope);
+        intern->options.scope = NULL;
+    }
+#else
     struct php_handlebars_options_obj * intern = Z_HBS_OPTIONS_P(object);
     if( intern->options.scope ) {
         zval z_scope = {0};
@@ -158,10 +202,21 @@ static zval * hbs_read_scope(READ_PROPERTY_ARGS)
         zval_ptr_dtor(&z_scope);
         intern->options.scope = NULL;
     }
+#endif
     return intern->std_hnd->read_property(READ_PROPERTY_ARGS_PASSTHRU);
 }
 static zval * hbs_read_hash(READ_PROPERTY_ARGS)
 {
+#if PHP_MAJOR_VERSION >= 8
+    struct php_handlebars_options_obj * intern = php_handlebars_options_fetch_object(object);
+    if( intern->options.hash ) {
+        zval z_hash = {0};
+        handlebars_value_to_zval(intern->options.hash, &z_hash);
+        object->handlers->write_property(object, member, &z_hash, NULL);
+        zval_ptr_dtor(&z_hash);
+        intern->options.hash = NULL;
+    }
+#else
     struct php_handlebars_options_obj * intern = Z_HBS_OPTIONS_P(object);
     if( intern->options.hash ) {
         zval z_hash = {0};
@@ -170,10 +225,21 @@ static zval * hbs_read_hash(READ_PROPERTY_ARGS)
         zval_ptr_dtor(&z_hash);
         intern->options.hash = NULL;
     }
+#endif
     return intern->std_hnd->read_property(READ_PROPERTY_ARGS_PASSTHRU);
 }
 static zval * hbs_read_data(READ_PROPERTY_ARGS)
 {
+#if PHP_MAJOR_VERSION >= 8
+    struct php_handlebars_options_obj * intern = php_handlebars_options_fetch_object(object);
+    if( intern->options.data ) {
+        zval z_data = {0};
+        handlebars_value_to_zval(intern->options.data, &z_data);
+        object->handlers->write_property(object, member, &z_data, NULL);
+        zval_ptr_dtor(&z_data);
+        intern->options.data = NULL;
+    }
+#else
     struct php_handlebars_options_obj * intern = Z_HBS_OPTIONS_P(object);
     if( intern->options.data ) {
         zval z_data = {0};
@@ -182,10 +248,22 @@ static zval * hbs_read_data(READ_PROPERTY_ARGS)
         zval_ptr_dtor(&z_data);
         intern->options.data = NULL;
     }
+#endif
     return intern->std_hnd->read_property(READ_PROPERTY_ARGS_PASSTHRU);
 }
-static zval *php_handlebars_options_object_read_property(zval *object, zval *member, int type, void **cache_slot, zval *rv)
+static zval *php_handlebars_options_object_read_property(READ_PROPERTY_ARGS)
 {
+#if PHP_MAJOR_VERSION >= 8
+    struct php_handlebars_options_obj * intern = php_handlebars_options_fetch_object(object);
+    struct hbs_prop_handlers * hnd = zend_hash_find_ptr(&HandlebarsOptions_prop_handlers, member);
+    zval * ret;
+    if( hnd ) {
+        ret = hnd->read_property(object, member, type, cache_slot, rv);
+    } else {
+        ret = intern->std_hnd->read_property(object, member, type, cache_slot, rv);
+    }
+    // zend_string_release(member); // @todo needed?
+#else
     zend_string *member_str = zval_get_string(member);
     struct php_handlebars_options_obj * intern = Z_HBS_OPTIONS_P(object);
     struct hbs_prop_handlers * hnd = zend_hash_find_ptr(&HandlebarsOptions_prop_handlers, member_str);
@@ -196,12 +274,17 @@ static zval *php_handlebars_options_object_read_property(zval *object, zval *mem
         ret = intern->std_hnd->read_property(object, member, type, cache_slot, rv);
     }
     zend_string_release(member_str);
+#endif
     return ret;
 }
-static int php_handlebars_options_object_has_property(zval *object, zval *member, int check_empty, void **cache_slot)
+static int php_handlebars_options_object_has_property(HAS_PROPERTY_ARGS)
 {
+#if PHP_MAJOR_VERSION >= 8
+    struct php_handlebars_options_obj * intern = php_handlebars_options_fetch_object(object);
+#else
     struct php_handlebars_options_obj * intern = Z_HBS_OPTIONS_P(object);
-    zval tmp;
+#endif
+    zval tmp = {0};
     php_handlebars_options_object_read_property(object, member, 0, cache_slot, &tmp);
     return intern->std_hnd->has_property(object, member, check_empty, cache_slot);
 }
@@ -359,7 +442,7 @@ PHP_METHOD(HandlebarsOptions, offsetExists)
         Z_PARAM_STR(offset)
     ZEND_PARSE_PARAMETERS_END();
 
-    prop = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZSTR_VAL(offset), ZSTR_LEN(offset), 1, NULL);
+    prop = zend_read_property_ex(Z_OBJCE_P(_this_zval), _this_zval, offset, 1, NULL);
     RETURN_BOOL(prop != NULL);
 }
 
@@ -373,7 +456,7 @@ PHP_METHOD(HandlebarsOptions, offsetGet)
         Z_PARAM_STR(offset)
     ZEND_PARSE_PARAMETERS_END();
 
-    prop = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZSTR_VAL(offset), ZSTR_LEN(offset), 1, NULL);
+    prop = zend_read_property_ex(Z_OBJCE_P(_this_zval), _this_zval, offset, 1, NULL);
     RETURN_ZVAL(prop, 1, 0);
 }
 
