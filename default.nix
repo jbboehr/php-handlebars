@@ -26,8 +26,8 @@
   })) { inherit mustache_spec handlebars_spec; },
 
   php_psr ? pkgs.callPackage (import (fetchTarball {
-    url = https://github.com/jbboehr/php-psr/archive/v0.6.0.tar.gz;
-    sha256 = "1zslwrjpzsvvnr5igy0j6z7hgjvrflzk7j20v6w0pc2v124g5ykk";
+    url = https://github.com/jbboehr/php-psr/archive/c158134026438d03dffd2b944ee16afa0b33cad7.tar.gz;
+    sha256 = "0h1hlh3w724h7r6xfz4rfg17a8kzj3k0a74126iwkd243nxy1k94";
   })) {}
 }:
 
