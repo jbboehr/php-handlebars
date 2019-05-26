@@ -9,6 +9,7 @@ let
 in
 
 buildPecl rec {
+  pname = "handlebars";
   name = "handlebars-${version}";
   version = orDefault phpHandlebarsVersion "v0.8.3";
   src = orDefault phpHandlebarsSrc (fetchurl {

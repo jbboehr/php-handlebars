@@ -25,14 +25,13 @@ ZEND_END_ARG_INFO()
 PHP_METHOD(HandlebarsSafeString, __construct)
 {
     zval * _this_zval = getThis();
-    char * value;
-    size_t value_len;
+    zend_string * value;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
-	    Z_PARAM_STRING(value, value_len)
+	    Z_PARAM_STR(value)
     ZEND_PARSE_PARAMETERS_END();
 
-    zend_update_property_stringl(Z_OBJCE_P(_this_zval), _this_zval, "value", sizeof("value")-1, value, value_len);
+    zend_update_property_str(Z_OBJCE_P(_this_zval), _this_zval, "value", sizeof("value")-1, value);
 }
 /* }}} Handlebars\SafeString::__construct */
 
@@ -50,7 +49,7 @@ PHP_METHOD(HandlebarsSafeString, __toString)
 static zend_function_entry HandlebarsSafeString_methods[] = {
     PHP_ME(HandlebarsSafeString, __construct, HandlebarsSafeString_construct_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsSafeString, __toString, HandlebarsSafeString_toString_args, ZEND_ACC_PUBLIC)
-    { NULL, NULL, NULL }
+    PHP_FE_END
 };
 /* }}} HandlebarsSafeString methods */
 

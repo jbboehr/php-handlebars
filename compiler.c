@@ -352,8 +352,7 @@ PHP_HANDLEBARS_API void php_handlebars_process_options_zval(struct handlebars_co
 /* {{{ proto mixed Handlebars\Compiler::compile(string tmpl[, long flags[, array knownHelpers]]) */
 static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short print)
 {
-    char * tmpl = NULL;
-    size_t tmpl_len = 0;
+    zend_string * tmpl = NULL;
     zval * options = NULL;
     TALLOC_CTX * mctx = NULL;
     struct handlebars_context * ctx;
@@ -364,7 +363,7 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
     jmp_buf buf;
 
     ZEND_PARSE_PARAMETERS_START(1, 3)
-	    Z_PARAM_STRING(tmpl, tmpl_len)
+	    Z_PARAM_STR(tmpl)
         Z_PARAM_OPTIONAL
         Z_PARAM_ZVAL(options)
     ZEND_PARSE_PARAMETERS_END();
@@ -397,7 +396,7 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
     }
 
     // Preprocess template
-    tmpl_str = handlebars_string_ctor(HBSCTX(parser), tmpl, tmpl_len);
+    tmpl_str = handlebars_string_ctor(HBSCTX(parser), ZSTR_VAL(tmpl), ZSTR_LEN(tmpl));
 #if defined(HANDLEBARS_VERSION_INT) && HANDLEBARS_VERSION_INT >= 604
     php_handlebars_try(HandlebarsParseException_ce_ptr, parser, &buf);
     if( compiler->flags & handlebars_compiler_flag_compat ) {
@@ -451,7 +450,7 @@ ZEND_END_ARG_INFO()
 static zend_function_entry HandlebarsCompiler_methods[] = {
 	PHP_ME(HandlebarsCompiler, compile, HandlebarsCompiler_compile_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 	PHP_ME(HandlebarsCompiler, compilePrint, HandlebarsCompiler_compile_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-	{ NULL, NULL, NULL }
+	PHP_FE_END
 };
 /* }}} HandlebarsCompiler methods */
 

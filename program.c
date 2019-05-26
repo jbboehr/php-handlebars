@@ -43,7 +43,7 @@ PHP_METHOD(HandlebarsProgram, __construct)
 /* {{{ Handlebars\Program methods */
 static zend_function_entry HandlebarsProgram_methods[] = {
     PHP_ME(HandlebarsProgram, __construct, HandlebarsProgram_construct_args, ZEND_ACC_PUBLIC)
-    { NULL, NULL, NULL }
+    PHP_FE_END
 };
 /* }}} Handlebars\Program methods */
 

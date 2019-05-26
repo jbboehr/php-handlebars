@@ -57,18 +57,16 @@ PHP_HANDLEBARS_API void php_handlebars_token_ctor(struct handlebars_token * toke
 PHP_METHOD(HandlebarsToken, __construct)
 {
     zval * _this_zval = getThis();
-    char * name_str;
-    size_t name_len;
-    char * text_str;
-    size_t text_len;
+    zend_string * name;
+    zend_string * text;
 
     ZEND_PARSE_PARAMETERS_START(2, 2)
-        Z_PARAM_STRING(name_str, name_len)
-        Z_PARAM_STRING(text_str, text_len)
+        Z_PARAM_STR(name)
+        Z_PARAM_STR(text)
     ZEND_PARSE_PARAMETERS_END();
 
-    zend_update_property_stringl(Z_OBJCE_P(_this_zval), _this_zval, "name", sizeof("name")-1, name_str, name_len);
-    zend_update_property_stringl(Z_OBJCE_P(_this_zval), _this_zval, "text", sizeof("text")-1, text_str, text_len);
+    zend_update_property_str(Z_OBJCE_P(_this_zval), _this_zval, "name", sizeof("name")-1, name);
+    zend_update_property_str(Z_OBJCE_P(_this_zval), _this_zval, "text", sizeof("text")-1, text);
 }
 /* }}} Handlebars\Token::__construct */
 

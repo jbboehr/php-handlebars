@@ -27,46 +27,41 @@ PHP_HANDLEBARS_API zend_class_entry * HandlebarsUtils_ce_ptr;
 PHP_METHOD(HandlebarsUtils, appendContextPath)
 {
     zval * context_path;
-    char * id;
-    size_t id_length;
+    zend_string * id = NULL;
     zval * entry = NULL;
-    char * tmp = NULL;
-    size_t tmp_length = 0;
+    zend_string * tmp = NULL;
     char * out;
 
     ZEND_PARSE_PARAMETERS_START(2, 2)
 	    Z_PARAM_ZVAL(context_path)
-        Z_PARAM_STRING(id, id_length)
+        Z_PARAM_STR(id)
     ZEND_PARSE_PARAMETERS_END();
 
     switch( Z_TYPE_P(context_path) ) {
         case IS_ARRAY:
-        	if( (entry = zend_hash_str_find(HASH_OF(context_path), "contextPath", sizeof("contextPath") - 1)) ) {
+        	if( (entry = zend_hash_str_find(HASH_OF(context_path), ZEND_STRL("contextPath"))) ) {
                 if( Z_TYPE_P(entry) == IS_STRING ) {
-                    tmp = Z_STRVAL_P(entry);
-                    tmp_length = Z_STRLEN_P(entry);
+                    tmp = Z_STR_P(entry);
                 }
         	}
             break;
         case IS_OBJECT:
-            entry = zend_read_property(Z_OBJCE_P(context_path), context_path, "contextPath", sizeof("contextPath") - 1, 1, NULL);
+            entry = zend_read_property(Z_OBJCE_P(context_path), context_path, ZEND_STRL("contextPath"), 1, NULL);
             if( entry && Z_TYPE_P(entry) == IS_STRING ) {
-                tmp = Z_STRVAL_P(entry);
-                tmp_length = Z_STRLEN_P(entry);
+                tmp = Z_STR_P(entry);
             }
             break;
         case IS_STRING:
-            tmp = Z_STRVAL_P(context_path);
-            tmp_length = Z_STRLEN_P(context_path);
+            tmp = Z_STR_P(context_path);
             break;
     }
 
-    if( tmp != NULL && tmp_length > 0 ) {
-        spprintf(&out, 0, "%.*s.%.*s", (int) tmp_length, tmp, (int) id_length, id);
+    if( tmp != NULL && ZSTR_LEN(tmp) > 0 ) {
+        spprintf(&out, 0, "%.*s.%.*s", (int) ZSTR_LEN(tmp), ZSTR_VAL(tmp), (int) ZSTR_LEN(id), ZSTR_VAL(id));
         RETVAL_STRING(out);
         efree(out);
     } else {
-    	RETVAL_STRING(id);
+    	RETVAL_STR(id);
     }
 }
 /* }}} Handlebars\Utils::appendContextPath */
@@ -74,7 +69,7 @@ PHP_METHOD(HandlebarsUtils, appendContextPath)
 /* {{{ proto mixed Handlebars\Utils::createFrame(mixed $value) */
 static inline void php_handlebars_create_frame(zval * return_value, zval * value)
 {
-    zval tmp;
+    zval tmp = {0};
 
     switch( Z_TYPE_P(value) ) {
         case IS_ARRAY:
@@ -144,7 +139,7 @@ static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * f
             if( index > -1 && (entry = zend_hash_index_find(Z_ARRVAL_P(value), (zend_long) index)) ) {
                 // nothing
             } else {
-                entry = zend_hash_str_find(Z_ARRVAL_P(value), Z_STRVAL_P(field), Z_STRLEN_P(field));
+                entry = zend_hash_find(Z_ARRVAL_P(value), Z_STR_P(field));
             }
             break;
         case IS_OBJECT:
@@ -191,17 +186,15 @@ PHP_METHOD(HandlebarsUtils, nameLookup)
 /* {{{ proto boolean Handlebars\Utils::indent(string str, string indent) */
 PHP_METHOD(HandlebarsUtils, indent)
 {
-    char * str;
-    size_t str_len;
-    char * indent;
-    size_t indent_len;
+    zend_string * str;
+    zend_string * indent;
 
     ZEND_PARSE_PARAMETERS_START(2, 2)
-        Z_PARAM_STRING(str, str_len)
-        Z_PARAM_STRING(indent, indent_len)
+        Z_PARAM_STR(str)
+        Z_PARAM_STR(indent)
     ZEND_PARSE_PARAMETERS_END();
 
-    struct handlebars_string * tmp = handlebars_string_indent(HANDLEBARS_G(context), str, str_len, indent, indent_len);
+    struct handlebars_string * tmp = handlebars_string_indent(HANDLEBARS_G(context), ZSTR_VAL(str), ZSTR_LEN(str), ZSTR_VAL(indent), ZSTR_LEN(indent));
     RETVAL_STRINGL(tmp->val, tmp->len);
     handlebars_talloc_free(tmp);
 
@@ -514,7 +507,7 @@ static zend_function_entry HandlebarsUtils_methods[] = {
     PHP_ME(HandlebarsUtils, expression, HandlebarsUtils_expression_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(HandlebarsUtils, escapeExpression, HandlebarsUtils_expression_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(HandlebarsUtils, escapeExpressionCompat, HandlebarsUtils_expression_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-  { NULL, NULL, NULL }
+    PHP_FE_END
 };
 /* }}} HandlebarsUtils methods */
 

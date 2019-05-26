@@ -352,30 +352,28 @@ PHP_METHOD(HandlebarsOptions, inverse)
 PHP_METHOD(HandlebarsOptions, offsetExists)
 {
     zval * _this_zval = getThis();
-    char * offset;
-    size_t offset_len;
+    zend_string * offset;
     zval * prop;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
-            Z_PARAM_STRING(offset, offset_len)
+        Z_PARAM_STR(offset)
     ZEND_PARSE_PARAMETERS_END();
 
-    prop = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, offset, offset_len, 1, NULL);
+    prop = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZSTR_VAL(offset), ZSTR_LEN(offset), 1, NULL);
     RETURN_BOOL(prop != NULL);
 }
 
 PHP_METHOD(HandlebarsOptions, offsetGet)
 {
     zval * _this_zval = getThis();
-    char * offset;
-    size_t offset_len;
+    zend_string * offset;
     zval * prop;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
-            Z_PARAM_STRING(offset, offset_len)
+        Z_PARAM_STR(offset)
     ZEND_PARSE_PARAMETERS_END();
 
-    prop = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, offset, offset_len, 1, NULL);
+    prop = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZSTR_VAL(offset), ZSTR_LEN(offset), 1, NULL);
     RETURN_ZVAL(prop, 1, 0);
 }
 
@@ -398,7 +396,7 @@ static zend_function_entry HandlebarsOptions_methods[] = {
     PHP_ME(HandlebarsOptions, offsetGet, HandlebarsOptions_offsetExists_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsOptions, offsetSet, HandlebarsOptions_offsetSet_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsOptions, offsetUnset, HandlebarsOptions_offsetExists_args, ZEND_ACC_PUBLIC)
-    { NULL, NULL, NULL }
+    PHP_FE_END
 };
 /* }}} Handlebars\Options methods */
 

@@ -255,8 +255,7 @@ PHP_METHOD(HandlebarsVM, __construct)
 PHP_METHOD(HandlebarsVM, render)
 {
     zval * _this_zval = getThis();
-    char * tmpl_str;
-    size_t tmpl_len;
+    zend_string * tmpl_str;
     zval * z_context = NULL;
     zval * z_options = NULL;
     TALLOC_CTX * mctx;
@@ -270,7 +269,7 @@ PHP_METHOD(HandlebarsVM, render)
     bool from_cache = false;
 
     ZEND_PARSE_PARAMETERS_START(1, 3)
-        Z_PARAM_STRING(tmpl_str, tmpl_len)
+        Z_PARAM_STR(tmpl_str)
         Z_PARAM_OPTIONAL
         Z_PARAM_ZVAL(z_context)
         Z_PARAM_ZVAL(z_options)
@@ -304,7 +303,7 @@ PHP_METHOD(HandlebarsVM, render)
     vm->log_func = &php_handlebars_log;
     vm->log_ctx = _this_zval;
 
-    struct handlebars_string * tmpl = handlebars_string_ctor(HBSCTX(vm), tmpl_str, tmpl_len);
+    struct handlebars_string * tmpl = handlebars_string_ctor(HBSCTX(vm), ZSTR_VAL(tmpl_str), ZSTR_LEN(tmpl_str));
 
     // Lookup cache entry
     if( cache && (module = handlebars_cache_find(cache, tmpl)) ) {
@@ -383,8 +382,7 @@ done:
 PHP_METHOD(HandlebarsVM, renderFile)
 {
     zval * _this_zval = getThis();
-    char * filename_str;
-    size_t filename_len;
+    zend_string * filename_str;
     zval * z_context = NULL;
     zval * z_options = NULL;
     void * mctx = NULL;
@@ -398,7 +396,7 @@ PHP_METHOD(HandlebarsVM, renderFile)
     bool from_cache = false;
 
     ZEND_PARSE_PARAMETERS_START(1, 3)
-        Z_PARAM_STRING(filename_str, filename_len)
+        Z_PARAM_STR(filename_str)
         Z_PARAM_OPTIONAL
         Z_PARAM_ZVAL(z_context)
         Z_PARAM_ZVAL(z_options)
@@ -432,7 +430,7 @@ PHP_METHOD(HandlebarsVM, renderFile)
     vm->log_func = &php_handlebars_log;
     vm->log_ctx = _this_zval;
 
-    struct handlebars_string * filename = handlebars_string_ctor(HBSCTX(vm), filename_str, filename_len);
+    struct handlebars_string * filename = handlebars_string_ctor(HBSCTX(vm), ZSTR_VAL(filename_str), ZSTR_LEN(filename_str));
 
     // Lookup cache entry
     if( cache && (module = handlebars_cache_find(cache, filename)) ) {
@@ -440,7 +438,7 @@ PHP_METHOD(HandlebarsVM, renderFile)
         if( HANDLEBARS_G(cache_stat) ) {
             zval zstat;
             ZVAL_LONG(&zstat, 0);
-            php_stat(filename_str, filename_len, FS_MTIME, &zstat);
+            php_stat(ZSTR_VAL(filename_str), ZSTR_LEN(filename), FS_MTIME, &zstat);
             if( Z_LVAL(zstat) > module->ts ) { // possibly not portable
                 cache->release(cache, filename, module);
                 from_cache = false;
@@ -457,7 +455,7 @@ PHP_METHOD(HandlebarsVM, renderFile)
         php_stream *stream;
         struct handlebars_string * tmpl;
 
-        stream = php_stream_open_wrapper_ex(filename_str, "rb", REPORT_ERRORS, NULL, NULL);
+        stream = php_stream_open_wrapper_ex(ZSTR_VAL(filename_str), "rb", REPORT_ERRORS, NULL, NULL);
         if( !stream ) {
             RETVAL_FALSE;
             goto done;

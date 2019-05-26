@@ -319,15 +319,14 @@ static void php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node, z
 /* {{{ proto mixed Handlebars\Parser::parse(string tmpl) */
 static void php_handlebars_parse(INTERNAL_FUNCTION_PARAMETERS, short print)
 {
-    char * tmpl = NULL;
-    size_t tmpl_len = 0;
+    zend_string * tmpl = NULL;
     struct handlebars_context * ctx;
     struct handlebars_parser * parser;
     struct handlebars_string * output;
     jmp_buf buf;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
-	    Z_PARAM_STRING(tmpl, tmpl_len)
+	    Z_PARAM_STR(tmpl)
     ZEND_PARSE_PARAMETERS_END();
 
     ctx = handlebars_context_ctor();
@@ -338,7 +337,7 @@ static void php_handlebars_parse(INTERNAL_FUNCTION_PARAMETERS, short print)
     parser = handlebars_parser_ctor(ctx);
 
     // Parse
-    parser->tmpl = handlebars_string_ctor(HBSCTX(parser), tmpl, tmpl_len);
+    parser->tmpl = handlebars_string_ctor(HBSCTX(parser), ZSTR_VAL(tmpl), ZSTR_LEN(tmpl));
     php_handlebars_try(HandlebarsParseException_ce_ptr, parser, &buf);
     handlebars_parse(parser);
 
@@ -376,7 +375,7 @@ ZEND_END_ARG_INFO()
 static zend_function_entry HandlebarsParser_methods[] = {
     PHP_ME(HandlebarsParser, parse, HandlebarsParser_parse_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(HandlebarsParser, parsePrint, HandlebarsParser_parse_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-{ NULL, NULL, NULL }
+    PHP_FE_END
 };
 /* }}} HandlebarsParser methods */
 

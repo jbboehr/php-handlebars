@@ -23,16 +23,15 @@ ZEND_END_ARG_INFO()
 PHP_METHOD(HandlebarsOpcode, __construct)
 {
     zval * _this_zval = getThis();
-    char * opcode_str;
-    size_t opcode_len;
+    zend_string * opcode;
     zval * args;
 
     ZEND_PARSE_PARAMETERS_START(2, 2)
-        Z_PARAM_STRING(opcode_str, opcode_len)
+        Z_PARAM_STR(opcode)
 		Z_PARAM_ARRAY(args)
     ZEND_PARSE_PARAMETERS_END();
 
-    zend_update_property_stringl(Z_OBJCE_P(_this_zval), _this_zval, "opcode", sizeof("opcode")-1, opcode_str, opcode_len);
+    zend_update_property_str(Z_OBJCE_P(_this_zval), _this_zval, "opcode", sizeof("opcode")-1, opcode);
     zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, "args", sizeof("args")-1, args);
 }
 /* }}} Handlebars\Opcode::__construct */
@@ -40,7 +39,7 @@ PHP_METHOD(HandlebarsOpcode, __construct)
 /* {{{ HandlebarsOpcode methods */
 static zend_function_entry HandlebarsOpcode_methods[] = {
     PHP_ME(HandlebarsOpcode, __construct, HandlebarsOpcode_construct_args, ZEND_ACC_PUBLIC)
-    { NULL, NULL, NULL }
+    PHP_FE_END
 };
 /* }}} HandlebarsOpcode methods */
 
