@@ -1,11 +1,15 @@
 { lib, php, stdenv, autoreconfHook, fetchurl, handlebarsc, talloc, pcre, mustache_spec, handlebars_spec, php_psr,
-  phpHandlebarsVersion ? null, phpHandlebarsSrc ? null, phpHandlebarsSha256 ? null, phpHandlebarsAllTheTests ? false }:
+  buildPecl ? import <nixpkgs/pkgs/build-support/build-pecl.nix> {
+    # re2c is required for nixpkgs master, must not be specified for <= 19.03
+    inherit php stdenv autoreconfHook fetchurl;
+  },
+  phpHandlebarsVersion ? null,
+  phpHandlebarsSrc ? null,
+  phpHandlebarsSha256 ? null,
+  phpHandlebarsAllTheTests ? false }:
 
 let
   orDefault = x: y: (if (!isNull x) then x else y);
-  buildPecl = import <nixpkgs/pkgs/build-support/build-pecl.nix> {
-    inherit php stdenv autoreconfHook fetchurl;
-  };
 in
 
 buildPecl rec {

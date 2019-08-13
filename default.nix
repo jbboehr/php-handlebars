@@ -4,6 +4,9 @@
 {
   pkgs ? import <nixpkgs> {},
   php ? pkgs.php,
+  buildPecl ? pkgs.callPackage <nixpkgs/pkgs/build-support/build-pecl.nix> {
+    inherit php;
+  },
 
   phpHandlebarsVersion ? null,
   phpHandlebarsSrc ? ./.,
@@ -26,12 +29,12 @@
   })) { inherit mustache_spec handlebars_spec; },
 
   php_psr ? pkgs.callPackage (import (fetchTarball {
-    url = https://github.com/jbboehr/php-psr/archive/c158134026438d03dffd2b944ee16afa0b33cad7.tar.gz;
-    sha256 = "0h1hlh3w724h7r6xfz4rfg17a8kzj3k0a74126iwkd243nxy1k94";
-  })) {}
+    url = https://github.com/jbboehr/php-psr/archive/v0.7.0.tar.gz;
+    sha256 = "0sgdls1c9hzza3y8279gspkhmr0zdn46qmx5bfzahkgzrz11fimg";
+  })) { inherit buildPecl; }
 }:
 
 pkgs.callPackage ./derivation.nix {
-  inherit mustache_spec handlebars_spec handlebarsc php_psr phpHandlebarsVersion phpHandlebarsSrc phpHandlebarsSha256 phpHandlebarsAllTheTests;
+  inherit buildPecl mustache_spec handlebars_spec handlebarsc php_psr phpHandlebarsVersion phpHandlebarsSrc phpHandlebarsSha256 phpHandlebarsAllTheTests;
 }
 
