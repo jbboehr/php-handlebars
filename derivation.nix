@@ -1,4 +1,4 @@
-{ lib, php, stdenv, autoreconfHook, fetchurl, handlebarsc, talloc, pcre, mustache_spec, handlebars_spec, php_psr,
+{ lib, php, stdenv, autoreconfHook, fetchurl, handlebarsc, talloc, pcre, pcre2, mustache_spec, handlebars_spec, php_psr,
   buildPecl ? import <nixpkgs/pkgs/build-support/build-pecl.nix> {
     # re2c is required for nixpkgs master, must not be specified for <= 19.03
     inherit php stdenv autoreconfHook fetchurl;
@@ -21,7 +21,7 @@ buildPecl rec {
     sha256 = orDefault phpHandlebarsSha256 "1w054335fzz8xs1kxacczsfcyswrs6bjjfm2ma4l9mdqnxdspjzg";
   });
 
-  buildInputs = [ handlebarsc talloc pcre php_psr ];
+  buildInputs = [ handlebarsc talloc pcre pcre2 php_psr ];
   nativeBuildInputs = [ mustache_spec handlebars_spec ];
   makeFlags = ["phpincludedir=$(out)/include/php/ext/psr"];
 
