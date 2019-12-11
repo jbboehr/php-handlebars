@@ -22,12 +22,6 @@ function script() (
 
     NIX_PATH=nixpkgs=https://github.com/NixOS/nixpkgs-channels/archive/nixos-${NIX_CHANNEL}.tar.gz
     nix-build --argstr phpHandlebarsVersion ${TRAVIS_BRANCH} --arg php "(import <nixpkgs> {}).${NIX_PHP_ATTR}" | tee result.txt
-
-    # test the pecl packaging
-    nix-shell -p ${NIX_PHP_ATTR} --command 'php generate-tests.php'
-    exec 5>&1
-    pecl_tgz=$(nix-shell -p ${NIX_PHP_ATTR} --command 'pecl package' | tee /dev/fd/5 | grep -v Warning | awk '{print $2}')
-    nix-build --arg php "(import <nixpkgs> {}).${NIX_PHP_ATTR}" --arg phpHandlebarsSrc "./${pecl_tgz}"
 )
 
 function after_success() (
