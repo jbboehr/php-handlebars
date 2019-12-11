@@ -7,6 +7,7 @@ let
                 ./.;
         } ''
             cp -r $src/* .
+            php generate-tests.php
             pecl package | tee tmp.txt
             pecl_tgz=$(cat tmp.txt | grep -v Warning | awk '{print $2}')
             echo $pecl_tgz
