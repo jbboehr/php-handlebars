@@ -4,6 +4,7 @@
 #endif
 
 #include "Zend/zend_API.h"
+#include "Zend/zend_closures.h"
 #include "Zend/zend_exceptions.h"
 #include "Zend/zend_interfaces.h"
 #include "main/php.h"
@@ -305,6 +306,12 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     struct handlebars_zval * obj = (struct handlebars_zval *) value->v.usr;
     zval * intern = get_intern_zval(value);
     zval * z_ret;
+    zend_function *fptr;
+    zend_bool is_closure = 0;
+	zend_class_entry *ce = NULL;
+	uint32_t num_args;
+	struct _zend_arg_info *arg_info;
+    short send_options = 0;
 
     // Check if is callable object (closure or __invoke)
     if( !intern || Z_TYPE_P(intern) != IS_OBJECT ) {
@@ -319,11 +326,40 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
         return NULL;
     }
 
-    zval z_options;
-    php_handlebars_options_ctor(options, &z_options);
+    // If the argument is a closure: we will omit passing the options
+    // object if it will go into a slot with an incompatible type
+    // If the argument is a callable object: we will append the
+    // options if the appended parameter will go into a
+    // declared parameter with either no type signature or explicitly
+    // typed with Handlebars\Options
+    ce = Z_OBJCE_P(intern);
+    if (instanceof_function(ce, zend_ce_closure)) {
+        fptr = (zend_function *)zend_get_closure_method_def(intern);
+        send_options = 1;
+    } else {
+        fptr = zend_hash_find_ptr(&ce->function_table, ZSTR_KNOWN(ZEND_STR_MAGIC_INVOKE));
+    }
+    if (fptr) {
+        arg_info = fptr->common.arg_info;
+        num_args = fptr->common.num_args;
+
+        if (argc < num_args) {
+            if (ZEND_TYPE_IS_CLASS((arg_info + argc)->type)) {
+                if (0 == strcmp(ZSTR_VAL(ZEND_TYPE_NAME((arg_info + argc)->type)), "Handlebars\\Options")) {
+                    send_options = 1;
+                } else {
+                    send_options = 0;
+                }
+            } else if (ZEND_TYPE_IS_CODE(arg_info->type)) {
+                send_options = 0;
+            } else {
+                send_options = 1;
+            }
+        }
+    }
 
     // Convert paramsma
-    int n_args = argc + 1;
+    int n_args = argc + (send_options ? 1 : 0);
     zval *z_args = alloca(sizeof(zval) * n_args);
     memset(z_args, 0, sizeof(z_args));
 
@@ -332,7 +368,11 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
         handlebars_value_to_zval(argv[i], &z_args[i]);
     }
 
-    z_args[n_args - 1] = z_options;
+    if (send_options) {
+        zval z_options;
+        php_handlebars_options_ctor(options, &z_options);
+        z_args[n_args - 1] = z_options;
+    }
 
     // Make ret
     zval _z_ret;
