@@ -446,6 +446,10 @@ class VM extends BaseImpl
     public function render($tmpl, $context = null, array $options = null) {}
 
     public function renderFile($filename, $context = null, array $options = null) {}
+
+    public function preload($tmpl, array $options = null) {}
+
+    public function preloadFile($filename, array $options = null) {}
 }
 
 /*
