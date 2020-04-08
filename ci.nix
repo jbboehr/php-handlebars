@@ -51,18 +51,6 @@ builtins.mapAttrs (k: _v:
   pkgs.recurseIntoAttrs {
     peclDist = phpHandlebarsSrc;
 
-    php71 = let
-        path = builtins.fetchTarball {
-           url = https://github.com/NixOS/nixpkgs/archive/release-19.03.tar.gz;
-           name = "nixpkgs-19.03";
-        };
-        pkgs = import (path) { system = k; };
-        php = pkgs.php71;
-    in generateHandlebarsTestsForPlatform {
-        inherit pkgs php phpHandlebarsSrc;
-        buildPecl = pkgs.callPackage "${path}/pkgs/build-support/build-pecl.nix" { inherit php; };
-    };
-
     php72 = let
         php = pkgs.php72;
     in generateHandlebarsTestsForPlatform {
