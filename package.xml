@@ -55,6 +55,7 @@
    <file name="tests/gh-40.phpt" role="test" />
    <file name="tests/gh-41.phpt" role="test" />
    <file name="tests/gh-48.phpt" role="test" />
+   <file name="tests/helper-with-options.phpt" role="test" />
    <file name="tests/HandlebarsBaseImpl_getDecorators.phpt" role="test" />
    <file name="tests/HandlebarsBaseImpl_getHelpers.phpt" role="test" />
    <file name="tests/HandlebarsBaseImpl_getPartials.phpt" role="test" />
