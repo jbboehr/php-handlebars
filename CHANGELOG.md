@@ -9,8 +9,16 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ### Added
 - Preliminary PHP 8 support
 
+### Changed
+- Drop max PHP version constraint from PECL
+- Selective helper options omission - If the argument is a closure: we will omit passing the options
+object if it will go into a slot with an incompatible type. If the argument is a callable object: we will append the
+options if the appended parameter will go into a declared parameter with either no type signature or explicitly
+typed with `Handlebars\Options`. This will allow some standard helpers to have typed default arguments while still allowing
+access to the Options object for other helpers. See `tests/helper-with-options.phpt` for details.
+
 ### Removed
-- PHP 5 support, require at least PHP 7.1
+- PHP 5 support, require at least PHP 7.2
 
 ## [0.8.3] - 2018-11-11
 
