@@ -447,6 +447,10 @@ class VM extends BaseImpl
     public function render($tmpl, $context = null, array $options = null) {}
 
     public function renderFile($filename, $context = null, array $options = null) {}
+
+    public function compile($tmpl, array $options = null) {}
+
+    public function renderFromBinaryString($binaryString, $context = null, array $options = null) {}
 }
 
 /*

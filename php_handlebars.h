@@ -43,6 +43,7 @@ PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsException_ce_ptr;
 PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsParseException_ce_ptr;
 PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsCompileException_ce_ptr;
 PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsInvalidArgumentException_ce_ptr;
+PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsInvalidBinaryStringException_ce_ptr;
 PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsOpcode_ce_ptr;
 PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsOptions_ce_ptr;
 PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsParser_ce_ptr;
