@@ -35,7 +35,7 @@ PHP_MINIT_FUNCTION(handlebars_exceptions)
     zend_class_implements(HandlebarsCompileException_ce_ptr, 1, HandlebarsException_ce_ptr);
 
     // Handlebars\ParseException
-    zend_register_class_alias_ex(ZEND_STRL("Handlebars\\ParseException"), HandlebarsCompileException_ce_ptr, 1);
+    zend_register_class_alias("Handlebars\\ParseException", HandlebarsCompileException_ce_ptr);
     HandlebarsParseException_ce_ptr = HandlebarsCompileException_ce_ptr;
 
     // Handlebars\InvalidArgumentException
