@@ -7,10 +7,10 @@
 #include "Zend/zend_constants.h"
 #include "Zend/zend_exceptions.h"
 #include "Zend/zend_string.h"
+#include "Zend/zend_interfaces.h"
 #include "main/php.h"
 #include "ext/standard/basic_functions.h"
 #include "ext/standard/php_filestat.h"
-#include "ext/standard/md5.h"
 
 #include "handlebars.h"
 #include "handlebars_private.h"
@@ -30,6 +30,9 @@
 #include "handlebars.lex.h"
 
 #include "php_handlebars.h"
+
+#define XXH_STATIC_LINKING_ONLY
+#include "xxhash.h"
 
 
 
@@ -313,41 +316,53 @@ done:
     return module;
 }
 
-static inline void md5_bin2hex(const unsigned char *in, char *out) {
+static inline void pack_long(unsigned long lval, char *out) {
+    out[0] = (int)((lval >> 24) & 0xFF);
+    out[1] = (int)((lval >> 16) & 0xFF) ;
+    out[2] = (int)((lval >> 8) & 0XFF);
+    out[3] = (int)((lval & 0XFF));
+}
+
+static inline void hash_bin2hex(const unsigned char *in, char *out) {
     static char hexconvtab[] = "0123456789abcdef";
 	size_t i, j;
 
-	for (i = j = 0; i < 16; i++) {
+	for (i = j = 0; i < 4; i++) {
 		out[j++] = hexconvtab[in[i] >> 4];
 		out[j++] = hexconvtab[in[i] & 15];
 	}
 	out[j] = '\0';
 }
 
+static inline unsigned long hash_buf(unsigned char * buf, size_t len) {
+    XXH3_state_t state;
+    XXH3_64bits_reset(&state);
+    XXH3_64bits_update(&state, buf, len);
+    XXH64_hash_t const h = XXH3_64bits_digest(&state);
+    return h;
+}
+
 static inline struct handlebars_module * verify_and_load_module(
     struct handlebars_context * ctx,
     zend_string *buf
 ) {
-    if( UNEXPECTED(ZSTR_LEN(buf) <= 16) ) {
-        zend_throw_exception(HandlebarsInvalidBinaryStringException_ce_ptr, "Failed to validate precompiled template: buffer must be at least 16 bytes", 0);
+    if( UNEXPECTED(ZSTR_LEN(buf) <= 4) ) {
+        zend_throw_exception(HandlebarsInvalidBinaryStringException_ce_ptr, "Failed to validate precompiled template: buffer not long enough", 0);
         return NULL;
     }
 
-    size_t size = ZSTR_LEN(buf) - 16;
-    struct handlebars_module *UNSAFE_module = (struct handlebars_module *) (ZSTR_VAL(buf) + 16);
+    size_t size = ZSTR_LEN(buf) - 4;
+    struct handlebars_module *UNSAFE_module = (struct handlebars_module *) (ZSTR_VAL(buf) + 4);
 
-	PHP_MD5_CTX md5_context;
-	zend_uchar md5[16];
+    unsigned long hash = hash_buf((unsigned char *) UNSAFE_module, size);
+    char hash_arr[4];
+    pack_long(hash, hash_arr);
 
-	PHP_MD5Init(&md5_context);
-	PHP_MD5Update(&md5_context, (const unsigned char *) UNSAFE_module, size);
-	PHP_MD5Final(md5, &md5_context);
-
-    if (0 != memcmp(md5, ZSTR_VAL(buf), 16)) {
-        char actual_hex[33] = {0};
-        char expected_hex[33] = {0};
-        md5_bin2hex(md5, actual_hex);
-        md5_bin2hex(ZSTR_VAL(buf), expected_hex);
+    if (0 != memcmp(hash_arr, ZSTR_VAL(buf), 4)) {
+        char actual_hex[9] = {0};
+        char expected_hex[9] = {0};
+        hash_bin2hex(hash_arr, actual_hex);
+        hash_bin2hex(ZSTR_VAL(buf), expected_hex);
         zend_throw_exception_ex(HandlebarsInvalidBinaryStringException_ce_ptr, 0,
             "Failed to validate precompiled template: template hash was %s, expected %s",
             actual_hex,
@@ -369,7 +384,7 @@ static inline struct handlebars_module * verify_and_load_module(
 
     struct handlebars_module * module = handlebars_talloc_zero(ctx, struct handlebars_module);
     module = handlebars_talloc_realloc_size(ctx, module, size);
-    memcpy(module, ZSTR_VAL(buf) + 16, size);
+    memcpy(module, ZSTR_VAL(buf) + 4, size);
 
     handlebars_module_patch_pointers(module);
 
@@ -384,11 +399,6 @@ PHP_METHOD(HandlebarsVM, compile)
 {
     zend_string * zstr_tmpl;
     zval * z_options = NULL;
-    struct handlebars_string * tmpl;
-    struct handlebars_module * module = NULL;
-	PHP_MD5_CTX md5_context;
-	zend_uchar md5[16];
-    zend_string *res;
 
     zval * _this_zval = getThis();
     struct php_handlebars_vm_obj *intern = Z_HANDLEBARS_VM_P(_this_zval);
@@ -402,23 +412,21 @@ PHP_METHOD(HandlebarsVM, compile)
         Z_PARAM_ZVAL(z_options)
     ZEND_PARSE_PARAMETERS_END();
 
-    tmpl = handlebars_string_ctor(HBSCTX(ctx), ZSTR_VAL(zstr_tmpl), ZSTR_LEN(zstr_tmpl));
+    struct handlebars_string * tmpl = handlebars_string_ctor(HBSCTX(ctx), ZSTR_VAL(zstr_tmpl), ZSTR_LEN(zstr_tmpl));
 
-    module = compile(ctx, NULL, tmpl, z_options);
+    struct handlebars_module * module = compile(ctx, NULL, tmpl, z_options);
     if (!module) {
         goto done;
     }
 
-	PHP_MD5Init(&md5_context);
-	PHP_MD5Update(&md5_context, (const unsigned char *) module, module->size);
-	PHP_MD5Final(md5, &md5_context);
+    // @todo patch module so it's deterministic
 
-    // @TODO patch module so it's deterministic
+    unsigned long hash = hash_buf((unsigned char *) module, module->size);
 
-    size_t len = sizeof(md5) + module->size;
-	res = zend_string_alloc(len, 0);
-	memcpy(ZSTR_VAL(res), md5, sizeof(md5));
-	memcpy(ZSTR_VAL(res) + sizeof(md5), module, module->size);
+    size_t len = 4 + module->size;
+	zend_string *res = zend_string_alloc(len, 0);
+    pack_long(hash, ZSTR_VAL(res));
+	memcpy(ZSTR_VAL(res) + 4, module, module->size);
 	ZSTR_VAL(res)[len] = '\0';
 
     RETVAL_STR(res);

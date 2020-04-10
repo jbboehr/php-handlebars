@@ -10,7 +10,7 @@ $binaryString = $vm->compile(file_get_contents(__DIR__ . '/fixture1.hbs'));
 var_dump($vm->renderFromBinaryString($binaryString, array('foo' => 'bar')));
 
 try {
-    $vm->renderFromBinaryString(substr($binaryString, 0, 15));
+    $vm->renderFromBinaryString(substr($binaryString, 0, 3));
 } catch (\Handlebars\InvalidBinaryStringException $e) {
     var_dump($e->getMessage());
 }
@@ -25,7 +25,7 @@ try {
 
 try {
     $tmp = $binaryString;
-    $tmp[80] = 0xFF;
+    $tmp[51] = 0xFF;
     $vm->renderFromBinaryString($tmp);
 } catch (\Handlebars\InvalidBinaryStringException $e) {
     var_dump($e->getMessage());
@@ -33,6 +33,6 @@ try {
 
 --EXPECTF--
 string(3) "bar"
-string(73) "Failed to validate precompiled template: buffer must be at least 16 bytes"
-string(134) "Failed to validate precompiled template: template hash was %s, expected %s"
-string(134) "Failed to validate precompiled template: template hash was %s, expected %s"
+string(63) "Failed to validate precompiled template: buffer not long enough"
+string(86) "Failed to validate precompiled template: template hash was %s, expected %s"
+string(86) "Failed to validate precompiled template: template hash was %s, expected %s"
