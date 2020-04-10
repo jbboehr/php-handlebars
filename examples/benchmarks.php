@@ -19,6 +19,8 @@ $vm = new Handlebars\VM();
 $iterations = 100000;
 
 // standard
+$vm->render($tmpl, $data);
+
 $start = microtime(true);
 for ($i = 0; $i < $iterations; $i++ ) {
     $vm->render($tmpl, $data);
@@ -29,8 +31,10 @@ $delta = $end - $start;
 printf("%-12s iterations=%d cacheBackend=%-6s time=%g\n", "standard", $iterations, Handlebars\CACHE_BACKEND, $delta);
 
 // precompiled
-$start = microtime(true);
 $binaryString = $vm->compile($tmpl);
+$vm->renderFromBinaryString($binaryString, $data);
+
+$start = microtime(true);
 for ($i = 0; $i < $iterations; $i++ ) {
     $vm->renderFromBinaryString($binaryString, $data);
 }
