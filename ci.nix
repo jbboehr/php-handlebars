@@ -67,23 +67,11 @@ builtins.mapAttrs (k: _v:
 
     php74 = let
         path = builtins.fetchTarball {
-           url = https://github.com/NixOS/nixpkgs/archive/master.tar.gz;
-           name = "nixpkgs-unstable";
+           url = https://github.com/NixOS/nixpkgs/archive/release-20.03.tar.gz;
+           name = "nixpkgs-20.03";
         };
         pkgs = import (path) { system = k; };
         php = pkgs.php74;
-    in generateHandlebarsTestsForPlatform {
-        inherit pkgs php phpHandlebarsSrc;
-        buildPecl = pkgs.callPackage "${path}/pkgs/build-support/build-pecl.nix" { inherit php; };
-    };
-
-    php = let
-        path = builtins.fetchTarball {
-           url = https://github.com/NixOS/nixpkgs/archive/master.tar.gz;
-           name = "nixpkgs-unstable";
-        };
-        pkgs = import (path) { system = k; };
-        php = pkgs.php;
     in generateHandlebarsTestsForPlatform {
         inherit pkgs php phpHandlebarsSrc;
         buildPecl = pkgs.callPackage "${path}/pkgs/build-support/build-pecl.nix" { inherit php; };
