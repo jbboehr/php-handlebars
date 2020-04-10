@@ -267,6 +267,7 @@ static inline void render(INTERNAL_FUNCTION_PARAMETERS, enum input_type type)
     zend_string * zstr_input;
     zval * z_context = NULL;
     zval * z_options = NULL;
+    zval * tmp = NULL;
     void * mctx = NULL;
     struct handlebars_cache * cache = NULL;
     struct handlebars_module * module = NULL;
@@ -280,7 +281,6 @@ static inline void render(INTERNAL_FUNCTION_PARAMETERS, enum input_type type)
     struct php_handlebars_vm_obj * intern;
     struct handlebars_vm * vm;
     struct handlebars_string * input;
-    zval * tmp = NULL;
 
     ZEND_PARSE_PARAMETERS_START(1, 3)
         Z_PARAM_STR(zstr_input)
@@ -398,7 +398,7 @@ static inline void render(INTERNAL_FUNCTION_PARAMETERS, enum input_type type)
 #endif
 
         // Parse
-        php_handlebars_try(HandlebarsCompileException_ce_ptr, parser, &buf);
+        php_handlebars_try(HandlebarsParseException_ce_ptr, parser, &buf);
         handlebars_parse(parser);
 
         // Compile

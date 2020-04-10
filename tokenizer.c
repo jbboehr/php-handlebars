@@ -46,7 +46,7 @@ static inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
 
     // Lex
     parser->tmpl = handlebars_string_ctor(HBSCTX(parser), ZSTR_VAL(tmpl), ZSTR_LEN(tmpl));
-    php_handlebars_try(HandlebarsParseException_ce_ptr, parser, &buf);
+    php_handlebars_try(HandlebarsCompileException_ce_ptr, parser, &buf);
     tokens = handlebars_lex(parser);
 
     // Print or convert to zval
