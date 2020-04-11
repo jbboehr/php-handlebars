@@ -8,6 +8,7 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ### Added
 - Preliminary PHP 8 support
+- Support for precompiling templates. New methods `Handlebars\VM::compile()` and `Handlebars\VM::renderFromBinaryString()`.
 
 ### Changed
 - Drop max PHP version constraint from PECL
