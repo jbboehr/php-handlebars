@@ -29,10 +29,11 @@ const PSR = true;
 const CACHE_BACKEND = 'mmap';
 
 interface Exception {}
-class ParseException extends \Exception implements Exception {}
 class CompileException extends \Exception implements Exception {}
 class InvalidArgumentException extends \InvalidArgumentException implements Exception {}
 class RuntimeException extends \RuntimeException implements Exception {}
+
+class_alias(CompileException::class, "Handlebars\ParseException");
 
 class Tokenizer
 {
@@ -446,6 +447,10 @@ class VM extends BaseImpl
     public function render($tmpl, $context = null, array $options = null) {}
 
     public function renderFile($filename, $context = null, array $options = null) {}
+
+    public function compile($tmpl, array $options = null) {}
+
+    public function renderFromBinaryString($binaryString, $context = null, array $options = null) {}
 }
 
 /*

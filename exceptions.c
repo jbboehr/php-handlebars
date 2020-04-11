@@ -16,6 +16,7 @@ PHP_HANDLEBARS_API zend_class_entry * HandlebarsParseException_ce_ptr;
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsCompileException_ce_ptr;
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsInvalidArgumentException_ce_ptr;
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsRuntimeException_ce_ptr;
+PHP_HANDLEBARS_API zend_class_entry * HandlebarsInvalidBinaryStringException_ce_ptr;
 /* }}} Variables & Prototypes */
 
 /* {{{ PHP_MINIT_FUNCTION */
@@ -28,15 +29,14 @@ PHP_MINIT_FUNCTION(handlebars_exceptions)
     INIT_CLASS_ENTRY(ce, "Handlebars\\Exception", NULL);
     HandlebarsException_ce_ptr = zend_register_internal_interface(&ce);
 
-    // Handlebars\ParseException
-    INIT_CLASS_ENTRY(ce, "Handlebars\\ParseException", NULL);
-    HandlebarsParseException_ce_ptr = zend_register_internal_class_ex(&ce, exception_ce);
-    zend_class_implements(HandlebarsParseException_ce_ptr, 1, HandlebarsException_ce_ptr);
-
     // Handlebars\CompileException
     INIT_CLASS_ENTRY(ce, "Handlebars\\CompileException", NULL);
     HandlebarsCompileException_ce_ptr = zend_register_internal_class_ex(&ce, exception_ce);
     zend_class_implements(HandlebarsCompileException_ce_ptr, 1, HandlebarsException_ce_ptr);
+
+    // Handlebars\ParseException
+    zend_register_class_alias("Handlebars\\ParseException", HandlebarsCompileException_ce_ptr);
+    HandlebarsParseException_ce_ptr = HandlebarsCompileException_ce_ptr;
 
     // Handlebars\InvalidArgumentException
     INIT_CLASS_ENTRY(ce, "Handlebars\\InvalidArgumentException", NULL);
@@ -47,6 +47,11 @@ PHP_MINIT_FUNCTION(handlebars_exceptions)
     INIT_CLASS_ENTRY(ce, "Handlebars\\RuntimeException", NULL);
     HandlebarsRuntimeException_ce_ptr = zend_register_internal_class_ex(&ce, spl_ce_RuntimeException);
     zend_class_implements(HandlebarsRuntimeException_ce_ptr, 1, HandlebarsException_ce_ptr);
+
+    // Handlebars\InvalidBinaryStringException
+    INIT_CLASS_ENTRY(ce, "Handlebars\\InvalidBinaryStringException", NULL);
+    HandlebarsInvalidBinaryStringException_ce_ptr = zend_register_internal_class_ex(&ce, exception_ce);
+    zend_class_implements(HandlebarsInvalidBinaryStringException_ce_ptr, 1, HandlebarsException_ce_ptr);
 
     return SUCCESS;
 }

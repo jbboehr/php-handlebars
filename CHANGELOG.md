@@ -16,6 +16,7 @@ object if it will go into a slot with an incompatible type. If the argument is a
 options if the appended parameter will go into a declared parameter with either no type signature or explicitly
 typed with `Handlebars\Options`. This will allow some standard helpers to have typed default arguments while still allowing
 access to the Options object for other helpers. See `tests/helper-with-options.phpt` for details.
+- `Handlebars\ParseException` is deprecated and now an alias of `Handlebars\CompileException`
 
 ### Removed
 - PHP 5 support, require at least PHP 7.2

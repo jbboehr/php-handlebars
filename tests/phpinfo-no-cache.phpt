@@ -16,10 +16,11 @@ Version => %s
 Released => %s
 Authors => %s
 Spec Version => %s
+PSR support => %s
 libhandlebars Version => %s
 libhandlebars Handlebars Spec Version => %s
 libhandlebars Mustache Spec Version => %s
-PSR support => %s
+xxhash version => %s
 Local memory usage => %d
 %A
 Directive => Local Value => Master Value
