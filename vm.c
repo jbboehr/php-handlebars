@@ -626,18 +626,28 @@ PHP_METHOD(HandlebarsVM, renderFromBinaryString)
 ZEND_BEGIN_ARG_INFO_EX(HandlebarsVM_construct_args, ZEND_SEND_BY_VAL, 0, 1)
     ZEND_ARG_ARRAY_INFO(0, options, 1)
 ZEND_END_ARG_INFO()
-/* }}} Argument Info */
 
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsVM_compile_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_INFO(0, tmpl)
+    ZEND_ARG_ARRAY_INFO(0, options, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsVM_renderFromBinaryString_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_INFO(0, binaryString)
+    ZEND_ARG_INFO(0, context)
+    ZEND_ARG_ARRAY_INFO(0, options, 1)
+ZEND_END_ARG_INFO()
+/* }}} Argument Info */
 
 /* {{{ HandlebarsVM methods */
 static zend_function_entry HandlebarsVM_methods[] = {
     PHP_ME(HandlebarsVM, __construct, HandlebarsVM_construct_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsVM, setHelpers, HandlebarsImpl_setHelpers_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsVM, setPartials, HandlebarsImpl_setPartials_args, ZEND_ACC_PUBLIC)
-    PHP_ME(HandlebarsVM, compile, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsVM, compile, HandlebarsVM_compile_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsVM, render, HandlebarsImpl_render_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsVM, renderFile, HandlebarsImpl_renderFile_args, ZEND_ACC_PUBLIC)
-    PHP_ME(HandlebarsVM, renderFromBinaryString, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsVM, renderFromBinaryString, HandlebarsVM_renderFromBinaryString_args, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 /* }}} HandlebarsVM methods */
