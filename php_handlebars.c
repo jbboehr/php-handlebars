@@ -22,6 +22,8 @@
 
 #include "handlebars_cache.h"
 
+#include "xxhash.h"
+
 /* {{{ Prototypes */
 extern PHP_MINIT_FUNCTION(handlebars_compiler);
 extern PHP_MINIT_FUNCTION(handlebars_exceptions);
@@ -100,10 +102,10 @@ static PHP_MINIT_FUNCTION(handlebars)
     if( !HANDLEBARS_G(cache_enable_cli) && 0 == strcmp(sapi_module.name, "cli") ) {
         HANDLEBARS_G(cache_enable) = false;
     }
-	
+
     // Save jmp
     jmp_buf buf;
-    
+
     if( handlebars_setjmp_ex(HANDLEBARS_G(context), &buf) ) {
         HANDLEBARS_G(cache_enable) = 0;
     }
@@ -174,10 +176,14 @@ static PHP_MINFO_FUNCTION(handlebars)
     php_info_print_table_row(2, "Authors", PHP_HANDLEBARS_AUTHORS);
     // @todo make spec version from libhandlebars function
     php_info_print_table_row(2, "Spec Version", PHP_HANDLEBARS_SPEC);
+    php_info_print_table_row(2, "PSR support", handlebars_has_psr ? "active" : "inactive");
     php_info_print_table_row(2, "libhandlebars Version", handlebars_version_string());
     php_info_print_table_row(2, "libhandlebars Handlebars Spec Version", handlebars_spec_version_string());
     php_info_print_table_row(2, "libhandlebars Mustache Spec Version", handlebars_mustache_spec_version_string());
-    php_info_print_table_row(2, "PSR support", handlebars_has_psr ? "active" : "inactive");
+
+    snprintf(buf, sizeof(buf), "%d.%d.%d", XXH_VERSION_MAJOR, XXH_VERSION_MINOR, XXH_VERSION_RELEASE);
+    php_info_print_table_row(2, "xxhash version",  buf);
+
     snprintf(buf, sizeof(buf), "%ld", talloc_total_size(HANDLEBARS_G(root)));
     php_info_print_table_row(2, "Local memory usage", buf);
     php_info_print_table_end();
