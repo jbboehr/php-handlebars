@@ -97,6 +97,7 @@ function after_success() (
         lcov --no-checksum --directory . --capture --compat-libtool --output-file coverage.info
         lcov --remove coverage.info "/usr*" \
             --remove coverage.info "*/.phpenv/*" \
+            --remove coverage.info "*/xxh*.h" \
             --remove coverage.info "/home/travis/build/include/*" \
             --compat-libtool \
             --output-file coverage.info
