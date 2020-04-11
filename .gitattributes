@@ -5,5 +5,4 @@
 .travis.yml	export-ignore
 spec		export-ignore
 xxh3.h      linguist-vendored
-xxhash.c    linguist-vendored
 xxhash.h    linguist-vendored

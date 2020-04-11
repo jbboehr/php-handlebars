@@ -31,7 +31,8 @@
 
 #include "php_handlebars.h"
 
-#define XXH_STATIC_LINKING_ONLY
+#define XXH_PRIVATE_API
+#define XXH_INLINE_ALL
 #include "xxhash.h"
 
 
@@ -316,51 +317,57 @@ done:
     return module;
 }
 
-static inline void pack_long(unsigned long lval, char *out) {
-    out[0] = (int)((lval >> 24) & 0xFF);
-    out[1] = (int)((lval >> 16) & 0xFF) ;
-    out[2] = (int)((lval >> 8) & 0XFF);
-    out[3] = (int)((lval & 0XFF));
+#define HASH_LEN 8
+typedef XXH64_hash_t hash_type;
+
+static inline void hash_pack(hash_type val, char *out) {
+    out[0] = (int)((val >> 56) & 0xFF);
+    out[1] = (int)((val >> 48) & 0xFF) ;
+    out[2] = (int)((val >> 40) & 0XFF);
+    out[3] = (int)((val >> 32) & 0xFF);
+    out[4] = (int)((val >> 24) & 0xFF);
+    out[5] = (int)((val >> 16) & 0xFF) ;
+    out[6] = (int)((val >> 8) & 0XFF);
+    out[7] = (int)((val & 0XFF));
 }
 
 static inline void hash_bin2hex(const unsigned char *in, char *out) {
     static char hexconvtab[] = "0123456789abcdef";
 	size_t i, j;
 
-	for (i = j = 0; i < 4; i++) {
+	for (i = j = 0; i < HASH_LEN; i++) {
 		out[j++] = hexconvtab[in[i] >> 4];
 		out[j++] = hexconvtab[in[i] & 15];
 	}
 	out[j] = '\0';
 }
 
-static inline unsigned long hash_buf(unsigned char * buf, size_t len) {
+static hash_type hash_buf(unsigned char * buf, size_t len) {
     XXH3_state_t state;
     XXH3_64bits_reset(&state);
     XXH3_64bits_update(&state, buf, len);
-    XXH64_hash_t const h = XXH3_64bits_digest(&state);
-    return h;
+    return XXH3_64bits_digest(&state);
 }
 
 static inline struct handlebars_module * verify_and_load_module(
     struct handlebars_context * ctx,
     zend_string *buf
 ) {
-    if( UNEXPECTED(ZSTR_LEN(buf) <= 4) ) {
+    if( UNEXPECTED(ZSTR_LEN(buf) <= HASH_LEN) ) {
         zend_throw_exception(HandlebarsInvalidBinaryStringException_ce_ptr, "Failed to validate precompiled template: buffer not long enough", 0);
         return NULL;
     }
 
-    size_t size = ZSTR_LEN(buf) - 4;
-    struct handlebars_module *UNSAFE_module = (struct handlebars_module *) (ZSTR_VAL(buf) + 4);
+    size_t size = ZSTR_LEN(buf) - HASH_LEN;
+    struct handlebars_module *UNSAFE_module = (struct handlebars_module *) (ZSTR_VAL(buf) + HASH_LEN);
 
-    unsigned long hash = hash_buf((unsigned char *) UNSAFE_module, size);
-    char hash_arr[4];
-    pack_long(hash, hash_arr);
+    hash_type hash = hash_buf((unsigned char *) UNSAFE_module, size);
+    char hash_arr[HASH_LEN];
+    hash_pack(hash, hash_arr);
 
-    if (0 != memcmp(hash_arr, ZSTR_VAL(buf), 4)) {
-        char actual_hex[9] = {0};
-        char expected_hex[9] = {0};
+    if (0 != memcmp(hash_arr, ZSTR_VAL(buf), HASH_LEN)) {
+        char actual_hex[HASH_LEN * 2 + 1] = {0};
+        char expected_hex[HASH_LEN * 2 + 1] = {0};
         hash_bin2hex(hash_arr, actual_hex);
         hash_bin2hex(ZSTR_VAL(buf), expected_hex);
         zend_throw_exception_ex(HandlebarsInvalidBinaryStringException_ce_ptr, 0,
@@ -384,7 +391,7 @@ static inline struct handlebars_module * verify_and_load_module(
 
     struct handlebars_module * module = handlebars_talloc_zero(ctx, struct handlebars_module);
     module = handlebars_talloc_realloc_size(ctx, module, size);
-    memcpy(module, ZSTR_VAL(buf) + 4, size);
+    memcpy(module, ZSTR_VAL(buf) + HASH_LEN, size);
 
     handlebars_module_patch_pointers(module);
 
@@ -421,12 +428,12 @@ PHP_METHOD(HandlebarsVM, compile)
 
     // @todo patch module so it's deterministic
 
-    unsigned long hash = hash_buf((unsigned char *) module, module->size);
+    hash_type hash = hash_buf((unsigned char *) module, module->size);
 
-    size_t len = 4 + module->size;
+    size_t len = HASH_LEN + module->size;
 	zend_string *res = zend_string_alloc(len, 0);
-    pack_long(hash, ZSTR_VAL(res));
-	memcpy(ZSTR_VAL(res) + 4, module, module->size);
+    hash_pack(hash, ZSTR_VAL(res));
+	memcpy(ZSTR_VAL(res) + HASH_LEN, module, module->size);
 	ZSTR_VAL(res)[len] = '\0';
 
     RETVAL_STR(res);

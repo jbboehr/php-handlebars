@@ -47,7 +47,6 @@
    <file name="value.c" role="src" />
    <file name="vm.c" role="src" />
    <file name="xxh3.h" role="src" />
-   <file name="xxhash.c" role="src" />
    <file name="xxhash.h" role="src" />
    <file name="tests/cache-mmap.phpt" role="test" />
    <file name="tests/cache-none.phpt" role="test" />

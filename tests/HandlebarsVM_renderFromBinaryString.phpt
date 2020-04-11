@@ -32,7 +32,7 @@ try {
 }
 
 --EXPECTF--
-string(3) "bar"
-string(63) "Failed to validate precompiled template: buffer not long enough"
-string(86) "Failed to validate precompiled template: template hash was %s, expected %s"
-string(86) "Failed to validate precompiled template: template hash was %s, expected %s"
+string(%d) "bar"
+string(%d) "Failed to validate precompiled template: buffer not long enough"
+string(%d) "Failed to validate precompiled template: template hash was %s, expected %s"
+string(%d) "Failed to validate precompiled template: template hash was %s, expected %s"

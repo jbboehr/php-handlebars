@@ -44,7 +44,6 @@ if test "$PHP_HANDLEBARS" != "no"; then
 		utils.c
 		vm.c
 		value.c
-        xxhash.c
 	])
     PHP_INSTALL_HEADERS([ext/handlebars], [php_handlebars.h])
     PHP_NEW_EXTENSION(handlebars, $PHP_HANDLEBARS_SOURCES, $ext_shared)
