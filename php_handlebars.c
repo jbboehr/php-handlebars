@@ -22,6 +22,8 @@
 
 #include "handlebars_cache.h"
 
+#define XXH_PRIVATE_API
+#define XXH_INLINE_ALL
 #include "xxhash.h"
 
 /* {{{ Prototypes */
