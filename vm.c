@@ -39,39 +39,7 @@
 
 /* {{{ Variables & Prototypes */
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsVM_ce_ptr;
-static zend_object_handlers HandlebarsVM_obj_handlers;
-
-struct php_handlebars_vm_obj {
-    struct handlebars_context * context;
-    struct handlebars_value * helpers;
-    struct handlebars_value * partials;
-    zend_object std;
-};
 /* }}} Variables & Prototypes */
-
-/* {{{ Z_HANDLEBARS_VM_P */
-static inline struct php_handlebars_vm_obj * php_handlebars_vm_fetch_object(zend_object *obj) {
-    return (struct php_handlebars_vm_obj *)((char*)(obj) - XtOffsetOf(struct php_handlebars_vm_obj, std));
-}
-#define Z_HANDLEBARS_VM_P(zv) php_handlebars_vm_fetch_object(Z_OBJ_P((zv)))
-/* }}} */
-
-/* {{{ php_handlebars_vm_obj_free */
-static void php_handlebars_vm_obj_free(zend_object * object)
-{
-    struct php_handlebars_vm_obj * obj = php_handlebars_vm_fetch_object(object);
-
-    if( obj->helpers ) {
-        handlebars_value_dtor(obj->helpers);
-    }
-    if( obj->partials ) {
-        handlebars_value_dtor(obj->partials);
-    }
-    handlebars_context_dtor(obj->context);
-
-    zend_object_std_dtor((zend_object *)object);
-}
-/* }}} */
 
 /* php_handlebars_log */
 static void php_handlebars_log(
@@ -118,29 +86,6 @@ static void php_handlebars_log(
 }
 /* */
 
-/* {{{ php_handlebars_vm_obj_create */
-static inline void php_handlebars_vm_obj_create_common(struct php_handlebars_vm_obj *obj)
-{
-    obj->context = handlebars_context_ctor_ex(HANDLEBARS_G(root));
-    obj->helpers = handlebars_value_ctor(obj->context);
-    handlebars_value_map_init(obj->helpers);
-    obj->partials = handlebars_value_ctor(obj->context);
-    handlebars_value_map_init(obj->partials);
-}
-static zend_object * php_handlebars_vm_obj_create(zend_class_entry * ce)
-{
-    struct php_handlebars_vm_obj *obj;
-
-    obj = ecalloc(1, sizeof(*obj) + zend_object_properties_size(ce));
-    zend_object_std_init(&obj->std, ce);
-    object_properties_init(&obj->std, ce);
-    obj->std.handlers = &HandlebarsVM_obj_handlers;
-    php_handlebars_vm_obj_create_common(obj);
-
-    return &obj->std;
-}
-/* }}} */
-
 /* {{{ php_handlebars_fetch_known_helpers */
 void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, zval * helpers)
 {
@@ -181,20 +126,6 @@ void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, z
 }
 /* }}} php_handlebars_fetch_known_helpers */
 
-static void php_handlebars_vm_set_helpers(zval * _this_zval, zval * helpers)
-{
-    jmp_buf buf;
-    struct php_handlebars_vm_obj * intern = Z_HANDLEBARS_VM_P(_this_zval);
-    struct handlebars_context * context = intern->context;
-    php_handlebars_try(HandlebarsRuntimeException_ce_ptr, context, &buf);
-    if( intern->helpers ) {
-        handlebars_value_dtor(intern->helpers);
-    }
-    intern->helpers = handlebars_value_from_zval(HBSCTX(context), helpers);
-    zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("helpers"), helpers);
-done:
-    context->e->jmp = NULL;
-}
 PHP_METHOD(HandlebarsVM, setHelpers)
 {
     zval * _this_zval = getThis();
@@ -204,22 +135,7 @@ PHP_METHOD(HandlebarsVM, setHelpers)
         Z_PARAM_OBJECT_OF_CLASS(helpers, HandlebarsRegistry_ce_ptr)
     ZEND_PARSE_PARAMETERS_END();
 
-    php_handlebars_vm_set_helpers(_this_zval, helpers);
-}
-
-static void php_handlebars_vm_set_partials(zval * _this_zval, zval * partials)
-{
-    jmp_buf buf;
-    struct php_handlebars_vm_obj * intern = Z_HANDLEBARS_VM_P(_this_zval);
-    struct handlebars_context * context = intern->context;
-    php_handlebars_try(HandlebarsRuntimeException_ce_ptr, context, &buf);
-    if( intern->partials ) {
-        handlebars_value_dtor(intern->partials);
-    }
-    intern->partials = handlebars_value_from_zval(HBSCTX(context), partials);
-    zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("partials"), partials);
-done:
-    context->e->jmp = NULL;
+    zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("helpers"), helpers);
 }
 
 PHP_METHOD(HandlebarsVM, setPartials)
@@ -231,7 +147,7 @@ PHP_METHOD(HandlebarsVM, setPartials)
             Z_PARAM_OBJECT_OF_CLASS(partials, HandlebarsRegistry_ce_ptr)
     ZEND_PARSE_PARAMETERS_END();
 
-    php_handlebars_vm_set_partials(_this_zval, partials);
+    zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("partials"), partials);
 }
 
 PHP_METHOD(HandlebarsVM, __construct)
@@ -250,10 +166,10 @@ PHP_METHOD(HandlebarsVM, __construct)
         zval * partials = zend_hash_str_find(ht, ZEND_STRL("partials"));
         zval * logger = zend_hash_str_find(ht, ZEND_STRL("logger"));
         if( helpers ) {
-            php_handlebars_vm_set_helpers(_this_zval, helpers);
+            zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("helpers"), helpers);
         }
         if( partials ) {
-            php_handlebars_vm_set_partials(_this_zval, partials);
+            zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("partials"), partials);
         }
         if( logger ) {
             // @todo check type
@@ -262,11 +178,11 @@ PHP_METHOD(HandlebarsVM, __construct)
     }
 }
 
-static inline void *make_mctx(struct php_handlebars_vm_obj *intern) {
+static inline void *make_mctx() {
     if( HANDLEBARS_G(pool_size) > 0 ) {
-        return talloc_pool(intern->context, HANDLEBARS_G(pool_size));
+        return talloc_pool(HANDLEBARS_G(root), HANDLEBARS_G(pool_size));
     } else {
-        return talloc_new(intern->context);
+        return talloc_new(HANDLEBARS_G(root));
     }
 }
 
@@ -408,8 +324,7 @@ PHP_METHOD(HandlebarsVM, compile)
     zval * z_options = NULL;
 
     zval * _this_zval = getThis();
-    struct php_handlebars_vm_obj *intern = Z_HANDLEBARS_VM_P(_this_zval);
-    void *mctx = make_mctx(intern);
+    void *mctx = make_mctx();
     struct handlebars_context *ctx = handlebars_context_ctor_ex(mctx);
     struct handlebars_vm * vm = handlebars_vm_ctor(ctx);
 
@@ -463,8 +378,7 @@ static inline void render(INTERNAL_FUNCTION_PARAMETERS, enum input_type type)
     zval * tmp = NULL;
 
     zval *_this_zval = getThis();
-    struct php_handlebars_vm_obj *intern = Z_HANDLEBARS_VM_P(_this_zval);
-    void *mctx = make_mctx(intern);
+    void *mctx = make_mctx();
     struct handlebars_context *ctx = handlebars_context_ctor_ex(mctx);
     struct handlebars_vm * vm = handlebars_vm_ctor(ctx);
     struct handlebars_cache * cache = HANDLEBARS_G(cache);
@@ -482,13 +396,15 @@ static inline void render(INTERNAL_FUNCTION_PARAMETERS, enum input_type type)
     }
 
     vm->cache = cache;
-    if( intern->helpers ) {
-        vm->helpers = intern->helpers;
-        vm->helpers->ctx = ctx;
+
+    // Load helpers
+    zval *z_helpers = zend_read_property(HandlebarsBaseImpl_ce_ptr, _this_zval, ZEND_STRL("helpers"), 1, NULL);
+    if (z_helpers) {
+        vm->helpers = handlebars_value_from_zval(HBSCTX(vm), z_helpers);
     }
-    if( intern->partials ) {
-        vm->partials = intern->partials;
-        vm->partials->ctx = ctx;
+    zval *z_partials = zend_read_property(HandlebarsBaseImpl_ce_ptr, _this_zval, ZEND_STRL("partials"), 1, NULL);
+    if (z_partials) {
+        vm->partials = handlebars_value_from_zval(HBSCTX(vm), z_partials);
     }
     vm->log_func = &php_handlebars_log;
     vm->log_ctx = _this_zval;
@@ -594,12 +510,6 @@ skip_compile:
     }
 
 done:
-    if( intern->helpers ) {
-        intern->helpers->ctx = NULL;
-    }
-    if( intern->partials ) {
-        intern->partials->ctx = NULL;
-    }
     if( from_cache ) {
         cache->release(cache, cache_id, module);
     }
@@ -657,14 +567,8 @@ PHP_MINIT_FUNCTION(handlebars_vm)
 {
     zend_class_entry ce;
 
-    memcpy(&HandlebarsVM_obj_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
-    HandlebarsVM_obj_handlers.offset = XtOffsetOf(struct php_handlebars_vm_obj, std);
-    HandlebarsVM_obj_handlers.free_obj = php_handlebars_vm_obj_free;
-    HandlebarsVM_obj_handlers.clone_obj = NULL;
-
     INIT_CLASS_ENTRY(ce, "Handlebars\\VM", HandlebarsVM_methods);
     HandlebarsVM_ce_ptr = zend_register_internal_class_ex(&ce, HandlebarsBaseImpl_ce_ptr);
-    HandlebarsVM_ce_ptr ->create_object = php_handlebars_vm_obj_create;
 
     return SUCCESS;
 }
