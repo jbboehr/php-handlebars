@@ -21,6 +21,13 @@
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsOptions_ce_ptr;
 static zend_object_handlers HandlebarsOptions_obj_handlers;
 static HashTable HandlebarsOptions_prop_handlers;
+static zend_string *INTERNED_NAME;
+static zend_string *INTERNED_FN;
+static zend_string *INTERNED_INVERSE;
+static zend_string *INTERNED_SCOPE;
+static zend_string *INTERNED_HASH;
+static zend_string *INTERNED_DATA;
+static zend_string *INTERNED_BLOCK_PARAMS;
 /* }}} Variables & Prototypes */
 
 struct php_handlebars_options_obj {
@@ -140,7 +147,9 @@ static zval * hbs_read_name(READ_PROPERTY_ARGS)
 #else
     struct php_handlebars_options_obj * intern = Z_HBS_OPTIONS_P(object);
     if( intern->options.name ) {
-        zend_update_property_stringl(Z_OBJCE_P(object), object, ZEND_STRL("name"), intern->options.name->val, intern->options.name->len);
+        zval tmp;
+        ZVAL_STRINGL(&tmp, intern->options.name->val, intern->options.name->len);
+        zend_update_property_ex(Z_OBJCE_P(object), object, INTERNED_NAME, &tmp);
         intern->options.name = NULL;
     }
 #endif
@@ -158,7 +167,9 @@ static zval * hbs_read_program(READ_PROPERTY_ARGS)
 #else
     struct php_handlebars_options_obj * intern = Z_HBS_OPTIONS_P(object);
     if( intern->options.program >= 0 ) {
-        zend_update_property_long(Z_OBJCE_P(object), object, ZEND_STRL("fn"), intern->options.program);
+        zval tmp;
+        ZVAL_LONG(&tmp, intern->options.program);
+        zend_update_property_ex(Z_OBJCE_P(object), object, INTERNED_FN, &tmp);
         // @todo clear?
     }
 #endif
@@ -169,14 +180,16 @@ static zval * hbs_read_inverse(READ_PROPERTY_ARGS)
 #if PHP_MAJOR_VERSION >= 8
     struct php_handlebars_options_obj * intern = php_handlebars_options_fetch_object(object);
     if( intern->options.inverse >= 0 ) {
-        zval tmp = {0};
+        zval tmp;
         ZVAL_LONG(&tmp, intern->options.inverse);
         object->handlers->write_property(object, member, &tmp, NULL);
     }
 #else
     struct php_handlebars_options_obj * intern = Z_HBS_OPTIONS_P(object);
     if( intern->options.inverse >= 0 ) {
-        zend_update_property_long(Z_OBJCE_P(object), object, ZEND_STRL("inverse"), intern->options.inverse);
+        zval tmp;
+        ZVAL_LONG(&tmp, intern->options.inverse);
+        zend_update_property_ex(Z_OBJCE_P(object), object, INTERNED_INVERSE, &tmp);
         // @todo clear?
     }
 #endif
@@ -198,7 +211,7 @@ static zval * hbs_read_scope(READ_PROPERTY_ARGS)
     if( intern->options.scope ) {
         zval z_scope = {0};
         handlebars_value_to_zval(intern->options.scope, &z_scope);
-        zend_update_property(Z_OBJCE_P(object), object, ZEND_STRL("scope"), &z_scope);
+        zend_update_property_ex(Z_OBJCE_P(object), object, INTERNED_SCOPE, &z_scope);
         zval_ptr_dtor(&z_scope);
         intern->options.scope = NULL;
     }
@@ -221,7 +234,7 @@ static zval * hbs_read_hash(READ_PROPERTY_ARGS)
     if( intern->options.hash ) {
         zval z_hash = {0};
         handlebars_value_to_zval(intern->options.hash, &z_hash);
-        zend_update_property(Z_OBJCE_P(object), object, ZEND_STRL("hash"), &z_hash);
+        zend_update_property_ex(Z_OBJCE_P(object), object, INTERNED_HASH, &z_hash);
         zval_ptr_dtor(&z_hash);
         intern->options.hash = NULL;
     }
@@ -244,7 +257,7 @@ static zval * hbs_read_data(READ_PROPERTY_ARGS)
     if( intern->options.data ) {
         zval z_data = {0};
         handlebars_value_to_zval(intern->options.data, &z_data);
-        zend_update_property(Z_OBJCE_P(object), object, ZEND_STRL("data"), &z_data);
+        zend_update_property_ex(Z_OBJCE_P(object), object, INTERNED_DATA, &z_data);
         zval_ptr_dtor(&z_data);
         intern->options.data = NULL;
     }
@@ -301,8 +314,10 @@ PHP_METHOD(HandlebarsOptions, __construct)
         Z_PARAM_ARRAY(props)
     ZEND_PARSE_PARAMETERS_END();
 
-    zend_update_property_null(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("fn"));
-    zend_update_property_null(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("inverse"));
+    zval tmp;
+    ZVAL_NULL(&tmp);
+    zend_update_property_ex(Z_OBJCE_P(_this_zval), _this_zval, INTERNED_FN, &tmp);
+    zend_update_property_ex(Z_OBJCE_P(_this_zval), _this_zval, INTERNED_INVERSE, &tmp);
 
     if( props && Z_TYPE_P(props) == IS_ARRAY ) {
         HashTable * ht = Z_ARRVAL_P(props);
@@ -350,9 +365,9 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
         zval * z_fn;
         if( program ) {
             //z_fn = zend_hash_str_find(Z_ARRVAL_P(z_options), ZEND_STRL("data"))
-            z_fn = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("fn"), 0, NULL);
+            z_fn = zend_read_property_ex(Z_OBJCE_P(_this_zval), _this_zval, INTERNED_FN, 0, NULL);
         } else {
-            z_fn = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("inverse"), 0, NULL);
+            z_fn = zend_read_property_ex(Z_OBJCE_P(_this_zval), _this_zval, INTERNED_INVERSE, 0, NULL);
         }
 
         if( z_fn && Z_TYPE_P(z_fn) == IS_OBJECT ) {
@@ -400,10 +415,10 @@ static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, sho
 
     // Options
     if( z_options && Z_TYPE_P(z_options) == IS_ARRAY ) {
-        if( NULL != (z_entry = zend_hash_str_find(Z_ARRVAL_P(z_options), ZEND_STRL("data"))) ) {
+        if( NULL != (z_entry = zend_hash_find(Z_ARRVAL_P(z_options), INTERNED_DATA)) ) {
             data = handlebars_value_from_zval(HBSCTX(vm), z_entry);
         }
-        if( NULL != (z_entry = zend_hash_str_find(Z_ARRVAL_P(z_options), ZEND_STRL("blockParams"))) ) {
+        if( NULL != (z_entry = zend_hash_find(Z_ARRVAL_P(z_options), INTERNED_BLOCK_PARAMS)) ) {
             block_params = handlebars_value_from_zval(HBSCTX(vm), z_entry);
         }
         // @todo block params?
@@ -487,6 +502,14 @@ static zend_function_entry HandlebarsOptions_methods[] = {
 PHP_MINIT_FUNCTION(handlebars_options)
 {
     zend_class_entry ce;
+
+    INTERNED_NAME = zend_new_interned_string(zend_string_init(ZEND_STRL("name"), 1));
+    INTERNED_FN = zend_new_interned_string(zend_string_init(ZEND_STRL("fn"), 1));
+    INTERNED_INVERSE = zend_new_interned_string(zend_string_init(ZEND_STRL("inverse"), 1));
+    INTERNED_SCOPE = zend_new_interned_string(zend_string_init(ZEND_STRL("scope"), 1));
+    INTERNED_HASH = zend_new_interned_string(zend_string_init(ZEND_STRL("hash"), 1));
+    INTERNED_DATA = zend_new_interned_string(zend_string_init(ZEND_STRL("data"), 1));
+    INTERNED_BLOCK_PARAMS = zend_new_interned_string(zend_string_init(ZEND_STRL("blockParams"), 1));
 
     memcpy(&HandlebarsOptions_obj_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
     HandlebarsOptions_obj_handlers.offset = XtOffsetOf(struct php_handlebars_options_obj, std);

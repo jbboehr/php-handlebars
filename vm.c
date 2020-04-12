@@ -40,6 +40,10 @@
 /* {{{ Variables & Prototypes */
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsVM_ce_ptr;
 static zend_object_handlers HandlebarsVM_obj_handlers;
+static zend_string *INTERNED_LOGGER;
+static zend_string *INTERNED_HELPERS;
+static zend_string *INTERNED_PARTIALS;
+static zend_string *INTERNED_CACHE_ID;
 
 struct php_handlebars_vm_obj {
     struct handlebars_context * context;
@@ -80,7 +84,7 @@ static void php_handlebars_log(
         struct handlebars_options * options
 ) {
     zval * z_vm = (zval *) options->vm->log_ctx;
-    zval * logger = zend_read_property(HandlebarsBaseImpl_ce_ptr, z_vm, ZEND_STRL("logger"), 1, NULL);
+    zval * logger = zend_read_property_ex(HandlebarsBaseImpl_ce_ptr, z_vm, INTERNED_LOGGER, 1, NULL);
     char * message;
     size_t message_len;
     int i;
@@ -191,7 +195,7 @@ static void php_handlebars_vm_set_helpers(zval * _this_zval, zval * helpers)
         handlebars_value_dtor(intern->helpers);
     }
     intern->helpers = handlebars_value_from_zval(HBSCTX(context), helpers);
-    zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("helpers"), helpers);
+    zend_update_property_ex(Z_OBJCE_P(_this_zval), _this_zval, INTERNED_HELPERS, helpers);
 done:
     context->e->jmp = NULL;
 }
@@ -217,7 +221,7 @@ static void php_handlebars_vm_set_partials(zval * _this_zval, zval * partials)
         handlebars_value_dtor(intern->partials);
     }
     intern->partials = handlebars_value_from_zval(HBSCTX(context), partials);
-    zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("partials"), partials);
+    zend_update_property_ex(Z_OBJCE_P(_this_zval), _this_zval, INTERNED_PARTIALS, partials);
 done:
     context->e->jmp = NULL;
 }
@@ -246,9 +250,9 @@ PHP_METHOD(HandlebarsVM, __construct)
 
     if( z_options && Z_TYPE_P(z_options) == IS_ARRAY ) {
         HashTable * ht = Z_ARRVAL_P(z_options);
-        zval * helpers = zend_hash_str_find(ht, ZEND_STRL("helpers"));
-        zval * partials = zend_hash_str_find(ht, ZEND_STRL("partials"));
-        zval * logger = zend_hash_str_find(ht, ZEND_STRL("logger"));
+        zval * helpers = zend_hash_find(ht, INTERNED_HELPERS);
+        zval * partials = zend_hash_find(ht, INTERNED_PARTIALS);
+        zval * logger = zend_hash_find(ht, INTERNED_LOGGER);
         if( helpers ) {
             php_handlebars_vm_set_helpers(_this_zval, helpers);
         }
@@ -257,7 +261,7 @@ PHP_METHOD(HandlebarsVM, __construct)
         }
         if( logger ) {
             // @todo check type
-            zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("logger"), logger);
+            zend_update_property_ex(Z_OBJCE_P(_this_zval), _this_zval, INTERNED_LOGGER, logger);
         }
     }
 }
@@ -497,7 +501,7 @@ static inline void render(INTERNAL_FUNCTION_PARAMETERS, enum input_type type)
 
     // Check cache id
     if( NULL != z_options
-            && NULL != (tmp = zend_hash_str_find(Z_ARRVAL_P(z_options), ZEND_STRL("cacheId")))
+            && NULL != (tmp = zend_hash_find(Z_ARRVAL_P(z_options), INTERNED_CACHE_ID))
             && Z_TYPE_P(tmp) == IS_STRING ) {
         cache_id = handlebars_string_ctor(HBSCTX(ctx), Z_STRVAL_P(tmp), Z_STRLEN_P(tmp));
     } else if (type == input_type_binary) {
@@ -656,6 +660,11 @@ static zend_function_entry HandlebarsVM_methods[] = {
 PHP_MINIT_FUNCTION(handlebars_vm)
 {
     zend_class_entry ce;
+
+    INTERNED_LOGGER = zend_new_interned_string(zend_string_init(ZEND_STRL("logger"), 1));
+    INTERNED_HELPERS = zend_new_interned_string(zend_string_init(ZEND_STRL("helpers"), 1));
+    INTERNED_PARTIALS = zend_new_interned_string(zend_string_init(ZEND_STRL("partials"), 1));
+    INTERNED_CACHE_ID = zend_new_interned_string(zend_string_init(ZEND_STRL("cacheId"), 1));
 
     memcpy(&HandlebarsVM_obj_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
     HandlebarsVM_obj_handlers.offset = XtOffsetOf(struct php_handlebars_vm_obj, std);

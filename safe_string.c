@@ -10,6 +10,7 @@
 
 /* {{{ Variables & Prototypes */
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsSafeString_ce_ptr;
+static zend_string *INTERNED_VALUE;
 /* }}} Variables & Prototypes */
 
 /* {{{ Argument Info */
@@ -25,13 +26,15 @@ ZEND_END_ARG_INFO()
 PHP_METHOD(HandlebarsSafeString, __construct)
 {
     zval * _this_zval = getThis();
+    zval tmp;
     zend_string * value;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
 	    Z_PARAM_STR(value)
     ZEND_PARSE_PARAMETERS_END();
 
-    zend_update_property_str(Z_OBJCE_P(_this_zval), _this_zval, "value", sizeof("value")-1, value);
+	ZVAL_STR(&tmp, value);
+    zend_update_property_ex(Z_OBJCE_P(_this_zval), _this_zval, INTERNED_VALUE, &tmp);
 }
 /* }}} Handlebars\SafeString::__construct */
 
@@ -40,7 +43,7 @@ PHP_METHOD(HandlebarsSafeString, __toString)
 {
     zval * _this_zval = getThis();
     zval rv;
-    zval * value = zend_read_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("value"), 1, &rv);
+    zval * value = zend_read_property_ex(Z_OBJCE_P(_this_zval), _this_zval, INTERNED_VALUE, 1, &rv);
     RETURN_ZVAL(value, 1, 0);
 }
 /* }}} HandlebarsSafeString::__toString */
@@ -57,6 +60,8 @@ static zend_function_entry HandlebarsSafeString_methods[] = {
 PHP_MINIT_FUNCTION(handlebars_safe_string)
 {
     zend_class_entry ce;
+
+    INTERNED_VALUE = zend_new_interned_string(zend_string_init(ZEND_STRL("value"), 1));
 
     INIT_CLASS_ENTRY(ce, "Handlebars\\SafeString", HandlebarsSafeString_methods);
     HandlebarsSafeString_ce_ptr = zend_register_internal_class(&ce);
