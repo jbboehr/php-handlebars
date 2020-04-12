@@ -381,7 +381,7 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
     ZEND_PARSE_PARAMETERS_END();
 
     // Dereference zval
-    if (Z_TYPE_P(options) == IS_REFERENCE) {
+    if (options && Z_TYPE_P(options) == IS_REFERENCE) {
         ZVAL_DEREF(options);
     }
 
@@ -453,8 +453,8 @@ PHP_METHOD(HandlebarsCompiler, compilePrint)
 
 /* {{{ Argument Info */
 ZEND_BEGIN_ARG_INFO_EX(HandlebarsCompiler_compile_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
-    ZEND_ARG_INFO(0, tmpl)
-    ZEND_ARG_INFO(0, options)
+    ZEND_ARG_TYPE_INFO(0, tmpl, IS_STRING, 0)
+    ZEND_ARG_ARRAY_INFO(0, options, 1)
 ZEND_END_ARG_INFO()
 /* }}} Argument Info */
 

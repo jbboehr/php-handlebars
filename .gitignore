@@ -52,3 +52,4 @@ tests/*.php
 tests/*.sh
 third-party
 tmp-php.ini
+vgcore.*

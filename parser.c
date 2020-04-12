@@ -367,7 +367,7 @@ PHP_METHOD(HandlebarsParser, parsePrint)
 
 /* {{{ Argument Info */
 ZEND_BEGIN_ARG_INFO_EX(HandlebarsParser_parse_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
-    ZEND_ARG_INFO(0, tmpl)
+    ZEND_ARG_TYPE_INFO(0, tmpl, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 /* }}} Argument Info */
 

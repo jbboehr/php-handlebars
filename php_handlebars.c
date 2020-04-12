@@ -137,6 +137,7 @@ static PHP_MINIT_FUNCTION(handlebars)
     }
 
     // Call other MINIT functions
+    PHP_MINIT(handlebars_registry)(INIT_FUNC_ARGS_PASSTHRU); // must be before impl
     PHP_MINIT(handlebars_impl)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_compiler)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_exceptions)(INIT_FUNC_ARGS_PASSTHRU);
@@ -144,7 +145,6 @@ static PHP_MINIT_FUNCTION(handlebars)
     PHP_MINIT(handlebars_options)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_parser)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_program)(INIT_FUNC_ARGS_PASSTHRU);
-    PHP_MINIT(handlebars_registry)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_safe_string)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_token)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_tokenizer)(INIT_FUNC_ARGS_PASSTHRU);

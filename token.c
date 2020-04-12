@@ -17,8 +17,8 @@ PHP_HANDLEBARS_API zend_class_entry * HandlebarsToken_ce_ptr;
 
 /* {{{ Argument Info */
 ZEND_BEGIN_ARG_INFO_EX(HandlebarsToken_construct_args, ZEND_SEND_BY_VAL, 0, 2)
-    ZEND_ARG_INFO(0, name)
-    ZEND_ARG_INFO(0, text)
+    ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+    ZEND_ARG_TYPE_INFO(0, text, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 /* }}} Argument Info */
 

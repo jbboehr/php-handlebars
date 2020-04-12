@@ -17,6 +17,10 @@
 /* {{{ Variables & Prototypes */
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsImpl_ce_ptr;
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsBaseImpl_ce_ptr;
+zend_string *HANDLEBARS_INTERNED_STR_LOGGER;
+zend_string *HANDLEBARS_INTERNED_STR_DECORATORS;
+zend_string *HANDLEBARS_INTERNED_STR_HELPERS;
+zend_string *HANDLEBARS_INTERNED_STR_PARTIALS;
 /* }}} Variables & Prototypes */
 
 static zend_class_entry *lookup_class(const char *name)
@@ -71,6 +75,8 @@ PHP_METHOD(HandlebarsBaseImpl, setHelpers)
     ZEND_PARSE_PARAMETERS_END();
 
     zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("helpers"), helpers);
+
+    RETURN_ZVAL(_this_zval, 1, 0);
 }
 /* }}} */
 
@@ -85,6 +91,8 @@ PHP_METHOD(HandlebarsBaseImpl, setPartials)
     ZEND_PARSE_PARAMETERS_END();
 
     zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("partials"), partials);
+
+    RETURN_ZVAL(_this_zval, 1, 0);
 }
 /* }}} */
 
@@ -99,6 +107,8 @@ PHP_METHOD(HandlebarsBaseImpl, setDecorators)
     ZEND_PARSE_PARAMETERS_END();
 
     zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("decorators"), decorators);
+
+    RETURN_ZVAL(_this_zval, 1, 0);
 }
 /* }}} */
 
@@ -114,35 +124,37 @@ PHP_METHOD(HandlebarsBaseImpl, setLogger)
 	ZEND_PARSE_PARAMETERS_END();
 
     zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("logger"), logger);
+
+    RETURN_ZVAL(_this_zval, 1, 0);
 }
 /* }}} */
 
 /* {{{ Handlebars\HandlebarsImpl methods */
 static zend_function_entry HandlebarsImpl_methods[] = {
-    PHP_ABSTRACT_ME(HandlebarsImpl, getHelpers, HandlebarsImpl_getHelpers_args)
-    PHP_ABSTRACT_ME(HandlebarsImpl, getPartials, HandlebarsImpl_getHelpers_args)
-    PHP_ABSTRACT_ME(HandlebarsImpl, getDecorators, HandlebarsImpl_getHelpers_args)
-    PHP_ABSTRACT_ME(HandlebarsImpl, getLogger, HandlebarsImpl_getHelpers_args)
-    PHP_ABSTRACT_ME(HandlebarsImpl, setHelpers, HandlebarsImpl_setHelpers_args)
-    PHP_ABSTRACT_ME(HandlebarsImpl, setPartials, HandlebarsImpl_setPartials_args)
-    PHP_ABSTRACT_ME(HandlebarsImpl, setDecorators, HandlebarsImpl_setDecorators_args)
-    PHP_ABSTRACT_ME(HandlebarsImpl, setLogger, HandlebarsImpl_setLogger_args)
-    PHP_ABSTRACT_ME(HandlebarsImpl, render, HandlebarsImpl_render_args)
-    PHP_ABSTRACT_ME(HandlebarsImpl, renderFile, HandlebarsImpl_renderFile_args)
+    PHP_ABSTRACT_ME(HandlebarsImpl, getHelpers, arginfo_HandlebarsImpl_getHelpers)
+    PHP_ABSTRACT_ME(HandlebarsImpl, getPartials, arginfo_HandlebarsImpl_getPartials)
+    PHP_ABSTRACT_ME(HandlebarsImpl, getDecorators, arginfo_HandlebarsImpl_getDecorators)
+    PHP_ABSTRACT_ME(HandlebarsImpl, getLogger, arginfo_HandlebarsImpl_getLogger)
+    PHP_ABSTRACT_ME(HandlebarsImpl, setHelpers, arginfo_HandlebarsImpl_setHelpers)
+    PHP_ABSTRACT_ME(HandlebarsImpl, setPartials, arginfo_HandlebarsImpl_setPartials)
+    PHP_ABSTRACT_ME(HandlebarsImpl, setDecorators, arginfo_HandlebarsImpl_setDecorators)
+    PHP_ABSTRACT_ME(HandlebarsImpl, setLogger, arginfo_HandlebarsImpl_setLogger)
+    PHP_ABSTRACT_ME(HandlebarsImpl, render, arginfo_HandlebarsImpl_render)
+    PHP_ABSTRACT_ME(HandlebarsImpl, renderFile, arginfo_HandlebarsImpl_renderFile)
     PHP_FE_END
 };
 /* }}} Handlebars\HandlebarsImpl methods */
 
 /* {{{ Handlebars\HandlebarsBaseImpl methods */
 static zend_function_entry HandlebarsBaseImpl_methods[] = {
-    PHP_ME(HandlebarsBaseImpl, getHelpers, HandlebarsImpl_getHelpers_args, ZEND_ACC_PUBLIC)
-    PHP_ME(HandlebarsBaseImpl, getPartials, HandlebarsImpl_getHelpers_args, ZEND_ACC_PUBLIC)
-    PHP_ME(HandlebarsBaseImpl, getDecorators, HandlebarsImpl_getHelpers_args, ZEND_ACC_PUBLIC)
-    PHP_ME(HandlebarsBaseImpl, getLogger, HandlebarsImpl_getHelpers_args, ZEND_ACC_PUBLIC)
-    PHP_ME(HandlebarsBaseImpl, setHelpers, HandlebarsImpl_setHelpers_args, ZEND_ACC_PUBLIC)
-    PHP_ME(HandlebarsBaseImpl, setPartials, HandlebarsImpl_setPartials_args, ZEND_ACC_PUBLIC)
-    PHP_ME(HandlebarsBaseImpl, setDecorators, HandlebarsImpl_setDecorators_args, ZEND_ACC_PUBLIC)
-    PHP_ME(HandlebarsBaseImpl, setLogger, HandlebarsImpl_setLogger_args, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsBaseImpl, getHelpers, arginfo_HandlebarsImpl_getHelpers, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsBaseImpl, getPartials, arginfo_HandlebarsImpl_getPartials, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsBaseImpl, getDecorators, arginfo_HandlebarsImpl_getDecorators, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsBaseImpl, getLogger, arginfo_HandlebarsImpl_getLogger, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsBaseImpl, setHelpers, arginfo_HandlebarsImpl_setHelpers, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsBaseImpl, setPartials, arginfo_HandlebarsImpl_setPartials, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsBaseImpl, setDecorators, arginfo_HandlebarsImpl_setDecorators, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsBaseImpl, setLogger, arginfo_HandlebarsImpl_setLogger, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 /* }}} Handlebars\HandlebarsBaseImpl methods */
@@ -151,6 +163,11 @@ static zend_function_entry HandlebarsBaseImpl_methods[] = {
 PHP_MINIT_FUNCTION(handlebars_impl)
 {
     zend_class_entry ce;
+
+    HANDLEBARS_INTERNED_STR_LOGGER = zend_new_interned_string(zend_string_init(ZEND_STRL("logger"), 1));
+    HANDLEBARS_INTERNED_STR_DECORATORS = zend_new_interned_string(zend_string_init(ZEND_STRL("decorators"), 1));
+    HANDLEBARS_INTERNED_STR_HELPERS = zend_new_interned_string(zend_string_init(ZEND_STRL("helpers"), 1));
+    HANDLEBARS_INTERNED_STR_PARTIALS = zend_new_interned_string(zend_string_init(ZEND_STRL("partials"), 1));
 
     INIT_CLASS_ENTRY(ce, "Handlebars\\Impl", HandlebarsImpl_methods);
     HandlebarsImpl_ce_ptr = zend_register_internal_interface(&ce);
@@ -168,10 +185,38 @@ PHP_MINIT_FUNCTION(handlebars_impl)
     HandlebarsBaseImpl_ce_ptr = zend_register_internal_class(&ce);
     zend_class_implements(HandlebarsBaseImpl_ce_ptr, 1, HandlebarsImpl_ce_ptr);
 
-    zend_declare_property_null(HandlebarsBaseImpl_ce_ptr, ZEND_STRL("helpers"), ZEND_ACC_PROTECTED);
-    zend_declare_property_null(HandlebarsBaseImpl_ce_ptr, ZEND_STRL("partials"), ZEND_ACC_PROTECTED);
-    zend_declare_property_null(HandlebarsBaseImpl_ce_ptr, ZEND_STRL("decorators"), ZEND_ACC_PROTECTED);
-    zend_declare_property_null(HandlebarsBaseImpl_ce_ptr, ZEND_STRL("logger"), ZEND_ACC_PROTECTED);
+#if PHP_VERSION_ID < 70400
+	zval default_val;
+	ZVAL_NULL(&default_val);
+    zend_declare_property_ex(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_LOGGER, &default_val, ZEND_ACC_PROTECTED, NULL);
+    zend_declare_property_ex(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_DECORATORS, &default_val, ZEND_ACC_PROTECTED, NULL);
+    zend_declare_property_ex(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_HELPERS, &default_val, ZEND_ACC_PROTECTED, NULL);
+    zend_declare_property_ex(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_PARTIALS, &default_val, ZEND_ACC_PROTECTED, NULL);
+#else
+	zval default_val;
+	ZVAL_UNDEF(&default_val);
+
+    zend_class_entry *ilogger_ce = NULL;
+    if( handlebars_has_psr ) {
+        ilogger_ce = lookup_class("Psr\\Log\\LoggerInterface");
+    }
+    if( ilogger_ce ) {
+        zend_declare_typed_property(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_LOGGER, &default_val, ZEND_ACC_PROTECTED, NULL,
+            ZEND_TYPE_ENCODE_CE(ilogger_ce, 1));
+    } else {
+        // Checking zend.c:971, it appears that we can't typehint a userland class here, sadly
+        //zend_declare_typed_property(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_LOGGER, &default_val, ZEND_ACC_PROTECTED, NULL,
+        //    ZEND_TYPE_ENCODE_CLASS(zend_string_init(ZEND_STRL("psr\\log\\loggerinterface"), 1), 1));
+        zend_declare_property_ex(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_LOGGER, &default_val, ZEND_ACC_PROTECTED, NULL);
+    }
+
+	zend_declare_typed_property(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_DECORATORS, &default_val, ZEND_ACC_PROTECTED, NULL,
+		ZEND_TYPE_ENCODE_CE(HandlebarsRegistry_ce_ptr, 1));
+	zend_declare_typed_property(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_HELPERS, &default_val, ZEND_ACC_PROTECTED, NULL,
+		ZEND_TYPE_ENCODE_CE(HandlebarsRegistry_ce_ptr, 1));
+	zend_declare_typed_property(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_PARTIALS, &default_val, ZEND_ACC_PROTECTED, NULL,
+		ZEND_TYPE_ENCODE_CE(HandlebarsRegistry_ce_ptr, 1));
+#endif
 
     return SUCCESS;
 }
