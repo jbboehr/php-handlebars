@@ -21,6 +21,8 @@
 
 /* {{{ Variables & Prototypes */
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsUtils_ce_ptr;
+static zend_string *INTERNED_CONTEXT_PATH;
+static zend_string *INTERNED_VALUE;
 /* }}} Variables & Prototypes */
 
 /* {{{ proto mixed Handlebars\Utils::appendContextPath(mixed contextPath, string id) */
@@ -39,14 +41,14 @@ PHP_METHOD(HandlebarsUtils, appendContextPath)
 
     switch( Z_TYPE_P(context_path) ) {
         case IS_ARRAY:
-        	if( (entry = zend_hash_str_find(HASH_OF(context_path), ZEND_STRL("contextPath"))) ) {
+        	if( (entry = zend_hash_find(HASH_OF(context_path), INTERNED_CONTEXT_PATH)) ) {
                 if( Z_TYPE_P(entry) == IS_STRING ) {
                     tmp = Z_STR_P(entry);
                 }
         	}
             break;
         case IS_OBJECT:
-            entry = zend_read_property(Z_OBJCE_P(context_path), context_path, ZEND_STRL("contextPath"), 1, NULL);
+            entry = zend_read_property_ex(Z_OBJCE_P(context_path), context_path, INTERNED_CONTEXT_PATH, 1, NULL);
             if( entry && Z_TYPE_P(entry) == IS_STRING ) {
                 tmp = Z_STR_P(entry);
             }
@@ -343,7 +345,7 @@ static zend_always_inline void php_handlebars_escape_expression(zval * val, zval
     zval rv;
 
     if( Z_TYPE_P(val) == IS_OBJECT && instanceof_function(Z_OBJCE_P(val), HandlebarsSafeString_ce_ptr) ) {
-        zval * value = zend_read_property(Z_OBJCE_P(val), val, ZEND_STRL("value"), 1, &rv);
+        zval * value = zend_read_property_ex(Z_OBJCE_P(val), val, INTERNED_VALUE, 1, &rv);
         RETURN_ZVAL(value, 1, 0);
     }
 
@@ -437,7 +439,7 @@ static zend_always_inline void php_handlebars_escape_expression_compat(zval * va
 
     // @todo this should probably support inheritance
     if( Z_TYPE_P(val) == IS_OBJECT && instanceof_function(Z_OBJCE_P(val), HandlebarsSafeString_ce_ptr) ) {
-        zval * value = zend_read_property(Z_OBJCE_P(val), val, ZEND_STRL("value"), 1, &rv);
+        zval * value = zend_read_property_ex(Z_OBJCE_P(val), val, INTERNED_VALUE, 1, &rv);
         RETURN_ZVAL(value, 1, 0);
     }
 
@@ -520,6 +522,9 @@ static zend_function_entry HandlebarsUtils_methods[] = {
 PHP_MINIT_FUNCTION(handlebars_utils)
 {
     zend_class_entry ce;
+
+    INTERNED_CONTEXT_PATH = zend_new_interned_string(zend_string_init(ZEND_STRL("contextPath"), 1));
+    INTERNED_VALUE = zend_new_interned_string(zend_string_init(ZEND_STRL("value"), 1));
 
     // Handlebars\Utils
     INIT_CLASS_ENTRY(ce, "Handlebars\\Utils", HandlebarsUtils_methods);
