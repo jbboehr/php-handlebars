@@ -1,9 +1,9 @@
 <?php
 
 // for syntax testing, uncomment this and execute this file:
-namespace Psr\Log;
-interface LoggerInterface {}
-interface LoggerAwareInterface {}
+// namespace Psr\Log;
+// interface LoggerInterface {}
+// interface LoggerAwareInterface {}
 
 namespace Handlebars;
 
