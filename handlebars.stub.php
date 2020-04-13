@@ -215,8 +215,9 @@ class SafeString
 {
     /**
      * @var string
+     * This uses a typed property on >= PHP 7.4
      */
-    protected string $value;
+    protected /*string*/ $value;
 
     /**
      * Constructor
@@ -241,13 +242,15 @@ class Opcode
 {
     /**
      * @var string
+     * This uses a typed property on >= PHP 7.4
      */
-    public string $opcode;
+    public /*string*/ $opcode;
 
     /**
      * @var array
+     * This uses a typed property on >= PHP 7.4
      */
-    public array $args;
+    public /*array*/ $args;
 
     /**
      * Constructor
@@ -265,13 +268,15 @@ class Token
 {
     /**
      * @var string
+     * This uses a typed property on >= PHP 7.4
      */
-    public string $name;
+    public /*string*/ $name;
 
     /**
      * @var string
+     * This uses a typed property on >= PHP 7.4
      */
-    public string $text;
+    public /*string*/ $text;
 
     /**
      * Constructor
@@ -337,7 +342,7 @@ class Program
 	 */
 	public $trackIds;
 
-	public function __construct(array $opcodes, array $children, long $blockParams) {
+	public function __construct(array $opcodes, array $children, int $blockParams) {
 		$this->opcodes = $opcodes;
 		$this->children = $children;
 		$this->blockParams = $blockParams;
@@ -369,24 +374,28 @@ abstract class BaseImpl implements Impl
 {
 	/**
 	 * @var Registry
+     * This uses a typed property on >= PHP 7.4
 	 */
-    protected Registry $helpers;
+    protected /*Registry*/ $helpers;
 
 	/**
 	 * @var Registry
+     * This uses a typed property on >= PHP 7.4
 	 */
-    protected Registry $partials;
+    protected /*Registry*/ $partials;
 
 	/**
 	 * @var Registry
+     * This uses a typed property on >= PHP 7.4
 	 */
-    protected Registry $decorators;
+    protected /*Registry*/ $decorators;
 
 	/**
 	 * @var LoggerInterface
-     * Note: this property will not be typed if the psr extension is not loaded
+     * This uses a typed property on >= PHP 7.4
+     * This property will not be typed if the psr extension is not loaded
 	 */
-    protected LoggerInterface $logger;
+    protected /*LoggerInterface*/ $logger;
 
     /**
      * @return Registry
