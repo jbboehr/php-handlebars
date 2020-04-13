@@ -366,15 +366,19 @@ PHP_METHOD(HandlebarsParser, parsePrint)
 /* }}} Handlebars\Parser::parse */
 
 /* {{{ Argument Info */
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsParser_parse_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_TYPE_INFO(HandlebarsParser, parse, 1, IS_ARRAY, 0)
+    ZEND_ARG_TYPE_INFO(0, tmpl, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
+PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_TYPE_INFO(HandlebarsParser, parsePrint, 1, IS_STRING, 0)
     ZEND_ARG_TYPE_INFO(0, tmpl, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 /* }}} Argument Info */
 
 /* {{{ HandlebarsParser methods */
 static zend_function_entry HandlebarsParser_methods[] = {
-    PHP_ME(HandlebarsParser, parse, HandlebarsParser_parse_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(HandlebarsParser, parsePrint, HandlebarsParser_parse_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsParser, parse, arginfo_HandlebarsParser_parse, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsParser, parsePrint, arginfo_HandlebarsParser_parsePrint, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_FE_END
 };
 /* }}} HandlebarsParser methods */

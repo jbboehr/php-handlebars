@@ -16,7 +16,7 @@ PHP_HANDLEBARS_API zend_class_entry * HandlebarsProgram_ce_ptr;
 ZEND_BEGIN_ARG_INFO_EX(HandlebarsProgram_construct_args, ZEND_SEND_BY_VAL, 0, 2)
 	ZEND_ARG_ARRAY_INFO(0, opcodes, 0)
 	ZEND_ARG_ARRAY_INFO(0, children, 0)
-    ZEND_ARG_INFO(0, blockParams)
+    ZEND_ARG_TYPE_INFO(0, blockParams, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 /* }}} Argument Info */
 

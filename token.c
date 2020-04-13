@@ -34,7 +34,7 @@ PHP_HANDLEBARS_API void php_handlebars_token_ctor(struct handlebars_token * toke
     if( token->string ) {
         ZVAL_STRINGL(&text, token->string->val, token->string->len);
     } else {
-        ZVAL_NULL(&text);
+        ZVAL_STRINGL(&text, "", 0);
     }
 
     object_init_ex(z_token, HandlebarsToken_ce_ptr);
@@ -85,8 +85,19 @@ PHP_MINIT_FUNCTION(handlebars_token)
     INIT_CLASS_ENTRY(ce, "Handlebars\\Token", HandlebarsToken_methods);
     HandlebarsToken_ce_ptr = zend_register_internal_class(&ce);
 
+#if PHP_VERSION_ID < 70400
     zend_declare_property_null(HandlebarsToken_ce_ptr, "name", sizeof("name")-1, ZEND_ACC_PUBLIC);
     zend_declare_property_null(HandlebarsToken_ce_ptr, "text", sizeof("text")-1, ZEND_ACC_PUBLIC);
+#else
+	zval default_val;
+	ZVAL_UNDEF(&default_val);
+    zend_string *tmp;
+
+    tmp = zend_string_init(ZEND_STRL("name"), 0);
+	zend_declare_typed_property(HandlebarsToken_ce_ptr, tmp, &default_val, ZEND_ACC_PUBLIC, NULL, ZEND_TYPE_ENCODE(IS_STRING, 0));
+    tmp = zend_string_init(ZEND_STRL("text"), 0);
+	zend_declare_typed_property(HandlebarsToken_ce_ptr, tmp, &default_val, ZEND_ACC_PUBLIC, NULL, ZEND_TYPE_ENCODE(IS_STRING, 0));
+#endif
 
     return SUCCESS;
 }

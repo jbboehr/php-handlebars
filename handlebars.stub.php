@@ -49,7 +49,7 @@ class Tokenizer
      * @param string $tmpl
      * @return array
      */
-    public static function lex(string $tmpl) {}
+    public static function lex(string $tmpl): array {}
 
     /**
      * Tokenize a template and return a readable string representation of the tokens
@@ -57,7 +57,7 @@ class Tokenizer
      * @param string $tmpl
      * @return string
      */
-    public static function lexPrint(string $tmpl) {}
+    public static function lexPrint(string $tmpl): string {}
 }
 
 class Parser
@@ -69,7 +69,7 @@ class Parser
      * @return array
      * @throws \Handlebars\ParseException
      */
-    public static function parse(string $tmpl) {}
+    public static function parse(string $tmpl): array {}
 
     /**
      * Parse a template and return a readable string representation of the AST
@@ -78,7 +78,7 @@ class Parser
      * @return string
      * @throws \Handlebars\ParseException
      */
-    public static function parsePrint(string $tmpl) {}
+    public static function parsePrint(string $tmpl): string {}
 }
 
 class Compiler
@@ -113,7 +113,7 @@ class Compiler
      * @return array
      * @throws \Handlebars\CompileException
      */
-    public static function compile(string $tmpl, array $options = null) {}
+    public static function compile(string $tmpl, array $options = null): array {}
 
     /**
      * Compile a template and return a readable string representation of the opcodes
@@ -123,7 +123,7 @@ class Compiler
      * @return string
      * @throws \Handlebars\CompileException
      */
-    public static function compilePrint(string $tmpl, array $options = null) {}
+    public static function compilePrint(string $tmpl, array $options = null): string {}
 }
 
 class Utils
@@ -242,12 +242,12 @@ class Opcode
     /**
      * @var string
      */
-    public $opcode;
+    public string $opcode;
 
     /**
      * @var array
      */
-    public $args;
+    public array $args;
 
     /**
      * Constructor
@@ -266,12 +266,12 @@ class Token
     /**
      * @var string
      */
-    public $name;
+    public string $name;
 
     /**
      * @var string
      */
-    public $text;
+    public string $text;
 
     /**
      * Constructor
@@ -337,7 +337,7 @@ class Program
 	 */
 	public $trackIds;
 
-	public function __construct(array $opcodes, array $children, $blockParams) {
+	public function __construct(array $opcodes, array $children, long $blockParams) {
 		$this->opcodes = $opcodes;
 		$this->children = $children;
 		$this->blockParams = $blockParams;
@@ -347,6 +347,10 @@ class Program
 interface Registry extends ArrayAccess, IteratorAggregate {}
 class DefaultRegistry extends ArrayObject implements Registry {}
 
+/**
+ * This interface will not extend LoggerAwareInterface if the
+ * psr extension is not loaded.
+ */
 interface Impl extends LoggerAwareInterface
 {
     public function getHelpers(): ?Registry;
@@ -380,6 +384,7 @@ abstract class BaseImpl implements Impl
 
 	/**
 	 * @var LoggerInterface
+     * Note: this property will not be typed if the psr extension is not loaded
 	 */
     protected LoggerInterface $logger;
 

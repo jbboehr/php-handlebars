@@ -3,7 +3,6 @@ Handlebars\BaseImpl reflection
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
-if( PHP_VERSION_ID < 70400 ) die('skip not applicable to < PHP 7.4');
 ?>
 --FILE--
 <?php

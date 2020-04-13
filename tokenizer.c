@@ -84,15 +84,19 @@ PHP_METHOD(HandlebarsTokenizer, lexPrint)
 /* }}} Handlebars\Tokenizer::lex */
 
 /* {{{ Argument Info */
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsTokenizer_lex_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_TYPE_INFO(HandlebarsTokenizer, lex, 1, IS_ARRAY, 0)
+    ZEND_ARG_TYPE_INFO(0, tmpl, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
+PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_TYPE_INFO(HandlebarsTokenizer, lexPrint, 1, IS_STRING, 0)
     ZEND_ARG_TYPE_INFO(0, tmpl, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 /* }}} Argument Info */
 
 /* {{{ HandlebarsTokenizer methods */
 static zend_function_entry HandlebarsTokenizer_methods[] = {
-    PHP_ME(HandlebarsTokenizer, lex, HandlebarsTokenizer_lex_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(HandlebarsTokenizer, lexPrint, HandlebarsTokenizer_lex_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsTokenizer, lex, arginfo_HandlebarsTokenizer_lex, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsTokenizer, lexPrint, arginfo_HandlebarsTokenizer_lexPrint, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_FE_END
 };
 /* }}} HandlebarsTokenizer methods */
