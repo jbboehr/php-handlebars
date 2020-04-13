@@ -73,7 +73,6 @@
    <file name="tests/gh-40.phpt" role="test" />
    <file name="tests/gh-41.phpt" role="test" />
    <file name="tests/gh-48.phpt" role="test" />
-   <file name="tests/.gitignore" role="test" />
    <file name="tests/handlebars/export/basic/001.phpt" role="test" />
    <file name="tests/handlebars/export/basic/002.phpt" role="test" />
    <file name="tests/handlebars/export/basic/003.phpt" role="test" />
