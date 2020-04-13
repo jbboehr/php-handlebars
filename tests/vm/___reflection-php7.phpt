@@ -127,7 +127,7 @@ Class [ <internal:handlebars> class Handlebars\VM extends Handlebars\BaseImpl im
       - Return [ Handlebars\Impl ]
     }
 
-    Method [ <internal:handlebars, inherits Handlebars\BaseImpl, prototype Handlebars\Impl> public method setLogger ] {
+    Method [ <internal:handlebars, inherits Handlebars\BaseImpl, prototype Psr\Log\LoggerAwareInterface> public method setLogger ] {
 
       - Parameters [1] {
         Parameter #0 [ <required> Psr\Log\LoggerInterface $logger ]

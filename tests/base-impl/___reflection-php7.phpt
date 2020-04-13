@@ -81,7 +81,7 @@ Class [ <internal:handlebars> abstract class Handlebars\BaseImpl implements Hand
       - Return [ Handlebars\Impl ]
     }
 
-    Method [ <internal:handlebars, prototype Handlebars\Impl> public method setLogger ] {
+    Method [ <internal:handlebars, prototype Psr\Log\LoggerAwareInterface> public method setLogger ] {
 
       - Parameters [1] {
         Parameter #0 [ <required> Psr\Log\LoggerInterface $logger ]
