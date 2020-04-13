@@ -23,7 +23,7 @@ buildPecl rec {
 
   buildInputs = [ handlebarsc talloc pcre pcre2 php_psr ];
   nativeBuildInputs = [ mustache_spec handlebars_spec ];
-  makeFlags = ["phpincludedir=$(out)/include/php/ext/psr"];
+  makeFlags = ["phpincludedir=$(out)/include/php/ext/handlebars"];
 
   postBuild = lib.optionalString phpHandlebarsAllTheTests ''
       MUSTACHE_SPEC_DIR=${mustache_spec}/share/mustache-spec HANDLEBARS_SPEC_DIR=${handlebars_spec}/share/handlebars-spec php generate-tests.php

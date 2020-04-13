@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 export LIBHANDLEBARS_VERSION=${LIBHANDLEBARS_VERSION:-master}
-export PHP_PSR_VERSION=${PHP_PSR_VERSION:-master}
+#export PHP_PSR_VERSION=${PHP_PSR_VERSION:-master}
 export COVERAGE=${COVERAGE:-true}
 
 export NO_INTERACTION=1
@@ -54,7 +54,9 @@ function install() (
     set -e -o pipefail
 
     install_libhandlebars
-    install_php_psr
+    if [[ ! -z "${PHP_PSR_VERSION}" ]]; then
+        install_php_psr
+    fi
 
     phpize
     if [[ "${COVERAGE}" = "true" ]]; then
@@ -83,9 +85,14 @@ function before_script() (
 function script() (
     set -e -o pipefail
 
+    extra_flags=""
+    if [[ ! -z "${PHP_PSR_VERSION}" ]]; then
+        extra_flags="-d extension=third-party/php-psr/modules/psr.so"
+    fi
+
     echo "Running main test suite"
     php run-tests.php -n \
-        -d extension=third-party/php-psr/modules/psr.so \
+        ${extra_flags} \
         -d extension=modules/handlebars.so
 )
 
