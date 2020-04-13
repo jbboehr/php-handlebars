@@ -1,5 +1,10 @@
 <?php
 
+// for syntax testing, uncomment this and execute this file:
+// namespace Psr\Log;
+// interface LoggerInterface {}
+// interface LoggerAwareInterface {}
+
 namespace Handlebars;
 
 use ArrayAccess;
@@ -32,6 +37,7 @@ interface Exception {}
 class CompileException extends \Exception implements Exception {}
 class InvalidArgumentException extends \InvalidArgumentException implements Exception {}
 class RuntimeException extends \RuntimeException implements Exception {}
+class InvalidBinaryStringException extends \Exception implements Exception {}
 
 class_alias(CompileException::class, "Handlebars\ParseException");
 
@@ -43,7 +49,7 @@ class Tokenizer
      * @param string $tmpl
      * @return array
      */
-    public static function lex($tmpl) {}
+    public static function lex(string $tmpl): array {}
 
     /**
      * Tokenize a template and return a readable string representation of the tokens
@@ -51,7 +57,7 @@ class Tokenizer
      * @param string $tmpl
      * @return string
      */
-    public static function lexPrint($tmpl) {}
+    public static function lexPrint(string $tmpl): string {}
 }
 
 class Parser
@@ -63,7 +69,7 @@ class Parser
      * @return array
      * @throws \Handlebars\ParseException
      */
-    public static function parse($tmpl) {}
+    public static function parse(string $tmpl): array {}
 
     /**
      * Parse a template and return a readable string representation of the AST
@@ -72,7 +78,7 @@ class Parser
      * @return string
      * @throws \Handlebars\ParseException
      */
-    public static function parsePrint($tmpl) {}
+    public static function parsePrint(string $tmpl): string {}
 }
 
 class Compiler
@@ -103,23 +109,21 @@ class Compiler
      * Compile a template and return the opcodes
      *
      * @param string $tmpl
-     * @param integer $flags
-     * @param array $knownHelpers
+     * @param array $options
      * @return array
      * @throws \Handlebars\CompileException
      */
-    public static function compile($tmpl, $flags = 0, array $knownHelpers = null) {}
+    public static function compile(string $tmpl, array $options = null): array {}
 
     /**
      * Compile a template and return a readable string representation of the opcodes
      *
      * @param string $tmpl
-     * @param integer $flags
-     * @param array $knownHelpers
+     * @param array $options
      * @return string
      * @throws \Handlebars\CompileException
      */
-    public static function compilePrint($tmpl, $flags = 0, array $knownHelpers = null) {}
+    public static function compilePrint(string $tmpl, array $options = null): string {}
 }
 
 class Utils
@@ -131,7 +135,7 @@ class Utils
      * @param string $id
      * @return string
      */
-    public static function appendContextPath($contextPath, $id) {}
+    public static function appendContextPath($contextPath, string $id): string {}
 
     /**
      * @param mixed $value
@@ -144,20 +148,20 @@ class Utils
      * javascript behaviours.
      *
      * @param mixed $value
-     * @retrun string
+     * @return string
      * @throws \Handlebars\RuntimeException
      */
-    public static function expression($value) {}
+    public static function expression($value): string {}
 
     /**
      * Escape an expression for the output buffer. Does not handle certain
      * javascript behaviours.
      *
      * @param mixed $value
-     * @retrun string
+     * @return string
      * @throws \Handlebars\RuntimeException
      */
-    public static function escapeExpression($value) {}
+    public static function escapeExpression($value): string {}
 
     /**
      * Escape an expression for the output buffer. Handles certain
@@ -167,7 +171,7 @@ class Utils
      * @retrun string
      * @throws \Handlebars\RuntimeException
      */
-    public static function escapeExpressionCompat($value) {}
+    public static function escapeExpressionCompat($value): string {}
 
     /**
      * Indent a multi-line string
@@ -176,7 +180,7 @@ class Utils
      * @param string $indent
      * @return string
      */
-    static public function indent($str, $indent) {}
+    static public function indent(string $str, string $indent): string {}
 
     /**
      * Similar to is_callable(), but only allows closures and objects
@@ -186,7 +190,7 @@ class Utils
      * @param array $array
      * @return boolean
      */
-    public static function isCallable($arr) {}
+    public static function isCallable($arr): bool {}
 
     /**
      * Is the array a numeric array?
@@ -194,7 +198,7 @@ class Utils
      * @param array $array
      * @return boolean
      */
-    public static function isIntArray($arr) {}
+    public static function isIntArray(array $arr): bool {}
 
     /**
      * Looks up a field in an object or array without
@@ -204,22 +208,23 @@ class Utils
      * @param string $field
      * @return mixed
      */
-    public static function nameLookup($objOrArray, $field) {}
+    public static function nameLookup($objOrArray, string $field) {}
 }
 
 class SafeString
 {
     /**
      * @var string
+     * This uses a typed property on >= PHP 7.4
      */
-    protected $value;
+    protected /*string*/ $value;
 
     /**
      * Constructor
      *
      * @param string $value
      */
-    public function __construct($value) {
+    public function __construct(string $value) {
         $this->value = $value;
     }
 
@@ -228,7 +233,7 @@ class SafeString
      *
      * @return string
      */
-    public function __toString() {
+    public function __toString(): string {
         return (string) $this->value;
     }
 }
@@ -237,13 +242,15 @@ class Opcode
 {
     /**
      * @var string
+     * This uses a typed property on >= PHP 7.4
      */
-    public $opcode;
+    public /*string*/ $opcode;
 
     /**
      * @var array
+     * This uses a typed property on >= PHP 7.4
      */
-    public $args;
+    public /*array*/ $args;
 
     /**
      * Constructor
@@ -251,7 +258,7 @@ class Opcode
      * @param string $opcode
      * @param array $args
      */
-    public function __construct($opcode, array $args) {
+    public function __construct(string $opcode, array $args) {
         $this->opcode = $opcode;
         $this->args = $args;
     }
@@ -261,13 +268,15 @@ class Token
 {
     /**
      * @var string
+     * This uses a typed property on >= PHP 7.4
      */
-    public $name;
+    public /*string*/ $name;
 
     /**
      * @var string
+     * This uses a typed property on >= PHP 7.4
      */
-    public $text;
+    public /*string*/ $text;
 
     /**
      * Constructor
@@ -275,7 +284,7 @@ class Token
      * @param string $name
      * @param string $text
      */
-    public function __construct($name, $text) {
+    public function __construct(string $name, string $text) {
         $this->name = $name;
         $this->text = $text;
     }
@@ -333,7 +342,7 @@ class Program
 	 */
 	public $trackIds;
 
-	public function __construct(array $opcodes, array $children, $blockParams) {
+	public function __construct(array $opcodes, array $children, int $blockParams) {
 		$this->opcodes = $opcodes;
 		$this->children = $children;
 		$this->blockParams = $blockParams;
@@ -343,114 +352,127 @@ class Program
 interface Registry extends ArrayAccess, IteratorAggregate {}
 class DefaultRegistry extends ArrayObject implements Registry {}
 
+/**
+ * This interface will not extend LoggerAwareInterface if the
+ * psr extension is not loaded.
+ */
 interface Impl extends LoggerAwareInterface
 {
-    public function getHelpers();
-    public function getPartials();
-    public function getDecorators();
-    public function getLogger();
-    public function setHelpers(Registry $helpers);
-    public function setPartials(Registry $partials);
-    public function setDecorators(Registry $decorators);
-    public function setLogger(LoggerInterface $logger);
-    public function render($tmpl, $context = null, array $options = null);
-    public function renderFile($filename, $context = null, array $options = null);
+    public function getHelpers(): ?Registry;
+    public function getPartials(): ?Registry;
+    public function getDecorators(): ?Registry;
+    public function getLogger(): ?LoggerInterface;
+    public function setHelpers(Registry $helpers): Impl;
+    public function setPartials(Registry $partials): Impl;
+    public function setDecorators(Registry $decorators): Impl;
+    public function setLogger(LoggerInterface $logger): Impl;
+    public function render(string $tmpl, $context = null, array $options = null): string;
+    public function renderFile(string $filename, $context = null, array $options = null): string;
 }
 
 abstract class BaseImpl implements Impl
 {
 	/**
 	 * @var Registry
+     * This uses a typed property on >= PHP 7.4
 	 */
-    protected $helpers;
+    protected /*Registry*/ $helpers;
 
 	/**
 	 * @var Registry
+     * This uses a typed property on >= PHP 7.4
 	 */
-    protected $partials;
+    protected /*Registry*/ $partials;
 
 	/**
 	 * @var Registry
+     * This uses a typed property on >= PHP 7.4
 	 */
-    protected $decorators;
+    protected /*Registry*/ $decorators;
 
 	/**
 	 * @var LoggerInterface
+     * This uses a typed property on >= PHP 7.4
+     * This property will not be typed if the psr extension is not loaded
 	 */
-    protected $logger;
+    protected /*LoggerInterface*/ $logger;
 
     /**
      * @return Registry
      */
-    public function getDecorators() {
+    public function getDecorators(): ?Registry {
         return $this->decorators;
     }
 
     /**
      * @return Registry
      */
-    public function getHelpers() {
+    public function getHelpers(): ?Registry {
         return $this->helpers;
     }
 
     /**
      * @return Registry
      */
-    public function getPartials() {
+    public function getPartials(): ?Registry {
         return $this->partials;
     }
 
     /**
      * @return LoggerInterface
      */
-    public function getLogger() {
+    public function getLogger(): ?LoggerInterface {
         return $this->logger;
     }
 
     /**
      * @param Registry $helpers
      */
-    public function setHelpers(Registry $helpers) {
+    public function setHelpers(Registry $helpers): Impl {
         $this->helpers = $helpers;
+        return $this;
     }
 
     /**
      * @param Registry $partials
      */
-    public function setPartials(Registry $partials) {
+    public function setPartials(Registry $partials): Impl {
         $this->partials = $partials;
+        return $this;
     }
 
     /**
      * @param Registry $decorators
      */
-    public function setDecorators(Registry $decorators) {
+    public function setDecorators(Registry $decorators): Impl {
         $this->decorators = $decorators;
+        return $this;
     }
 
     /**
      * @param LoggerInterface $logger
      */
-    public function setLogger(LoggerInterface $logger) {
+    public function setLogger(LoggerInterface $logger): Impl {
         $this->logger = $logger;
+        return $this;
     }
 }
 
 class VM extends BaseImpl
 {
-    public function setHelpers(Registry $helpers) {}
+    public function setHelpers(Registry $helpers): Impl {}
 
-    public function setPartials(Registry $partials) {}
+    public function setPartials(Registry $partials): Impl {}
 
-    public function setLogger(LoggerInterface $partials) {}
+    public function setLogger(LoggerInterface $partials): Impl {}
 
-    public function render($tmpl, $context = null, array $options = null) {}
+    public function render(string $tmpl, $context = null, array $options = null): string {}
 
-    public function renderFile($filename, $context = null, array $options = null) {}
+    public function renderFile(string $filename, $context = null, array $options = null): string {}
 
-    public function compile($tmpl, array $options = null) {}
+    public function compile(string $tmpl, array $options = null): string {}
 
-    public function renderFromBinaryString($binaryString, $context = null, array $options = null) {}
+    public function renderFromBinaryString(string $binaryString, $context = null, array $options = null): string {}
 }
 
 /*

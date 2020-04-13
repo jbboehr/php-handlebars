@@ -5,7 +5,6 @@ Handlebars\Utils::isIntArray()
 --FILE--
 <?php
 use Handlebars\Utils;
-var_dump(Utils::isIntArray(true));
 var_dump(Utils::isIntArray(array()));
 var_dump(Utils::isIntArray(array('a')));
 var_dump(Utils::isIntArray(array('a', 'b')));
@@ -15,7 +14,6 @@ $tmp = array('a', 'b');
 unset($tmp[0]);
 var_dump(Utils::isIntArray($tmp));
 --EXPECT--
-bool(false)
 bool(true)
 bool(true)
 bool(true)

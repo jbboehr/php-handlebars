@@ -33,6 +33,7 @@ Makefile.fragments
 Makefile.global
 Makefile.objects
 *.mem
+*.mem.core.*
 missing
 mkinstalldirs
 modules
@@ -52,3 +53,4 @@ tests/*.php
 tests/*.sh
 third-party
 tmp-php.ini
+vgcore.*

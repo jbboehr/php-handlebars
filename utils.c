@@ -304,7 +304,11 @@ static zend_always_inline zend_bool php_handlebars_expression(zval * val, zval *
         case IS_ARRAY:
             if( php_handlebars_is_int_array(val) ) {
                 delim = zend_string_init(",", 1, 0);
+#if PHP_VERSION_ID >= 80000
+                php_implode(delim, Z_ARRVAL_P(val), return_value);
+#else
                 php_implode(delim, val, return_value);
+#endif
                 zend_string_free(delim);
             } else {
                 zend_throw_exception(HandlebarsRuntimeException_ce_ptr, "Trying to stringify assoc array", 0);
@@ -471,10 +475,10 @@ PHP_METHOD(HandlebarsUtils, escapeExpressionCompat)
 /* }}} Handlebars\Utils::escapeExpressionCompat */
 
 /* {{{ Argument Info */
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsUtils_appendContextPath_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
+PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_TYPE_INFO(HandlebarsUtils, appendContextPath, 2, IS_STRING, 0)
     ZEND_ARG_INFO(0, contextPath)
-    ZEND_ARG_INFO(0, id)
-ZEND_END_ARG_INFO()
+    ZEND_ARG_TYPE_INFO(0, id, IS_STRING, 0)
+PHP_HANDLEBARS_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(HandlebarsUtils_createFrame_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
     ZEND_ARG_INFO(0, value)
@@ -482,38 +486,38 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(HandlebarsUtils_nameLookup_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
     ZEND_ARG_INFO(0, objOrArray)
-    ZEND_ARG_INFO(0, field)
+    ZEND_ARG_TYPE_INFO(0, field, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsUtils_indent_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
-    ZEND_ARG_INFO(0, str)
-    ZEND_ARG_INFO(0, indent)
-ZEND_END_ARG_INFO()
+PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_TYPE_INFO(HandlebarsUtils, indent, 2, IS_STRING, 0)
+    ZEND_ARG_TYPE_INFO(0, str, IS_STRING, 0)
+    ZEND_ARG_TYPE_INFO(0, indent, IS_STRING, 0)
+PHP_HANDLEBARS_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsUtils_isCallable_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_TYPE_INFO(HandlebarsUtils, isCallable, 1, _IS_BOOL, 0)
     ZEND_ARG_INFO(0, name)
-ZEND_END_ARG_INFO()
+PHP_HANDLEBARS_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsUtils_isIntArray_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
-    ZEND_ARG_INFO(0, arr)
-ZEND_END_ARG_INFO()
+PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_TYPE_INFO(HandlebarsUtils, isIntArray, 1, _IS_BOOL, 0)
+    ZEND_ARG_ARRAY_INFO(0, arr, 0)
+PHP_HANDLEBARS_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsUtils_expression_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_TYPE_INFO(HandlebarsUtils, expression, 1, IS_STRING, 0)
     ZEND_ARG_INFO(0, value)
-ZEND_END_ARG_INFO()
+PHP_HANDLEBARS_END_ARG_INFO()
 /* }}} Argument Info */
 
 /* {{{ HandlebarsUtils methods */
 static zend_function_entry HandlebarsUtils_methods[] = {
-    PHP_ME(HandlebarsUtils, appendContextPath, HandlebarsUtils_appendContextPath_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsUtils, appendContextPath, arginfo_HandlebarsUtils_appendContextPath, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(HandlebarsUtils, createFrame, HandlebarsUtils_createFrame_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_ME(HandlebarsUtils, nameLookup, HandlebarsUtils_nameLookup_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(HandlebarsUtils, indent, HandlebarsUtils_indent_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(HandlebarsUtils, isCallable, HandlebarsUtils_isCallable_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(HandlebarsUtils, isIntArray, HandlebarsUtils_isIntArray_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(HandlebarsUtils, expression, HandlebarsUtils_expression_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(HandlebarsUtils, escapeExpression, HandlebarsUtils_expression_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-    PHP_ME(HandlebarsUtils, escapeExpressionCompat, HandlebarsUtils_expression_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsUtils, indent, arginfo_HandlebarsUtils_indent, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsUtils, isCallable, arginfo_HandlebarsUtils_isCallable, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsUtils, isIntArray, arginfo_HandlebarsUtils_isIntArray, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsUtils, expression, arginfo_HandlebarsUtils_expression, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsUtils, escapeExpression, arginfo_HandlebarsUtils_expression, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+    PHP_ME(HandlebarsUtils, escapeExpressionCompat, arginfo_HandlebarsUtils_expression, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
     PHP_FE_END
 };
 /* }}} HandlebarsUtils methods */

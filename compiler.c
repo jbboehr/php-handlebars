@@ -381,7 +381,7 @@ static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short pr
     ZEND_PARSE_PARAMETERS_END();
 
     // Dereference zval
-    if (Z_TYPE_P(options) == IS_REFERENCE) {
+    if (options && Z_TYPE_P(options) == IS_REFERENCE) {
         ZVAL_DEREF(options);
     }
 
@@ -452,16 +452,21 @@ PHP_METHOD(HandlebarsCompiler, compilePrint)
 /* }}} Handlebars\Compiler::compile */
 
 /* {{{ Argument Info */
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsCompiler_compile_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
-    ZEND_ARG_INFO(0, tmpl)
-    ZEND_ARG_INFO(0, options)
+PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_TYPE_INFO(HandlebarsCompiler, compile, 1, IS_ARRAY, 0)
+    ZEND_ARG_TYPE_INFO(0, tmpl, IS_STRING, 0)
+    ZEND_ARG_ARRAY_INFO(0, options, 1)
+ZEND_END_ARG_INFO()
+
+PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_TYPE_INFO(HandlebarsCompiler, compilePrint, 1, IS_STRING, 0)
+    ZEND_ARG_TYPE_INFO(0, tmpl, IS_STRING, 0)
+    ZEND_ARG_ARRAY_INFO(0, options, 1)
 ZEND_END_ARG_INFO()
 /* }}} Argument Info */
 
 /* {{{ HandlebarsCompiler methods */
 static zend_function_entry HandlebarsCompiler_methods[] = {
-	PHP_ME(HandlebarsCompiler, compile, HandlebarsCompiler_compile_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-	PHP_ME(HandlebarsCompiler, compilePrint, HandlebarsCompiler_compile_args, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	PHP_ME(HandlebarsCompiler, compile, arginfo_HandlebarsCompiler_compile, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
+	PHP_ME(HandlebarsCompiler, compilePrint, arginfo_HandlebarsCompiler_compilePrint, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 	PHP_FE_END
 };
 /* }}} HandlebarsCompiler methods */

@@ -14,12 +14,12 @@ static zend_string *INTERNED_VALUE;
 /* }}} Variables & Prototypes */
 
 /* {{{ Argument Info */
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsSafeString_construct_args, ZEND_SEND_BY_VAL, 0, 1)
-    ZEND_ARG_INFO(0, value)
+PHP_HANDLEBARS_BEGIN_ARG_INFO(HandlebarsSafeString, __construct, 1)
+    ZEND_ARG_TYPE_INFO(0, value, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsSafeString_toString_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
-ZEND_END_ARG_INFO()
+PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_TYPE_INFO(HandlebarsSafeString, __toString, 0, IS_STRING, 0)
+PHP_HANDLEBARS_END_ARG_INFO()
 /* }}} Argument Info */
 
 /* {{{ proto Handlebars\SafeString::__construct(string value) */
@@ -50,8 +50,8 @@ PHP_METHOD(HandlebarsSafeString, __toString)
 
 /* {{{ HandlebarsSafeString methods */
 static zend_function_entry HandlebarsSafeString_methods[] = {
-    PHP_ME(HandlebarsSafeString, __construct, HandlebarsSafeString_construct_args, ZEND_ACC_PUBLIC)
-    PHP_ME(HandlebarsSafeString, __toString, HandlebarsSafeString_toString_args, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsSafeString, __construct, arginfo_HandlebarsSafeString___construct, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsSafeString, __toString, arginfo_HandlebarsSafeString___toString, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 /* }}} HandlebarsSafeString methods */
@@ -60,12 +60,31 @@ static zend_function_entry HandlebarsSafeString_methods[] = {
 PHP_MINIT_FUNCTION(handlebars_safe_string)
 {
     zend_class_entry ce;
+	zval default_val;
 
     INTERNED_VALUE = zend_new_interned_string(zend_string_init(ZEND_STRL("value"), 1));
 
     INIT_CLASS_ENTRY(ce, "Handlebars\\SafeString", HandlebarsSafeString_methods);
     HandlebarsSafeString_ce_ptr = zend_register_internal_class(&ce);
-    zend_declare_property_null(HandlebarsSafeString_ce_ptr, "value", sizeof("value")-1, ZEND_ACC_PROTECTED);
+
+#if PHP_VERSION_ID >= 80000
+
+	ZVAL_UNDEF(&default_val);
+	zend_declare_typed_property(HandlebarsSafeString_ce_ptr, INTERNED_VALUE, &default_val, ZEND_ACC_PROTECTED, NULL,
+		(zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+
+#elif PHP_VERSION_ID >= 70400
+
+	ZVAL_UNDEF(&default_val);
+	zend_declare_typed_property(HandlebarsSafeString_ce_ptr, INTERNED_VALUE, &default_val, ZEND_ACC_PROTECTED, NULL,
+		ZEND_TYPE_ENCODE(IS_STRING, 0));
+
+#else
+
+	ZVAL_NULL(&default_val);
+    zend_declare_property_ex(HandlebarsSafeString_ce_ptr, INTERNED_VALUE, &default_val, ZEND_ACC_PROTECTED, NULL);
+
+#endif
 
     return SUCCESS;
 }

@@ -59,17 +59,20 @@ static inline void register_prop_handler(const char * name, zend_object_read_pro
 }
 
 /* {{{ Argument Info */
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsOptions_construct_args, ZEND_SEND_BY_VAL, 0, 1)
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsOptions_construct_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
     ZEND_ARG_ARRAY_INFO(0, props, 1)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsOptions_offsetExists_args, ZEND_SEND_BY_VAL, 0, 1)
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsOptions_offsetExists_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
     ZEND_ARG_INFO(0, prop)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsOptions_offsetSet_args, ZEND_SEND_BY_VAL, 0, 2)
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsOptions_offsetSet_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
     ZEND_ARG_INFO(0, prop)
     ZEND_ARG_INFO(0, value)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsOptions_fn_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
 /* }}} Argument Info */
 
@@ -488,8 +491,8 @@ PHP_METHOD(HandlebarsOptions, offsetUnset)
 /* {{{ Handlebars\Options methods */
 static zend_function_entry HandlebarsOptions_methods[] = {
     PHP_ME(HandlebarsOptions, __construct, HandlebarsOptions_construct_args, ZEND_ACC_PUBLIC)
-    PHP_ME(HandlebarsOptions, fn, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(HandlebarsOptions, inverse, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsOptions, fn, HandlebarsOptions_fn_args, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsOptions, inverse, HandlebarsOptions_fn_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsOptions, offsetExists, HandlebarsOptions_offsetExists_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsOptions, offsetGet, HandlebarsOptions_offsetExists_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsOptions, offsetSet, HandlebarsOptions_offsetSet_args, ZEND_ACC_PUBLIC)

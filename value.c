@@ -5,12 +5,13 @@
 
 #include "Zend/zend_API.h"
 #include "Zend/zend_closures.h"
+#include "Zend/zend_compile.h"
 #include "Zend/zend_exceptions.h"
 #include "Zend/zend_interfaces.h"
+#include "Zend/zend_types.h"
 #include "main/php.h"
 
 #include <talloc.h>
-#include <zend_compile.h>
 
 #include "handlebars.h"
 #include "handlebars_private.h"
@@ -344,6 +345,22 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
         num_args = fptr->common.num_args;
 
         if (argc < num_args) {
+#if PHP_VERSION_ID >= 80000
+            zend_type type = (arg_info + argc)->type;
+            zend_type *subtype;
+
+            if (ZEND_TYPE_IS_ONLY_MASK(type)) {
+                send_options = 0;
+            }
+
+            ZEND_TYPE_FOREACH(type, subtype) {
+                if (ZEND_TYPE_HAS_NAME(*subtype)) {
+                    if (0 == strcmp(ZSTR_VAL(ZEND_TYPE_NAME(type)), "Handlebars\\Options")) {
+                        send_options = 1;
+                    }
+                }
+            } ZEND_TYPE_FOREACH_END();
+#else
             if (ZEND_TYPE_IS_CLASS((arg_info + argc)->type)) {
                 if (0 == strcmp(ZSTR_VAL(ZEND_TYPE_NAME((arg_info + argc)->type)), "Handlebars\\Options")) {
                     send_options = 1;
@@ -355,6 +372,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
             } else {
                 send_options = 1;
             }
+#endif
         }
     }
 

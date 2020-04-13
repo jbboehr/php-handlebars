@@ -108,36 +108,65 @@ PHP_HANDLEBARS_API zval * handlebars_value_to_zval(struct handlebars_value * val
         } \
     } while(0)
 
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_getHelpers_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
-ZEND_END_ARG_INFO()
+#define PHP_HANDLEBARS_BEGIN_ARG_INFO(c, f, n) ZEND_BEGIN_ARG_INFO_EX(arginfo_ ## c ## _ ## f, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, n)
+#define PHP_HANDLEBARS_END_ARG_INFO ZEND_END_ARG_INFO
 
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_setHelpers_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+#ifdef ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX
+#define PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_OBJ_INFO(c, f, n, cn, an) ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_ ## c ## _ ## f, ZEND_RETURN_VALUE, n, cn, an)
+#define PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_TYPE_INFO(c, f, n, t, an) ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_ ## c ## _ ## f, ZEND_RETURN_VALUE, n, t, an)
+#else
+#define PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_OBJ_INFO(c, f, n, cn, an) ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_ ## c ## _ ## f, ZEND_RETURN_VALUE, n, IS_OBJECT, #cn, an)
+#define PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_TYPE_INFO(c, f, n, t, an) ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_ ## c ## _ ## f, ZEND_RETURN_VALUE, n, t, NULL, an)
+#endif
+
+PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_OBJ_INFO(HandlebarsImpl, getLogger, 0, Psr\\Logger\\LoggerInterface, 1)
+PHP_HANDLEBARS_END_ARG_INFO()
+
+PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_OBJ_INFO(HandlebarsImpl, getDecorators, 0, Handlebars\\Registry, 1)
+PHP_HANDLEBARS_END_ARG_INFO()
+
+PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_OBJ_INFO(HandlebarsImpl, getHelpers, 0, Handlebars\\Registry, 1)
+PHP_HANDLEBARS_END_ARG_INFO()
+
+PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_OBJ_INFO(HandlebarsImpl, getPartials, 0, Handlebars\\Registry, 1)
+PHP_HANDLEBARS_END_ARG_INFO()
+
+PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_OBJ_INFO(HandlebarsImpl, setHelpers, 1, Handlebars\\Impl, 0)
     ZEND_ARG_OBJ_INFO(0, helpers, Handlebars\\Registry, 0)
-ZEND_END_ARG_INFO()
+PHP_HANDLEBARS_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_setPartials_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_OBJ_INFO(HandlebarsImpl, setPartials, 1, Handlebars\\Impl, 0)
     ZEND_ARG_OBJ_INFO(0, partials, Handlebars\\Registry, 0)
-ZEND_END_ARG_INFO()
+PHP_HANDLEBARS_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_setDecorators_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
-    ZEND_ARG_OBJ_INFO(0, partials, Handlebars\\Registry, 0)
-ZEND_END_ARG_INFO()
+PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_OBJ_INFO(HandlebarsImpl, setDecorators, 1, Handlebars\\Impl, 0)
+    ZEND_ARG_OBJ_INFO(0, decorators, Handlebars\\Registry, 0)
+PHP_HANDLEBARS_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_setLogger_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_OBJ_INFO(HandlebarsImpl, setLogger, 1, Handlebars\\Impl, 0)
     ZEND_ARG_OBJ_INFO(0, logger, Psr\\Log\\LoggerInterface, 0)
-ZEND_END_ARG_INFO()
+PHP_HANDLEBARS_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_render_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
-    ZEND_ARG_INFO(0, tmpl)
+PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_TYPE_INFO(HandlebarsImpl, render, 1, IS_STRING, 0)
+    ZEND_ARG_TYPE_INFO(0, tmpl, IS_STRING, 0)
     ZEND_ARG_INFO(0, context)
     ZEND_ARG_ARRAY_INFO(0, options, 1)
-ZEND_END_ARG_INFO()
+PHP_HANDLEBARS_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(HandlebarsImpl_renderFile_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
-    ZEND_ARG_INFO(0, filename)
+PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_TYPE_INFO(HandlebarsImpl, renderFile, 1, IS_STRING, 0)
+    ZEND_ARG_TYPE_INFO(0, filename, IS_STRING, 0)
     ZEND_ARG_INFO(0, context)
     ZEND_ARG_ARRAY_INFO(0, options, 1)
-ZEND_END_ARG_INFO()
+PHP_HANDLEBARS_END_ARG_INFO()
+
+// backwards compatibility
+#define HandlebarsImpl_getHelpers_args arginfo_HandlebarsImpl_getHelpers
+#define HandlebarsImpl_setHelpers_args arginfo_HandlebarsImpl_setHelpers
+#define HandlebarsImpl_setPartials_args arginfo_HandlebarsImpl_setPartials
+#define HandlebarsImpl_setDecorators_args arginfo_HandlebarsImpl_setDecorators
+#define HandlebarsImpl_setLogger_args arginfo_HandlebarsImpl_setLogger
+#define HandlebarsImpl_render_args arginfo_HandlebarsImpl_render
+#define HandlebarsImpl_renderFile_args arginfo_HandlebarsImpl_renderFile
 
 #endif	/* PHP_HANDLEBARS_H */
 

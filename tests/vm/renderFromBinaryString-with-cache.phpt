@@ -1,5 +1,5 @@
 --TEST--
-Handlebars\VM::renderFromBinaryString()
+Handlebars\VM::renderFromBinaryString() with cache
 --SKIPIF--
 <?php if( !extension_loaded('handlebars') ) die('skip '); ?>
 --INI--
@@ -11,7 +11,7 @@ handlebars.cache.stat=0
 <?php
 use Handlebars\VM;
 $vm = new VM();
-$binaryString = $vm->compile(file_get_contents(__DIR__ . '/fixture1.hbs'));
+$binaryString = $vm->compile(file_get_contents(__DIR__ . '/../fixture1.hbs'));
 
 var_dump($vm->renderFromBinaryString($binaryString, array('foo' => 'bar'), array(
     'cacheId' => 'bat',

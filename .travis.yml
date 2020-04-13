@@ -50,12 +50,12 @@ matrix:
     - NIX_PHP_ATTR=php73
   - language: nix
     env:
-    - NIX_CHANNEL=unstable
+    - NIX_CHANNEL=20.03
     - NIX_PHP_ATTR=php74
-  - language: nix
-    env:
-    - NIX_CHANNEL=unstable
-    - NIX_PHP_ATTR=php
+#   - language: nix
+#     env:
+#     - NIX_CHANNEL=unstable
+#     - NIX_PHP_ATTR=php
 
 env:
   global:
