@@ -60,6 +60,7 @@
    <file name="tests/base-impl/logger.phpt" role="test" />
    <file name="tests/base-impl/partials-php74.phpt" role="test" />
    <file name="tests/base-impl/partials.phpt" role="test" />
+   <file name="tests/base-impl/___reflection-php74.phpt" role="test" />
    <file name="tests/base-impl/___reflection-php7.phpt" role="test" />
    <file name="tests/base-impl/___reflection-php7-without-psr.phpt" role="test" />
    <file name="tests/base-impl/___reflection.phpt" role="test" />
@@ -1292,6 +1293,7 @@
    <file name="tests/vm/getDecorators.phpt" role="test" />
    <file name="tests/vm/getHelpers.phpt" role="test" />
    <file name="tests/vm/getPartials.phpt" role="test" />
+   <file name="tests/vm/___reflection-php74.phpt" role="test" />
    <file name="tests/vm/___reflection-php7.phpt" role="test" />
    <file name="tests/vm/___reflection-php7-without-psr.phpt" role="test" />
    <file name="tests/vm/___reflection.phpt" role="test" />
