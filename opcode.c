@@ -76,8 +76,8 @@ PHP_MINIT_FUNCTION(handlebars_opcode)
 #else
 
 	ZVAL_NULL(&default_val);
-    zend_declare_property_ex(HandlebarsOpcode_ce_ptr, INTERNED_OPCODE, &default_val, ZEND_ACC_PUBLIC);
-    zend_declare_property_ex(HandlebarsOpcode_ce_ptr, INTERNED_ARGS, &default_val, ZEND_ACC_PUBLIC);
+    zend_declare_property_ex(HandlebarsOpcode_ce_ptr, INTERNED_OPCODE, &default_val, ZEND_ACC_PUBLIC, NULL);
+    zend_declare_property_ex(HandlebarsOpcode_ce_ptr, INTERNED_ARGS, &default_val, ZEND_ACC_PUBLIC, NULL);
 
 #endif
 

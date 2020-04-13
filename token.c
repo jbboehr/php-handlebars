@@ -114,8 +114,8 @@ PHP_MINIT_FUNCTION(handlebars_token)
 #else
 
 	ZVAL_NULL(&default_val);
-    zend_declare_property_ex(HandlebarsToken_ce_ptr, INTERNED_NAME, &default_val, ZEND_ACC_PUBLIC);
-    zend_declare_property_ex(HandlebarsToken_ce_ptr, INTERNED_TEXT, &default_val, ZEND_ACC_PUBLIC);
+    zend_declare_property_ex(HandlebarsToken_ce_ptr, INTERNED_NAME, &default_val, ZEND_ACC_PUBLIC, NULL);
+    zend_declare_property_ex(HandlebarsToken_ce_ptr, INTERNED_TEXT, &default_val, ZEND_ACC_PUBLIC, NULL);
 
 #endif
 

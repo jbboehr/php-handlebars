@@ -82,7 +82,7 @@ PHP_MINIT_FUNCTION(handlebars_safe_string)
 #else
 
 	ZVAL_NULL(&default_val);
-    zend_declare_property_ex(HandlebarsSafeString_ce_ptr, INTERNED_VALUE, &default_val, ZEND_ACC_PROTECTED);
+    zend_declare_property_ex(HandlebarsSafeString_ce_ptr, INTERNED_VALUE, &default_val, ZEND_ACC_PROTECTED, NULL);
 
 #endif
 
