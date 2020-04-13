@@ -18,15 +18,19 @@ try {
 try {
     $tmp = $binaryString;
     $tmp[0] = chr(0xFF);
-    $vm->renderFromBinaryString($tmp);
+    $tmp[1] = chr(0xFF);
+    var_dump($vm->renderFromBinaryString($tmp));
 } catch (\Handlebars\InvalidBinaryStringException $e) {
     var_dump($e->getMessage());
 }
 
 try {
     $tmp = $binaryString;
-    $tmp[51] = chr(0xFF);
-    $vm->renderFromBinaryString($tmp);
+    // Hitting only one random bit seems to fail (pass) once in a while
+    for ($i = 51; $i < 251; $i++) {
+        $tmp[$i] = chr(0xFF);
+    }
+    var_dump($vm->renderFromBinaryString($tmp));
 } catch (\Handlebars\InvalidBinaryStringException $e) {
     var_dump($e->getMessage());
 }
