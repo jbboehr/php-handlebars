@@ -33,6 +33,7 @@ Makefile.fragments
 Makefile.global
 Makefile.objects
 *.mem
+*.mem.core.*
 missing
 mkinstalldirs
 modules

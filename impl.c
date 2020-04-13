@@ -201,9 +201,9 @@ PHP_MINIT_FUNCTION(handlebars_impl)
         zend_declare_typed_property(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_LOGGER, &default_val, ZEND_ACC_PROTECTED, NULL,
             (zend_type) ZEND_TYPE_INIT_CE(ilogger_ce, 1, 0));
     } else {
-        // Checking zend.c:971, it appears that we can't typehint a userland class here, sadly
-        //zend_declare_typed_property(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_LOGGER, &default_val, ZEND_ACC_PROTECTED, NULL,
-        //    ZEND_TYPE_ENCODE_CLASS(zend_string_init(ZEND_STRL("psr\\log\\loggerinterface"), 1), 1));
+        // checking zend.c:991, it appears that we can't typehint a userland class here, sadly
+        // zend_declare_typed_property(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_LOGGER, &default_val, ZEND_ACC_PROTECTED, NULL,
+        //     (zend_type) ZEND_TYPE_INIT_CLASS(zend_string_init(ZEND_STRL("psr\\log\\loggerinterface"), 1), 1, 0));
         zend_declare_property_ex(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_LOGGER, &default_val, ZEND_ACC_PROTECTED, NULL);
     }
 
