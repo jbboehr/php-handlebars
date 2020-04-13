@@ -65,11 +65,12 @@
    <file name="tests/base-impl/___reflection-php7-without-psr.phpt" role="test" />
    <file name="tests/base-impl/___reflection.phpt" role="test" />
    <file name="tests/base-impl/___reflection-without-psr.phpt" role="test" />
-   <file name="tests/cache-mmap.phpt" role="test" />
-   <file name="tests/cache-none.phpt" role="test" />
-   <file name="tests/cache-nostat.phpt" role="test" />
-   <file name="tests/cache-simple.phpt" role="test" />
-   <file name="tests/cache-stat.phpt" role="test" />
+   <file name="tests/cache/mmap.phpt" role="test" />
+   <file name="tests/cache/none.phpt" role="test" />
+   <file name="tests/cache/nostat.phpt" role="test" />
+   <file name="tests/cache/simple.phpt" role="test" />
+   <file name="tests/cache/stat.phpt" role="test" />
+   <file name="tests/context-reference.phpt" role="test" />
    <file name="tests/fixture1.hbs" role="test" />
    <file name="tests/gh-40.phpt" role="test" />
    <file name="tests/gh-41.phpt" role="test" />
@@ -526,8 +527,6 @@
    <file name="tests/handlebars/export/whitespace-control/034.phpt" role="test" />
    <file name="tests/handlebars/export/whitespace-control/035.phpt" role="test" />
    <file name="tests/handlebars/export/whitespace-control/036.phpt" role="test" />
-   <file name="tests/HandlebarsOptions_construct.phpt" role="test" />
-   <file name="tests/HandlebarsOptions_fn.phpt" role="test" />
    <file name="tests/handlebars/spec/basic/001.phpt" role="test" />
    <file name="tests/handlebars/spec/basic/002.phpt" role="test" />
    <file name="tests/handlebars/spec/basic/003.phpt" role="test" />
@@ -1147,19 +1146,12 @@
    <file name="tests/handlebars/spec/whitespace-control/034.phpt" role="test" />
    <file name="tests/handlebars/spec/whitespace-control/035.phpt" role="test" />
    <file name="tests/handlebars/spec/whitespace-control/036.phpt" role="test" />
-   <file name="tests/HandlebarsUtils_appendContextPath.phpt" role="test" />
-   <file name="tests/HandlebarsUtils_createFrame.phpt" role="test" />
-   <file name="tests/HandlebarsUtils_escapeExpressionCompat.phpt" role="test" />
-   <file name="tests/HandlebarsUtils_escapeExpression.phpt" role="test" />
-   <file name="tests/HandlebarsUtils_expression.phpt" role="test" />
-   <file name="tests/HandlebarsUtils_isCallable.phpt" role="test" />
-   <file name="tests/HandlebarsUtils_isIntArray.phpt" role="test" />
-   <file name="tests/HandlebarsUtils_nameLookup.phpt" role="test" />
-   <file name="tests/HandlebarsUtils_nameLookup_win64.phpt" role="test" />
    <file name="tests/helper-with-exception.phpt" role="test" />
    <file name="tests/helper-with-options.phpt" role="test" />
    <file name="tests/helper-with-options-union.phpt" role="test" />
+   <file name="tests/log-default.phpt" role="test" />
    <file name="tests/method-lookup.phpt" role="test" />
+   <file name="tests/missing-file.phpt" role="test" />
    <file name="tests/mustache/comments/001.phpt" role="test" />
    <file name="tests/mustache/comments/002.phpt" role="test" />
    <file name="tests/mustache/comments/003.phpt" role="test" />
@@ -1273,6 +1265,7 @@
    <file name="tests/mustache/sections/024.phpt" role="test" />
    <file name="tests/mustache/sections/025.phpt" role="test" />
    <file name="tests/mustache/sections/026.phpt" role="test" />
+   <file name="tests/nopool.phpt" role="test" />
    <file name="tests/opcode/args-php74.phpt" role="test" />
    <file name="tests/opcode/args.phpt" role="test" />
    <file name="tests/opcode/__construct-php7.phpt" role="test" />
@@ -1281,6 +1274,8 @@
    <file name="tests/opcode/opcode.phpt" role="test" />
    <file name="tests/opcode/___reflection-php7.phpt" role="test" />
    <file name="tests/opcode/___reflection.phpt" role="test" />
+   <file name="tests/options/__construct.phpt" role="test" />
+   <file name="tests/options/fn.phpt" role="test" />
    <file name="tests/phpinfo-no-cache.phpt" role="test" />
    <file name="tests/phpinfo.phpt" role="test" />
    <file name="tests/safe-string/__construct.phpt" role="test" />
@@ -1289,7 +1284,18 @@
    <file name="tests/safe-string/__toString.phpt" role="test" />
    <file name="tests/safe-string/value-php74.phpt" role="test" />
    <file name="tests/safe-string/value.phpt" role="test" />
+   <file name="tests/utils/appendContextPath.phpt" role="test" />
+   <file name="tests/utils/createFrame.phpt" role="test" />
+   <file name="tests/utils/escapeExpressionCompat.phpt" role="test" />
+   <file name="tests/utils/escapeExpression.phpt" role="test" />
+   <file name="tests/utils/expression.phpt" role="test" />
    <file name="tests/utils.inc" role="test" />
+   <file name="tests/utils/indent.phpt" role="test" />
+   <file name="tests/utils/isCallable.phpt" role="test" />
+   <file name="tests/utils/isIntArray.phpt" role="test" />
+   <file name="tests/utils/nameLookup.phpt" role="test" />
+   <file name="tests/utils/nameLookup-win64.phpt" role="test" />
+   <file name="tests/vm/__construct.phpt" role="test" />
    <file name="tests/vm/getDecorators.phpt" role="test" />
    <file name="tests/vm/getHelpers.phpt" role="test" />
    <file name="tests/vm/getPartials.phpt" role="test" />

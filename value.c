@@ -48,15 +48,15 @@ static inline zval * get_intern_zval(struct handlebars_value * value) {
 }
 static inline void set_intern_zval(struct handlebars_value * value, zval * val) {
     struct handlebars_zval * obj;
-    if( !value->v.usr ) {
+	assert(value->v.usr == NULL);
+    // if( !value->v.usr ) {
         obj = talloc_zero(value->ctx, struct handlebars_zval);
         obj->usr.handlers = &handlebars_value_std_zval_handlers;
         value->v.usr = (struct handlebars_user *) obj;
         talloc_set_destructor(obj, handlebars_zval_intern_dtor);
-    } else {
-        //obj = talloc_get_type(value->v.usr, struct handlebars_zval);
-        obj = (struct handlebars_zval *) value->v.usr;
-    }
+    // } else {
+    //     obj = (struct handlebars_zval *) value->v.usr;
+    // }
     obj->int_array = -1;
     obj->callable = -1;
     ZVAL_ZVAL(&obj->intern, val, 1, 0);
@@ -105,9 +105,10 @@ static enum handlebars_value_type handlebars_std_zval_type(struct handlebars_val
                 return HANDLEBARS_VALUE_TYPE_HELPER;
             }
             return HANDLEBARS_VALUE_TYPE_MAP;
-        default:
+
+        default: // LCOV_EXCL_START
             assert(0);
-            break;
+            break; // LCOV_EXCL_STOP
     }
     return HANDLEBARS_VALUE_TYPE_NULL;
 }
@@ -559,10 +560,10 @@ PHP_HANDLEBARS_API struct handlebars_value * handlebars_value_from_zval(struct h
             value->type = HANDLEBARS_VALUE_TYPE_USER;
             set_intern_zval(value, val);
             break;
-        default:
-            // ruh roh
+
+        default: // LCOV_EXCL_START
             assert(0);
-            break;
+            break; // LCOV_EXCL_STOP
     }
 
     return value;

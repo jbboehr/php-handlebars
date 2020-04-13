@@ -52,6 +52,7 @@ struct php_handlebars_vm_obj {
 extern zend_string *HANDLEBARS_INTERNED_STR_LOGGER;
 extern zend_string *HANDLEBARS_INTERNED_STR_HELPERS;
 extern zend_string *HANDLEBARS_INTERNED_STR_PARTIALS;
+extern zend_string *HANDLEBARS_INTERNED_STR_DECORATORS;
 /* }}} Variables & Prototypes */
 
 /* {{{ Z_HANDLEBARS_VM_P */
@@ -257,12 +258,16 @@ PHP_METHOD(HandlebarsVM, __construct)
         HashTable * ht = Z_ARRVAL_P(z_options);
         zval * helpers = zend_hash_find(ht, HANDLEBARS_INTERNED_STR_HELPERS);
         zval * partials = zend_hash_find(ht, HANDLEBARS_INTERNED_STR_PARTIALS);
+        zval * decorators = zend_hash_find(ht, HANDLEBARS_INTERNED_STR_DECORATORS);
         zval * logger = zend_hash_find(ht, HANDLEBARS_INTERNED_STR_LOGGER);
         if( helpers ) {
             php_handlebars_vm_set_helpers(_this_zval, helpers);
         }
         if( partials ) {
             php_handlebars_vm_set_partials(_this_zval, partials);
+        }
+        if( decorators ) {
+            zend_update_property_ex(Z_OBJCE_P(_this_zval), _this_zval, HANDLEBARS_INTERNED_STR_DECORATORS, decorators);
         }
         if( logger ) {
             // @todo check type
@@ -546,16 +551,16 @@ static inline void render(INTERNAL_FUNCTION_PARAMETERS, enum input_type type)
 
                 stream = php_stream_open_wrapper_ex(ZSTR_VAL(input), "rb", REPORT_ERRORS, NULL, NULL);
                 if( !stream ) {
-                    RETVAL_FALSE;
+                    zend_throw_exception(HandlebarsRuntimeException_ce_ptr, "Failed to read input template file", 0);
                     goto done;
                 }
 
                 zend_string *contents = php_stream_copy_to_mem(stream, PHP_STREAM_COPY_ALL, 0);
                 php_stream_close(stream);
-                if( contents != NULL) {
+                if( contents != NULL ) {
                     tmpl = handlebars_string_ctor(HBSCTX(vm), contents->val, contents->len);
                 } else {
-                    RETVAL_FALSE;
+                    zend_throw_exception(HandlebarsRuntimeException_ce_ptr, "Failed to read input template file", 0);
                     goto done;
                 }
 
