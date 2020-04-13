@@ -61,7 +61,9 @@
    <file name="tests/base-impl/partials-php74.phpt" role="test" />
    <file name="tests/base-impl/partials.phpt" role="test" />
    <file name="tests/base-impl/___reflection-php7.phpt" role="test" />
+   <file name="tests/base-impl/___reflection-php7-without-psr.phpt" role="test" />
    <file name="tests/base-impl/___reflection.phpt" role="test" />
+   <file name="tests/base-impl/___reflection-without-psr.phpt" role="test" />
    <file name="tests/cache-mmap.phpt" role="test" />
    <file name="tests/cache-none.phpt" role="test" />
    <file name="tests/cache-nostat.phpt" role="test" />
@@ -71,6 +73,7 @@
    <file name="tests/gh-40.phpt" role="test" />
    <file name="tests/gh-41.phpt" role="test" />
    <file name="tests/gh-48.phpt" role="test" />
+   <file name="tests/.gitignore" role="test" />
    <file name="tests/handlebars/export/basic/001.phpt" role="test" />
    <file name="tests/handlebars/export/basic/002.phpt" role="test" />
    <file name="tests/handlebars/export/basic/003.phpt" role="test" />
@@ -1291,7 +1294,9 @@
    <file name="tests/vm/getHelpers.phpt" role="test" />
    <file name="tests/vm/getPartials.phpt" role="test" />
    <file name="tests/vm/___reflection-php7.phpt" role="test" />
+   <file name="tests/vm/___reflection-php7-without-psr.phpt" role="test" />
    <file name="tests/vm/___reflection.phpt" role="test" />
+   <file name="tests/vm/___reflection-without-psr.phpt" role="test" />
    <file name="tests/vm/renderFile.phpt" role="test" />
    <file name="tests/vm/renderFromBinaryString.phpt" role="test" />
    <file name="tests/vm/renderFromBinaryString-with-cache.phpt" role="test" />
