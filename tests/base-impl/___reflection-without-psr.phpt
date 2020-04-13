@@ -1,16 +1,16 @@
 --TEST--
-Handlebars\BaseImpl reflection (PHP 8, with php-psr)
+Handlebars\BaseImpl reflection (PHP 8, without php-psr)
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
-if( !extension_loaded('psr') ) die('skip ');
+if( extension_loaded('psr') ) die('skip ');
 if( PHP_VERSION_ID < 80000 ) die('skip ');
 ?>
 --FILE--
 <?php
 echo preg_replace('/\?([\w\\\\]+)/', '$1 or NULL', (new ReflectionClass(Handlebars\BaseImpl::CLASS)));
 --EXPECT--
-Class [ <internal:handlebars> abstract class Handlebars\BaseImpl implements Handlebars\Impl, Psr\Log\LoggerAwareInterface ] {
+Class [ <internal:handlebars> abstract class Handlebars\BaseImpl implements Handlebars\Impl ] {
 
   - Constants [0] {
   }

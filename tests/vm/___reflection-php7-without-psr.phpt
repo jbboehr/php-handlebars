@@ -1,16 +1,16 @@
 --TEST--
-Handlebars\VM reflection (PHP 8, with php-psr)
+Handlebars\VM reflection (PHP 7, without php-psr)
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
-if( !extension_loaded('psr') ) die('skip ');
-if( PHP_VERSION_ID < 80000 ) die('skip ');
+if( extension_loaded('psr') ) die('skip ');
+if( PHP_VERSION_ID >= 80000 ) die('skip ');
 ?>
 --FILE--
 <?php
 echo preg_replace('/\?([\w\\\\]+)/', '$1 or NULL', (new ReflectionClass(Handlebars\VM::CLASS)));
 --EXPECT--
-Class [ <internal:handlebars> class Handlebars\VM extends Handlebars\BaseImpl implements Psr\Log\LoggerAwareInterface, Handlebars\Impl ] {
+Class [ <internal:handlebars> class Handlebars\VM extends Handlebars\BaseImpl implements Handlebars\Impl ] {
 
   - Constants [0] {
   }
@@ -22,10 +22,10 @@ Class [ <internal:handlebars> class Handlebars\VM extends Handlebars\BaseImpl im
   }
 
   - Properties [4] {
-    Property [ protected $logger ]
-    Property [ protected Handlebars\Registry or NULL $decorators ]
-    Property [ protected Handlebars\Registry or NULL $helpers ]
-    Property [ protected Handlebars\Registry or NULL $partials ]
+    Property [ <default> protected $logger ]
+    Property [ <default> protected $decorators ]
+    Property [ <default> protected $helpers ]
+    Property [ <default> protected $partials ]
   }
 
   - Methods [13] {
@@ -56,7 +56,7 @@ Class [ <internal:handlebars> class Handlebars\VM extends Handlebars\BaseImpl im
 
       - Parameters [2] {
         Parameter #0 [ <required> string $tmpl ]
-        Parameter #1 [ <optional> array or NULL $options = <default> ]
+        Parameter #1 [ <optional> array or NULL $options ]
       }
       - Return [ string ]
     }
@@ -65,8 +65,8 @@ Class [ <internal:handlebars> class Handlebars\VM extends Handlebars\BaseImpl im
 
       - Parameters [3] {
         Parameter #0 [ <required> string $tmpl ]
-        Parameter #1 [ <optional> $context = <default> ]
-        Parameter #2 [ <optional> array or NULL $options = <default> ]
+        Parameter #1 [ <optional> $context ]
+        Parameter #2 [ <optional> array or NULL $options ]
       }
       - Return [ string ]
     }
@@ -75,8 +75,8 @@ Class [ <internal:handlebars> class Handlebars\VM extends Handlebars\BaseImpl im
 
       - Parameters [3] {
         Parameter #0 [ <required> string $filename ]
-        Parameter #1 [ <optional> $context = <default> ]
-        Parameter #2 [ <optional> array or NULL $options = <default> ]
+        Parameter #1 [ <optional> $context ]
+        Parameter #2 [ <optional> array or NULL $options ]
       }
       - Return [ string ]
     }
@@ -85,8 +85,8 @@ Class [ <internal:handlebars> class Handlebars\VM extends Handlebars\BaseImpl im
 
       - Parameters [3] {
         Parameter #0 [ <required> string $binaryString ]
-        Parameter #1 [ <optional> $context = <default> ]
-        Parameter #2 [ <optional> array or NULL $options = <default> ]
+        Parameter #1 [ <optional> $context ]
+        Parameter #2 [ <optional> array or NULL $options ]
       }
       - Return [ string ]
     }
