@@ -1,9 +1,9 @@
 --TEST--
-Handlebars\Opcode::$args
+Handlebars\Opcode::$args (PHP 8)
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
-if( PHP_VERSION_ID < 70400 ) die('skip not applicable to < PHP 7.4');
+if( PHP_VERSION_ID < 80000 ) die('skip ');
 ?>
 --FILE--
 <?php
@@ -16,4 +16,4 @@ try {
     echo $e->getMessage();
 }
 --EXPECT--
-Typed property Handlebars\Opcode::$args must be array, stdClass used
+Cannot assign stdClass to property Handlebars\Opcode::$args of type array

@@ -1,5 +1,5 @@
 --TEST--
-Handlebars\VM::renderFromBinaryString()
+Handlebars\VM::renderFromBinaryString() with cache
 --SKIPIF--
 <?php if( !extension_loaded('handlebars') ) die('skip '); ?>
 --INI--

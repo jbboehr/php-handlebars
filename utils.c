@@ -304,7 +304,11 @@ static zend_always_inline zend_bool php_handlebars_expression(zval * val, zval *
         case IS_ARRAY:
             if( php_handlebars_is_int_array(val) ) {
                 delim = zend_string_init(",", 1, 0);
+#if PHP_VERSION_ID >= 80000
+                php_implode(delim, Z_ARRVAL_P(val), return_value);
+#else
                 php_implode(delim, val, return_value);
+#endif
                 zend_string_free(delim);
             } else {
                 zend_throw_exception(HandlebarsRuntimeException_ce_ptr, "Trying to stringify assoc array", 0);

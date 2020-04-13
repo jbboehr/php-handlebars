@@ -10,6 +10,8 @@
 
 /* {{{ Variables & Prototypes */
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsOpcode_ce_ptr;
+static zend_string *INTERNED_OPCODE;
+static zend_string *INTERNED_ARGS;
 /* }}} Variables & Prototypes */
 
 /* {{{ Argument Info */
@@ -47,22 +49,36 @@ static zend_function_entry HandlebarsOpcode_methods[] = {
 PHP_MINIT_FUNCTION(handlebars_opcode)
 {
     zend_class_entry ce;
+	zval default_val;
+
+    INTERNED_OPCODE = zend_new_interned_string(zend_string_init(ZEND_STRL("opcode"), 1));
+    INTERNED_ARGS = zend_new_interned_string(zend_string_init(ZEND_STRL("args"), 1));
 
     INIT_CLASS_ENTRY(ce, "Handlebars\\Opcode", HandlebarsOpcode_methods);
     HandlebarsOpcode_ce_ptr = zend_register_internal_class(&ce);
 
-#if PHP_VERSION_ID < 70400
-    zend_declare_property_null(HandlebarsOpcode_ce_ptr, "opcode", sizeof("opcode")-1, ZEND_ACC_PUBLIC);
-    zend_declare_property_null(HandlebarsOpcode_ce_ptr, "args", sizeof("args")-1, ZEND_ACC_PUBLIC);
-#else
-	zval default_val;
-	ZVAL_UNDEF(&default_val);
-    zend_string *tmp;
+#if PHP_VERSION_ID >= 80000
 
-    tmp = zend_string_init(ZEND_STRL("opcode"), 0);
-	zend_declare_typed_property(HandlebarsOpcode_ce_ptr, tmp, &default_val, ZEND_ACC_PUBLIC, NULL, ZEND_TYPE_ENCODE(IS_STRING, 0));
-    tmp = zend_string_init(ZEND_STRL("args"), 0);
-	zend_declare_typed_property(HandlebarsOpcode_ce_ptr, tmp, &default_val, ZEND_ACC_PUBLIC, NULL, ZEND_TYPE_ENCODE(IS_ARRAY, 0));
+	ZVAL_UNDEF(&default_val);
+	zend_declare_typed_property(HandlebarsOpcode_ce_ptr, INTERNED_OPCODE, &default_val, ZEND_ACC_PUBLIC, NULL,
+            (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+	zend_declare_typed_property(HandlebarsOpcode_ce_ptr, INTERNED_ARGS, &default_val, ZEND_ACC_PUBLIC, NULL,
+            (zend_type) ZEND_TYPE_INIT_CODE(IS_ARRAY, 0, 0));
+
+#elif PHP_VERSION_ID >= 70400
+
+	ZVAL_UNDEF(&default_val);
+	zend_declare_typed_property(HandlebarsOpcode_ce_ptr, INTERNED_OPCODE, &default_val, ZEND_ACC_PUBLIC, NULL,
+            ZEND_TYPE_ENCODE(IS_STRING, 0));
+	zend_declare_typed_property(HandlebarsOpcode_ce_ptr, INTERNED_ARGS, &default_val, ZEND_ACC_PUBLIC, NULL,
+            ZEND_TYPE_ENCODE(IS_ARRAY, 0));
+
+#else
+
+	ZVAL_NULL(&default_val);
+    zend_declare_property_ex(HandlebarsOpcode_ce_ptr, INTERNED_OPCODE, &default_val, ZEND_ACC_PUBLIC);
+    zend_declare_property_ex(HandlebarsOpcode_ce_ptr, INTERNED_ARGS, &default_val, ZEND_ACC_PUBLIC);
+
 #endif
 
     return SUCCESS;

@@ -1,9 +1,9 @@
 --TEST--
-Handlebars\SafeString reflection (PHP 8)
+Handlebars\SafeString reflection (PHP 7)
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
-if( PHP_VERSION_ID < 80000 ) die('skip ');
+if( PHP_VERSION_ID >= 80000 ) die('skip ');
 ?>
 --FILE--
 <?php
@@ -21,7 +21,7 @@ Class [ <internal:handlebars> class Handlebars\SafeString ] {
   }
 
   - Properties [1] {
-    Property [ protected string $value ]
+    Property [ <default> protected $value ]
   }
 
   - Methods [2] {

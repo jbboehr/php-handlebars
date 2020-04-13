@@ -1,15 +1,15 @@
 --TEST--
-Handlebars\BaseImpl::$decorators
+Handlebars\BaseImpl::$partials (PHP 8)
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
-if( PHP_VERSION_ID < 70400 ) die('skip not applicable to < PHP 7.4');
+if( PHP_VERSION_ID < 80000 ) die('skip ');
 ?>
 --FILE--
 <?php
 require __DIR__ . "/fake-impl.php.inc";
 $impl = new FakeImpl();
-$r = new ReflectionProperty($impl, 'decorators');
+$r = new ReflectionProperty($impl, 'partials');
 $r->setAccessible(true);
 try {
     $r->setValue($impl, 'notaregistry');
@@ -17,4 +17,4 @@ try {
     echo $e->getMessage();
 }
 --EXPECT--
-Typed property Handlebars\BaseImpl::$decorators must be an instance of Handlebars\Registry or null, string used
+Cannot assign string to property Handlebars\BaseImpl::$partials of type ?Handlebars\Registry

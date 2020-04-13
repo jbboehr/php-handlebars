@@ -1,9 +1,9 @@
 --TEST--
-Handlebars\Opcode::$opcode (PHP 8)
+Handlebars\Opcode::$opcode (PHP 7.4)
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
-if( PHP_VERSION_ID < 80000 ) die('skip ');
+if( PHP_VERSION_ID < 70400 || PHP_VERSION_ID >= 80000 ) die('skip ');
 ?>
 --FILE--
 <?php
@@ -16,4 +16,4 @@ try {
     echo $e->getMessage();
 }
 --EXPECT--
-Cannot assign stdClass to property Handlebars\Opcode::$opcode of type string
+Typed property Handlebars\Opcode::$opcode must be string, stdClass used

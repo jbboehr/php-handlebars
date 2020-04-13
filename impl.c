@@ -185,14 +185,7 @@ PHP_MINIT_FUNCTION(handlebars_impl)
     HandlebarsBaseImpl_ce_ptr = zend_register_internal_class(&ce);
     zend_class_implements(HandlebarsBaseImpl_ce_ptr, 1, HandlebarsImpl_ce_ptr);
 
-#if PHP_VERSION_ID < 70400
-	zval default_val;
-	ZVAL_NULL(&default_val);
-    zend_declare_property_ex(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_LOGGER, &default_val, ZEND_ACC_PROTECTED, NULL);
-    zend_declare_property_ex(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_DECORATORS, &default_val, ZEND_ACC_PROTECTED, NULL);
-    zend_declare_property_ex(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_HELPERS, &default_val, ZEND_ACC_PROTECTED, NULL);
-    zend_declare_property_ex(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_PARTIALS, &default_val, ZEND_ACC_PROTECTED, NULL);
-#else
+#if PHP_VERSION_ID >= 70400
 	zval default_val;
 	ZVAL_UNDEF(&default_val);
 
@@ -200,6 +193,29 @@ PHP_MINIT_FUNCTION(handlebars_impl)
     if( handlebars_has_psr ) {
         ilogger_ce = lookup_class("Psr\\Log\\LoggerInterface");
     }
+#endif
+
+#if PHP_VERSION_ID >= 80000
+
+    if( ilogger_ce ) {
+        zend_declare_typed_property(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_LOGGER, &default_val, ZEND_ACC_PROTECTED, NULL,
+            (zend_type) ZEND_TYPE_INIT_CE(ilogger_ce, 1, 0));
+    } else {
+        // Checking zend.c:971, it appears that we can't typehint a userland class here, sadly
+        //zend_declare_typed_property(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_LOGGER, &default_val, ZEND_ACC_PROTECTED, NULL,
+        //    ZEND_TYPE_ENCODE_CLASS(zend_string_init(ZEND_STRL("psr\\log\\loggerinterface"), 1), 1));
+        zend_declare_property_ex(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_LOGGER, &default_val, ZEND_ACC_PROTECTED, NULL);
+    }
+
+	zend_declare_typed_property(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_DECORATORS, &default_val, ZEND_ACC_PROTECTED, NULL,
+		(zend_type) ZEND_TYPE_INIT_CE(HandlebarsRegistry_ce_ptr, 1, 0));
+	zend_declare_typed_property(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_HELPERS, &default_val, ZEND_ACC_PROTECTED, NULL,
+		(zend_type) ZEND_TYPE_INIT_CE(HandlebarsRegistry_ce_ptr, 1, 0));
+	zend_declare_typed_property(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_PARTIALS, &default_val, ZEND_ACC_PROTECTED, NULL,
+		(zend_type) ZEND_TYPE_INIT_CE(HandlebarsRegistry_ce_ptr, 1, 0));
+
+#elif PHP_VERSION_ID >= 70400
+
     if( ilogger_ce ) {
         zend_declare_typed_property(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_LOGGER, &default_val, ZEND_ACC_PROTECTED, NULL,
             ZEND_TYPE_ENCODE_CE(ilogger_ce, 1));
@@ -216,6 +232,16 @@ PHP_MINIT_FUNCTION(handlebars_impl)
 		ZEND_TYPE_ENCODE_CE(HandlebarsRegistry_ce_ptr, 1));
 	zend_declare_typed_property(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_PARTIALS, &default_val, ZEND_ACC_PROTECTED, NULL,
 		ZEND_TYPE_ENCODE_CE(HandlebarsRegistry_ce_ptr, 1));
+
+#else
+
+	zval default_val;
+	ZVAL_NULL(&default_val);
+    zend_declare_property_ex(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_LOGGER, &default_val, ZEND_ACC_PROTECTED, NULL);
+    zend_declare_property_ex(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_DECORATORS, &default_val, ZEND_ACC_PROTECTED, NULL);
+    zend_declare_property_ex(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_HELPERS, &default_val, ZEND_ACC_PROTECTED, NULL);
+    zend_declare_property_ex(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_PARTIALS, &default_val, ZEND_ACC_PROTECTED, NULL);
+
 #endif
 
     return SUCCESS;

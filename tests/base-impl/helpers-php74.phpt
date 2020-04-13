@@ -1,9 +1,9 @@
 --TEST--
-Handlebars\BaseImpl::$helpers
+Handlebars\BaseImpl::$helpers (PHP 7.4)
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
-if( PHP_VERSION_ID < 70400 ) die('skip not applicable to < PHP 7.4');
+if( PHP_VERSION_ID < 70400 || PHP_VERSION_ID >= 80000 ) die('skip ');
 ?>
 --FILE--
 <?php

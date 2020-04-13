@@ -60,19 +60,30 @@ static zend_function_entry HandlebarsSafeString_methods[] = {
 PHP_MINIT_FUNCTION(handlebars_safe_string)
 {
     zend_class_entry ce;
+	zval default_val;
 
     INTERNED_VALUE = zend_new_interned_string(zend_string_init(ZEND_STRL("value"), 1));
 
     INIT_CLASS_ENTRY(ce, "Handlebars\\SafeString", HandlebarsSafeString_methods);
     HandlebarsSafeString_ce_ptr = zend_register_internal_class(&ce);
 
-#if PHP_VERSION_ID < 70400
-    zend_declare_property_null(HandlebarsSafeString_ce_ptr, "value", sizeof("value")-1, ZEND_ACC_PROTECTED);
-#else
-	zval default_val;
+#if PHP_VERSION_ID >= 80000
+
+	ZVAL_UNDEF(&default_val);
+	zend_declare_typed_property(HandlebarsSafeString_ce_ptr, INTERNED_VALUE, &default_val, ZEND_ACC_PROTECTED, NULL,
+		(zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+
+#elif PHP_VERSION_ID >= 70400
+
 	ZVAL_UNDEF(&default_val);
 	zend_declare_typed_property(HandlebarsSafeString_ce_ptr, INTERNED_VALUE, &default_val, ZEND_ACC_PROTECTED, NULL,
 		ZEND_TYPE_ENCODE(IS_STRING, 0));
+
+#else
+
+	ZVAL_NULL(&default_val);
+    zend_declare_property_ex(HandlebarsSafeString_ce_ptr, INTERNED_VALUE, &default_val, ZEND_ACC_PROTECTED);
+
 #endif
 
     return SUCCESS;

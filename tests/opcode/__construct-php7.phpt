@@ -1,9 +1,9 @@
 --TEST--
-Handlebars\Opcode::__construct() (PHP 8)
+Handlebars\Opcode::__construct() (PHP 7)
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
-if( PHP_VERSION_ID < 80000 ) die('skip ');
+if( PHP_VERSION_ID >= 80000 ) die('skip ');
 ?>
 --FILE--
 <?php
@@ -31,5 +31,5 @@ array(2) {
   [1]=>
   int(2)
 }
-Handlebars\Opcode::__construct(): Argument #1 ($opcode) must be of type string, object given
-Handlebars\Opcode::__construct(): Argument #2 ($args) must be of type array, object given
+Argument 1 passed to Handlebars\Opcode::__construct() must be of the type string, object given
+Argument 2 passed to Handlebars\Opcode::__construct() must be of the type array, object given

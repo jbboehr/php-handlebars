@@ -13,6 +13,8 @@
 
 /* {{{ Variables & Prototypes */
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsToken_ce_ptr;
+static zend_string *INTERNED_NAME;
+static zend_string *INTERNED_TEXT;
 /* }}} Variables & Prototypes */
 
 /* {{{ Argument Info */
@@ -81,22 +83,40 @@ static zend_function_entry HandlebarsToken_methods[] = {
 PHP_MINIT_FUNCTION(handlebars_token)
 {
     zend_class_entry ce;
+	zval default_val;
+
+    INTERNED_NAME = zend_new_interned_string(zend_string_init(ZEND_STRL("name"), 1));
+    INTERNED_TEXT = zend_new_interned_string(zend_string_init(ZEND_STRL("text"), 1));
 
     INIT_CLASS_ENTRY(ce, "Handlebars\\Token", HandlebarsToken_methods);
     HandlebarsToken_ce_ptr = zend_register_internal_class(&ce);
 
-#if PHP_VERSION_ID < 70400
-    zend_declare_property_null(HandlebarsToken_ce_ptr, "name", sizeof("name")-1, ZEND_ACC_PUBLIC);
-    zend_declare_property_null(HandlebarsToken_ce_ptr, "text", sizeof("text")-1, ZEND_ACC_PUBLIC);
-#else
-	zval default_val;
+#if PHP_VERSION_ID >= 70400
 	ZVAL_UNDEF(&default_val);
-    zend_string *tmp;
+#endif
 
-    tmp = zend_string_init(ZEND_STRL("name"), 0);
-	zend_declare_typed_property(HandlebarsToken_ce_ptr, tmp, &default_val, ZEND_ACC_PUBLIC, NULL, ZEND_TYPE_ENCODE(IS_STRING, 0));
-    tmp = zend_string_init(ZEND_STRL("text"), 0);
-	zend_declare_typed_property(HandlebarsToken_ce_ptr, tmp, &default_val, ZEND_ACC_PUBLIC, NULL, ZEND_TYPE_ENCODE(IS_STRING, 0));
+#if PHP_VERSION_ID >= 80000
+
+	ZVAL_UNDEF(&default_val);
+	zend_declare_typed_property(HandlebarsToken_ce_ptr, INTERNED_NAME, &default_val, ZEND_ACC_PUBLIC, NULL,
+            (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+	zend_declare_typed_property(HandlebarsToken_ce_ptr, INTERNED_TEXT, &default_val, ZEND_ACC_PUBLIC, NULL,
+            (zend_type) ZEND_TYPE_INIT_CODE(IS_STRING, 0, 0));
+
+#elif PHP_VERSION_ID >= 70400
+
+	ZVAL_UNDEF(&default_val);
+	zend_declare_typed_property(HandlebarsToken_ce_ptr, INTERNED_NAME, &default_val, ZEND_ACC_PUBLIC, NULL,
+            ZEND_TYPE_ENCODE(IS_STRING, 0));
+	zend_declare_typed_property(HandlebarsToken_ce_ptr, INTERNED_TEXT, &default_val, ZEND_ACC_PUBLIC, NULL,
+            ZEND_TYPE_ENCODE(IS_STRING, 0));
+
+#else
+
+	ZVAL_NULL(&default_val);
+    zend_declare_property_ex(HandlebarsToken_ce_ptr, INTERNED_NAME, &default_val, ZEND_ACC_PUBLIC);
+    zend_declare_property_ex(HandlebarsToken_ce_ptr, INTERNED_TEXT, &default_val, ZEND_ACC_PUBLIC);
+
 #endif
 
     return SUCCESS;

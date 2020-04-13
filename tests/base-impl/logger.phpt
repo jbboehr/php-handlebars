@@ -1,9 +1,9 @@
 --TEST--
-Handlebars\BaseImpl::$logger
+Handlebars\BaseImpl::$logger (PHP 8)
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
-if( PHP_VERSION_ID < 70400 ) die('skip not applicable to < PHP 7.4');
+if( PHP_VERSION_ID < 80000 ) die('skip ');
 if( !extension_loaded('psr') ) die('skip needs psr extension');
 ?>
 --FILE--
@@ -18,4 +18,4 @@ try {
     echo $e->getMessage();
 }
 --EXPECT--
-Typed property Handlebars\BaseImpl::$logger must be an instance of Psr\Log\LoggerInterface or null, string used
+Cannot assign string to property Handlebars\BaseImpl::$logger of type ?Psr\Log\LoggerInterface

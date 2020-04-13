@@ -1,9 +1,9 @@
 --TEST--
-Handlebars\SafeString::$value (PHP 8)
+Handlebars\SafeString::$value (PHP 7.4)
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
-if( PHP_VERSION_ID < 80000 ) die('skip ');
+if( PHP_VERSION_ID < 70400 || PHP_VERSION_ID >= 80000 ) die('skip ');
 ?>
 --FILE--
 <?php
@@ -16,4 +16,4 @@ try {
     echo $e->getMessage();
 }
 --EXPECT--
-Cannot assign stdClass to property Handlebars\SafeString::$value of type string
+Typed property Handlebars\SafeString::$value must be string, stdClass used

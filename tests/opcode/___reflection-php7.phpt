@@ -1,9 +1,9 @@
 --TEST--
-Handlebars\Opcode reflection (PHP 8)
+Handlebars\Opcode reflection (PHP 7)
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
-if( PHP_VERSION_ID < 80000 ) die('skip ');
+if( PHP_VERSION_ID >= 80000 ) die('skip ');
 ?>
 --FILE--
 <?php
@@ -21,8 +21,8 @@ Class [ <internal:handlebars> class Handlebars\Opcode ] {
   }
 
   - Properties [2] {
-    Property [ public string $opcode ]
-    Property [ public array $args ]
+    Property [ <default> public $opcode ]
+    Property [ <default> public $args ]
   }
 
   - Methods [1] {

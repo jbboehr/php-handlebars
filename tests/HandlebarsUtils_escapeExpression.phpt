@@ -25,10 +25,10 @@ var_dump(Utils::escapeExpression('"'));
 string(1) "1"
 string(0) ""
 
-Notice: Array to string conversion in %s on line %d
+%s: Array to string conversion in %s on line %d
 string(5) "Array"
 
-Notice: Array to string conversion in %s on line %d
+%s: Array to string conversion in %s on line %d
 string(5) "Array"
 string(6) "string"
 string(8) "MyString"

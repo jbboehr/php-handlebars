@@ -17,7 +17,7 @@ try {
 
 try {
     $tmp = $binaryString;
-    $tmp[0] = 0xFF;
+    $tmp[0] = chr(0xFF);
     $vm->renderFromBinaryString($tmp);
 } catch (\Handlebars\InvalidBinaryStringException $e) {
     var_dump($e->getMessage());
@@ -25,7 +25,7 @@ try {
 
 try {
     $tmp = $binaryString;
-    $tmp[51] = 0xFF;
+    $tmp[51] = chr(0xFF);
     $vm->renderFromBinaryString($tmp);
 } catch (\Handlebars\InvalidBinaryStringException $e) {
     var_dump($e->getMessage());
