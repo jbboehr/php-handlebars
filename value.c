@@ -5,12 +5,13 @@
 
 #include "Zend/zend_API.h"
 #include "Zend/zend_closures.h"
+#include "Zend/zend_compile.h"
 #include "Zend/zend_exceptions.h"
 #include "Zend/zend_interfaces.h"
+#include "Zend/zend_types.h"
 #include "main/php.h"
 
 #include <talloc.h>
-#include <zend_compile.h>
 
 #include "handlebars.h"
 #include "handlebars_private.h"
