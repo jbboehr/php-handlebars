@@ -4,6 +4,9 @@ matrix:
   fast_finish: true
   allow_failures:
   - php: 'master'
+  - php: 'master'
+    env:
+    - PHP_PSR_VERSION=v1.0.0
   - language: nix
     env:
       - NIX_CHANNEL=unstable
@@ -21,6 +24,22 @@ matrix:
     php: '7.4'
   - language: php
     php: 'master'
+  - language: php
+    php: '7.2'
+    env:
+    - PHP_PSR_VERSION=v1.0.0
+  - language: php
+    php: '7.3'
+    env:
+    - PHP_PSR_VERSION=v1.0.0
+  - language: php
+    php: '7.4'
+    env:
+    - PHP_PSR_VERSION=v1.0.0
+  - language: php
+    php: 'master'
+    env:
+    - PHP_PSR_VERSION=v1.0.0
   - language: nix
     env:
     - NIX_CHANNEL=18.09
@@ -39,10 +58,8 @@ matrix:
     - NIX_PHP_ATTR=php
 
 env:
-    global:
-    - LIBHANDLEBARS_VERSION=v0.6.4
-    - PHP_PSR_VERSION=v0.7.0
-    - secure: "FsLO9DoQipJjNT4/4uJH2w6kwiGscXzaKmC+nktR1/Y0fPF9a69qmqo6owxXcb0DXwq0kqQ9eCepYIz6iy3L/XK4bNfwXkq1x8LIG7/oPrwuzIjNBXdSvxtSDa8G6NNFAvWJHiw/HKMP4cMfIqAJqemmKnpvgGowK4mcZl252UU="
+  global:
+  - LIBHANDLEBARS_VERSION=v0.6.4
 
 cache: ccache
 
