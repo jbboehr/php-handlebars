@@ -1,10 +1,10 @@
 --TEST--
-Handlebars\BaseImpl reflection (PHP 7, with php-psr)
+Handlebars\BaseImpl reflection (PHP 7.4, with php-psr)
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
 if( !extension_loaded('psr') ) die('skip ');
-if( PHP_VERSION_ID >= 70400 ) die('skip ');
+if( PHP_VERSION_ID >= 80000 || PHP_VERSION_ID < 70400 ) die('skip ');
 ?>
 --FILE--
 <?php
@@ -81,7 +81,7 @@ Class [ <internal:handlebars> abstract class Handlebars\BaseImpl implements Hand
       - Return [ Handlebars\Impl ]
     }
 
-    Method [ <internal:handlebars, prototype Handlebars\Impl> public method setLogger ] {
+    Method [ <internal:handlebars, prototype Psr\Log\LoggerAwareInterface> public method setLogger ] {
 
       - Parameters [1] {
         Parameter #0 [ <required> Psr\Log\LoggerInterface $logger ]
