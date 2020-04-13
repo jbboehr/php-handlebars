@@ -1,9 +1,19 @@
 --TEST--
-Handlebars\VM::setLogger()
+Handlebars\VM::setLogger() without php-psr
 --SKIPIF--
-<?php if( !extension_loaded('handlebars') || !extension_loaded('psr') ) die('skip '); ?>
+<?php if( !extension_loaded('handlebars') || extension_loaded('psr') ) die('skip '); ?>
 --FILE--
 <?php
+namespace Psr\Log;
+interface LoggerInterface {
+    public function log($level, $message, array $context = null);
+}
+abstract class AbstractLogger implements LoggerInterface {
+    public function info($message, array $context = null) { $this->log('info', $message, $context); }
+    public function warning($message, array $context = null) { $this->log('warning', $message, $context); }
+}
+
+namespace Invalid;
 use Psr\Log\AbstractLogger;
 use Handlebars\VM;
 class TestLogger extends AbstractLogger {
