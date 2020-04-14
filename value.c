@@ -345,7 +345,8 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
         num_args = fptr->common.num_args;
 
         if (argc < num_args) {
-#if PHP_VERSION_ID >= 80000
+// Current TravisCI's PHP master is really old, falling through to PHP 7 case should fix it...
+#if PHP_VERSION_ID >= 80000 && defined(ZEND_TYPE_IS_ONLY_MASK)
             zend_type type = (arg_info + argc)->type;
             zend_type *subtype;
 

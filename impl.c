@@ -195,7 +195,8 @@ PHP_MINIT_FUNCTION(handlebars_impl)
     }
 #endif
 
-#if PHP_VERSION_ID >= 80000
+// Current TravisCI's PHP master is really old, falling through to PHP 7.4 case should fix it...
+#if PHP_VERSION_ID >= 80000 && defined(ZEND_TYPE_INIT_CE)
 
     if( ilogger_ce ) {
         zend_declare_typed_property(HandlebarsBaseImpl_ce_ptr, HANDLEBARS_INTERNED_STR_LOGGER, &default_val, ZEND_ACC_PROTECTED, NULL,

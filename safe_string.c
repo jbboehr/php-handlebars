@@ -67,7 +67,8 @@ PHP_MINIT_FUNCTION(handlebars_safe_string)
     INIT_CLASS_ENTRY(ce, "Handlebars\\SafeString", HandlebarsSafeString_methods);
     HandlebarsSafeString_ce_ptr = zend_register_internal_class(&ce);
 
-#if PHP_VERSION_ID >= 80000
+// Current TravisCI's PHP master is really old, falling through to PHP 7.4 case should fix it...
+#if PHP_VERSION_ID >= 80000 && defined(ZEND_TYPE_INIT_CODE)
 
 	ZVAL_UNDEF(&default_val);
 	zend_declare_typed_property(HandlebarsSafeString_ce_ptr, INTERNED_VALUE, &default_val, ZEND_ACC_PROTECTED, NULL,
