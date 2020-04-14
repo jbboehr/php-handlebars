@@ -48,6 +48,20 @@
    <file name="vm.c" role="src" />
    <file name="xxh3.h" role="src" />
    <file name="xxhash.h" role="src" />
+   <file name="examples/benchmarks.php" role="doc" />
+   <file name="examples/benchmarks.sh" role="doc" />
+   <file name="examples/block-expressions.php" role="doc" />
+   <file name="examples/comments.php" role="doc" />
+   <file name="examples/getting-started.php" role="doc" />
+   <file name="examples/helper-loader.php" role="doc" />
+   <file name="examples/helpers-2.php" role="doc" />
+   <file name="examples/helpers.php" role="doc" />
+   <file name="examples/html-escaping.php" role="doc" />
+   <file name="examples/partial-loader.php" role="doc" />
+   <file name="examples/partials.php" role="doc" />
+   <file name="examples/paths.php" role="doc" />
+   <file name="examples/safe-string.php" role="doc" />
+   <file name="examples/userMessage.hbs" role="doc" />
    <file name="tests/base-impl/decorators-php74.phpt" role="test" />
    <file name="tests/base-impl/decorators.phpt" role="test" />
    <file name="tests/base-impl/fake-impl.php.inc" role="test" />
