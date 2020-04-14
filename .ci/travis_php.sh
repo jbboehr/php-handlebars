@@ -82,6 +82,17 @@ function before_script() (
     fi
 )
 
+function run_examples() (
+    set -e -o pipefail
+
+    for i in `find examples -name "*.php" -not -name benchmarks.php`; do
+        printf "\nExecuting example ${i}:\n"
+        php -d extension=modules/handlebars.so $i
+    done
+
+    return 0
+)
+
 function script() (
     set -e -o pipefail
 
@@ -94,6 +105,12 @@ function script() (
     php run-tests.php -n \
         ${extra_flags} \
         -d extension=modules/handlebars.so
+
+    echo "Running examples"
+    run_examples
+
+    echo "Running benchmarks"
+    ./examples/benchmarks.sh
 )
 
 function after_success() (

@@ -48,15 +48,14 @@ static inline zval * get_intern_zval(struct handlebars_value * value) {
 }
 static inline void set_intern_zval(struct handlebars_value * value, zval * val) {
     struct handlebars_zval * obj;
-	assert(value->v.usr == NULL);
-    // if( !value->v.usr ) {
+    if( !value->v.usr ) {
         obj = talloc_zero(value->ctx, struct handlebars_zval);
         obj->usr.handlers = &handlebars_value_std_zval_handlers;
         value->v.usr = (struct handlebars_user *) obj;
         talloc_set_destructor(obj, handlebars_zval_intern_dtor);
-    // } else {
-    //     obj = (struct handlebars_zval *) value->v.usr;
-    // }
+    } else {
+        obj = (struct handlebars_zval *) value->v.usr;
+    }
     obj->int_array = -1;
     obj->callable = -1;
     ZVAL_ZVAL(&obj->intern, val, 1, 0);

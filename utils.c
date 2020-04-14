@@ -241,11 +241,18 @@ PHP_METHOD(HandlebarsUtils, isCallable)
 /* }}} Handlebars\Utils::isCallable */
 
 /* {{{ proto boolean Handlebars\Utils::isIntArray(array value) */
-PHP_HANDLEBARS_API zend_bool php_handlebars_is_int_array(HashTable *arr)
+PHP_HANDLEBARS_API zend_bool php_handlebars_is_int_array(zval *zarr)
 {
     zend_string * key;
     zend_ulong index;
     zend_ulong idx = 0;
+    HashTable *arr;
+
+    if (Z_TYPE_P(zarr) != IS_ARRAY) {
+        return 0;
+    }
+
+    arr = Z_ARRVAL_P(zarr);
 
     // An empty array is an int array
     if( !zend_hash_num_elements(arr) ) {
@@ -268,10 +275,10 @@ PHP_HANDLEBARS_API zend_bool php_handlebars_is_int_array(HashTable *arr)
 
 PHP_METHOD(HandlebarsUtils, isIntArray)
 {
-    HashTable *arr;
+    zval *arr;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
-	    Z_PARAM_ARRAY_OR_OBJECT_HT(arr)
+	    Z_PARAM_ZVAL(arr)
     ZEND_PARSE_PARAMETERS_END();
 
     if( php_handlebars_is_int_array(arr) ) {
@@ -295,7 +302,7 @@ static zend_always_inline zend_bool php_handlebars_expression(zval * val, zval *
         	RETVAL_STRING("false");
             break;
         case IS_ARRAY:
-            if( php_handlebars_is_int_array(Z_ARRVAL_P(val)) ) {
+            if( php_handlebars_is_int_array(val) ) {
                 delim = zend_string_init(",", 1, 0);
 #if PHP_VERSION_ID >= 80000
                 php_implode(delim, Z_ARRVAL_P(val), return_value);
