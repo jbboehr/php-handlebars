@@ -54,7 +54,6 @@ static inline void set_intern_zval(struct handlebars_value * value, zval * val) 
         value->v.usr = (struct handlebars_user *) obj;
         talloc_set_destructor(obj, handlebars_zval_intern_dtor);
     } else {
-        //obj = talloc_get_type(value->v.usr, struct handlebars_zval);
         obj = (struct handlebars_zval *) value->v.usr;
     }
     obj->int_array = -1;
@@ -105,9 +104,10 @@ static enum handlebars_value_type handlebars_std_zval_type(struct handlebars_val
                 return HANDLEBARS_VALUE_TYPE_HELPER;
             }
             return HANDLEBARS_VALUE_TYPE_MAP;
-        default:
+
+        default: // LCOV_EXCL_START
             assert(0);
-            break;
+            break; // LCOV_EXCL_STOP
     }
     return HANDLEBARS_VALUE_TYPE_NULL;
 }
@@ -345,7 +345,8 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
         num_args = fptr->common.num_args;
 
         if (argc < num_args) {
-#if PHP_VERSION_ID >= 80000
+// Current TravisCI's PHP master is really old, falling through to PHP 7 case should fix it...
+#if PHP_VERSION_ID >= 80000 && defined(ZEND_TYPE_IS_ONLY_MASK)
             zend_type type = (arg_info + argc)->type;
             zend_type *subtype;
 
@@ -559,10 +560,10 @@ PHP_HANDLEBARS_API struct handlebars_value * handlebars_value_from_zval(struct h
             value->type = HANDLEBARS_VALUE_TYPE_USER;
             set_intern_zval(value, val);
             break;
-        default:
-            // ruh roh
+
+        default: // LCOV_EXCL_START
             assert(0);
-            break;
+            break; // LCOV_EXCL_STOP
     }
 
     return value;

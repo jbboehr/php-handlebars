@@ -240,26 +240,26 @@ PHP_METHOD(HandlebarsUtils, isCallable)
 }
 /* }}} Handlebars\Utils::isCallable */
 
-/* {{{ proto boolean Handlebars\Utils::isIntArray(mixed value) */
-PHP_HANDLEBARS_API zend_bool php_handlebars_is_int_array(zval * arr)
+/* {{{ proto boolean Handlebars\Utils::isIntArray(array value) */
+PHP_HANDLEBARS_API zend_bool php_handlebars_is_int_array(zval *zarr)
 {
-    HashTable * data_hash = NULL;
     zend_string * key;
     zend_ulong index;
     zend_ulong idx = 0;
+    HashTable *arr;
 
-    if( Z_TYPE_P(arr) != IS_ARRAY ) {
+    if (Z_TYPE_P(zarr) != IS_ARRAY) {
         return 0;
     }
 
-    data_hash = Z_ARRVAL_P(arr);
+    arr = Z_ARRVAL_P(zarr);
 
     // An empty array is an int array
-    if( !zend_hash_num_elements(data_hash) ) {
+    if( !zend_hash_num_elements(arr) ) {
         return 1;
     }
 
-    ZEND_HASH_FOREACH_KEY(data_hash, index, key) {
+    ZEND_HASH_FOREACH_KEY(arr, index, key) {
         if( key ) {
             return 0;
         } else {
@@ -275,7 +275,7 @@ PHP_HANDLEBARS_API zend_bool php_handlebars_is_int_array(zval * arr)
 
 PHP_METHOD(HandlebarsUtils, isIntArray)
 {
-    zval * arr;
+    zval *arr;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
 	    Z_PARAM_ZVAL(arr)

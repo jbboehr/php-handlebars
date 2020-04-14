@@ -95,7 +95,8 @@ PHP_MINIT_FUNCTION(handlebars_token)
 	ZVAL_UNDEF(&default_val);
 #endif
 
-#if PHP_VERSION_ID >= 80000
+// Current TravisCI's PHP master is really old, falling through to PHP 7.4 case should fix it...
+#if PHP_VERSION_ID >= 80000 && defined(ZEND_TYPE_INIT_CODE)
 
 	ZVAL_UNDEF(&default_val);
 	zend_declare_typed_property(HandlebarsToken_ce_ptr, INTERNED_NAME, &default_val, ZEND_ACC_PUBLIC, NULL,
