@@ -1,12 +1,25 @@
 --TEST--
-Handlebars\VM::__construct() (with php-psr)
+Handlebars\VM::__construct() (without php-psr)
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
-if( !extension_loaded('psr') ) die('skip ');
+if( extension_loaded('psr') ) die('skip ');
 ?>
 --FILE--
 <?php
+
+namespace Psr\Log;
+
+interface LoggerInterface {
+    public function log($level, $message, array $context = null);
+}
+abstract class AbstractLogger implements LoggerInterface {
+    public function info($message, array $context = null) { $this->log('info', $message, $context); }
+    public function warning($message, array $context = null) { $this->log('warning', $message, $context); }
+}
+
+namespace IgnoreMe;
+
 use Handlebars\DefaultRegistry;
 use Handlebars\VM;
 use Psr\Log\AbstractLogger;
