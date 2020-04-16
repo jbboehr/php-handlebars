@@ -110,7 +110,12 @@ static void php_handlebars_opcode_to_zval(struct handlebars_opcode * opcode, zva
         php_handlebars_operand_append_zval(&opcode->op2, &args);
     }
     if( num >= 3 ) {
-        php_handlebars_operand_append_zval(&opcode->op3, &args);
+        // hack for invoke_ambiguous
+        if (opcode->type == handlebars_opcode_type_invoke_ambiguous && opcode->op3.type == handlebars_operand_type_null) {
+            // ignore
+        } else {
+            php_handlebars_operand_append_zval(&opcode->op3, &args);
+        }
     }
     if( num >= 4 ) {
         php_handlebars_operand_append_zval(&opcode->op4, &args);
