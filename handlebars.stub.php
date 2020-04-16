@@ -98,7 +98,8 @@ class Compiler
 	const STRICT = 1024;
 	const ASSUME_OBJECTS = 2048;
 	const COMPAT = 1;
-	const ALL = 4095;
+	const MUSTACHE_STYLE_LAMBDAS = 4096;
+	const ALL = 8191;
 
 	const USE_PARTIAL = 2;
 	const IS_SIMPLE = 4;
