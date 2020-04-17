@@ -1,5 +1,5 @@
 # when using nix-shell, run "configurePhase" otherwise you'll have missing headers
-# to use a specific version of php, run `nix-shell --arg php '(import <nixpkgs> {}).php56'`
+# to use a specific version of php, run `nix-shell --arg php '(import <nixpkgs> {}).php73'`
 
 {
   pkgs ? import <nixpkgs> {},
@@ -8,7 +8,7 @@
     inherit php;
   },
 
-  phpHandlebarsVersion ? null,
+  phpHandlebarsVersion ? "v0.9.0",
   phpHandlebarsSrc ? ./.,
   phpHandlebarsSha256 ? null,
   phpHandlebarsAllTheTests ? false,

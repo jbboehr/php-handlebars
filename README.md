@@ -14,13 +14,13 @@ PHP bindings for [handlebars.c](https://github.com/jbboehr/handlebars.c).
 ### Nix / NixOS
 
 ```bash
-nix-env -i -f https://github.com/jbboehr/php-handlebars/archive/master.tar.gz
+nix-env -i -f https://github.com/jbboehr/php-handlebars/archive/v0.9.0.tar.gz
 ```
 
 with a custom version of PHP:
 
 ```bash
-nix-env -i -f https://github.com/jbboehr/php-handlebars/archive/master.tar.gz \
+nix-env -i -f https://github.com/jbboehr/php-handlebars/archive/v0.9.0.tar.gz \
     --arg php '(import <nixpkgs> {}).php73'
 ```
 
