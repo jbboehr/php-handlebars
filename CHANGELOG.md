@@ -9,6 +9,9 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ### Added
 - Preliminary PHP 8 support
 - Support for precompiling templates. New methods `Handlebars\VM::compile()` and `Handlebars\VM::renderFromBinaryString()`.
+- Mustache-style lambda support behind a new compiler flag `mustacheStyleLambdas`. Please note that due to limitations in
+the parser, they will make (functionally compatible) transformations to the template passed to the lambda and may not work
+with some handlebars syntax.
 
 ### Changed
 - Drop max PHP version constraint from PECL
@@ -19,6 +22,7 @@ typed with `Handlebars\Options`. This will allow some standard helpers to have t
 access to the Options object for other helpers. See `tests/helper-with-options.phpt` for details.
 - `Handlebars\ParseException` is deprecated and now an alias of `Handlebars\CompileException`
 - Improved typehints
+- Target handlebars.c v0.7.0. The extension is fully backwards compatible with v0.6.4.
 
 ### Removed
 - PHP 5 support, require at least PHP 7.2

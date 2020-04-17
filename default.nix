@@ -24,8 +24,8 @@
   }))) {},
 
   handlebarsc ? pkgs.callPackage (import (fetchTarball {
-    url = https://github.com/jbboehr/handlebars.c/archive/43286ef23d4bdcfdf5a26d6f44b1e5e802b639bf.tar.gz;
-    sha256 = "03m93hz35n99wkv4k8r0nz6wsdx4v6j56fxzhllqr3gssancas1x";
+    url = https://github.com/jbboehr/handlebars.c/archive/57598c75f9b343e1af7608fa333821a1bca264eb.tar.gz;
+    sha256 = "0rwyhn562idr7swsccb94x5cbna0rf9p6wzqx58ll6d3k1wp7k0w";
   })) { inherit mustache_spec handlebars_spec; },
 
   php_psr ? pkgs.callPackage (import (fetchTarball {

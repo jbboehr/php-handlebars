@@ -19,8 +19,10 @@ function install_libhandlebars() (
 
     local dir=third-party/handlebars-c
     rm -rf ${dir}
-    git clone -b ${LIBHANDLEBARS_VERSION} https://github.com/jbboehr/handlebars.c.git ${dir} --recursive
+    git clone https://github.com/jbboehr/handlebars.c.git ${dir} --recursive
     cd ${dir}
+    git checkout ${LIBHANDLEBARS_VERSION}
+    git submodule update --init --recursive
     ./bootstrap
     ./configure --prefix=${PREFIX}
     touch src/handlebars_scanners.c

@@ -48,6 +48,7 @@ static zend_string *INTERNED_STRING_PARAMS;
 static zend_string *INTERNED_TRACK_IDS;
 static zend_string *INTERNED_STRICT;
 static zend_string *INTERNED_ASSUME_OBJECTS;
+static zend_string *INTERNED_MUSTACHE_STYLE_LAMBDAS;
 
 static void php_handlebars_program_to_zval(struct handlebars_program * program, zval * current);
 /* }}} Variables & Prototypes */
@@ -109,7 +110,12 @@ static void php_handlebars_opcode_to_zval(struct handlebars_opcode * opcode, zva
         php_handlebars_operand_append_zval(&opcode->op2, &args);
     }
     if( num >= 3 ) {
-        php_handlebars_operand_append_zval(&opcode->op3, &args);
+        // hack for invoke_ambiguous
+        if (opcode->type == handlebars_opcode_type_invoke_ambiguous && opcode->op3.type == handlebars_operand_type_null) {
+            // ignore
+        } else {
+            php_handlebars_operand_append_zval(&opcode->op3, &args);
+        }
     }
     if( num >= 4 ) {
         php_handlebars_operand_append_zval(&opcode->op4, &args);
@@ -355,6 +361,13 @@ PHP_HANDLEBARS_API void php_handlebars_process_options_zval(struct handlebars_co
         }
     }
 #endif
+#ifdef handlebars_compiler_flag_mustache_style_lambdas
+    if( NULL != (entry = zend_hash_find(ht, INTERNED_MUSTACHE_STYLE_LAMBDAS)) ) {
+        if( Z_IS_TRUE_P(entry) ) {
+            flags |= handlebars_compiler_flag_mustache_style_lambdas;
+        }
+    }
+#endif
 
     handlebars_compiler_set_flags(compiler, flags);
 
@@ -488,6 +501,7 @@ PHP_MINIT_FUNCTION(handlebars_compiler)
     INTERNED_TRACK_IDS = zend_new_interned_string(zend_string_init(ZEND_STRL("trackIds"), 1));
     INTERNED_STRICT = zend_new_interned_string(zend_string_init(ZEND_STRL("strict"), 1));
     INTERNED_ASSUME_OBJECTS = zend_new_interned_string(zend_string_init(ZEND_STRL("assumeObjects"), 1));
+    INTERNED_MUSTACHE_STYLE_LAMBDAS = zend_new_interned_string(zend_string_init(ZEND_STRL("mustacheStyleLambdas"), 1));
 
     INIT_CLASS_ENTRY(ce, "Handlebars\\Compiler", HandlebarsCompiler_methods);
     HandlebarsCompiler_ce_ptr = zend_register_internal_class(&ce);
@@ -507,6 +521,9 @@ PHP_MINIT_FUNCTION(handlebars_compiler)
 #endif
 #ifdef handlebars_compiler_flag_assume_objects
     zend_declare_class_constant_long(HandlebarsCompiler_ce_ptr, ZEND_STRL("ASSUME_OBJECTS"), handlebars_compiler_flag_assume_objects);
+#endif
+#ifdef handlebars_compiler_flag_mustache_style_lambdas
+    zend_declare_class_constant_long(HandlebarsCompiler_ce_ptr, ZEND_STRL("MUSTACHE_STYLE_LAMBDAS"), handlebars_compiler_flag_mustache_style_lambdas);
 #endif
     zend_declare_class_constant_long(HandlebarsCompiler_ce_ptr, ZEND_STRL("COMPAT"), handlebars_compiler_flag_compat);
     zend_declare_class_constant_long(HandlebarsCompiler_ce_ptr, ZEND_STRL("ALL"), handlebars_compiler_flag_all);

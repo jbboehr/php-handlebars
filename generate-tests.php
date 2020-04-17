@@ -34,7 +34,7 @@ function isIntArray($array)
     if( !is_array($array) ) {
         return false;
     }
-    
+
     $i = 0;
     foreach( $array as $k => $v ) {
         if( is_string($k) ) {
@@ -60,12 +60,12 @@ function indentVarExport($n, $var)
 class ClosureHolder
 {
     private $closureText;
-    
+
     public function __construct($closureText)
     {
         $this->closureText = $closureText;
     }
-    
+
     public function __toString()
     {
         return $this->closureText;
@@ -84,6 +84,9 @@ function convertLambdas(&$data)
         if( !empty($v['!code']) ) {
             $js = isset($v['javascript']) ? $v['javascript'] : null;
             $data[$k] = new ClosureHolder($v['php'] . '/*' . $js . '*/');
+        } else if (!empty($v['__tag__']) && $v['__tag__'] === 'code') {
+            $js = isset($v['js']) ? $v['js'] : null;
+            $data[$k] = new ClosureHolder('function($text) {' . $v['php'] . '}' . '/*' . $js . '*/');
         } else {
             convertLambdas($data[$k]);
         }
@@ -178,9 +181,9 @@ function patch_context(array $context) {
         $children[$k] = patch_context($v);
     }
     $blockParams = isset($context['blockParams']) ? $context['blockParams'] : null;
-    
+
     $obj = new Handlebars\Program($opcodes, $children, $blockParams);
-    
+
     foreach( array('useDepths', 'usePartial', 'useDecorators') as $k ) {
         if( !empty($context[$k]) ) {
             $obj->$k = true;
@@ -189,7 +192,7 @@ function patch_context(array $context) {
     foreach( array('stringParams', 'trackIds') as $k ) {
             $obj->$k = !empty($context[$k]);
     }
-    
+
     return $obj;
 }
 
@@ -209,9 +212,9 @@ function hbs_test_file(array $test) {
     } else {
         $st = 'handlebars/' . $test['suiteType'];
     }
-    $testFile = __DIR__ . '/tests' 
+    $testFile = __DIR__ . '/tests'
         . '/' . $st
-        . '/' . $test['suiteName'] 
+        . '/' . $test['suiteName']
         . '/' . sprintf("%03d", $test['number']) /*. '-' . $safeName */ . '.phpt';
     return $testFile;
 }
@@ -221,7 +224,7 @@ function hbs_generate_test_head(array &$test) {
     $skip = "!extension_loaded('handlebars')";
     $reason = '';
     $utilsPrefix = $test['suiteType'] === 'mustache' ? '' : '../';
-    
+
     switch( $test['description'] . '-' . $test['it'] ) {
         case 'basic context-escaping':
             if( $test['number'] != 3 ) {
@@ -239,7 +242,12 @@ function hbs_generate_test_head(array &$test) {
             break;
         case 'helpers-helper for nested raw block gets raw content':
             $skip = 'true';
-            $reason = 'skip for now'; 
+            $reason = 'skip for now';
+            break;
+
+        case 'Section - Alternate Delimiters-Lambdas used for sections should parse with the current delimiters.':
+            $skip = 'true';
+            $reason = 'mustache lambdas with delimter changing syntax are not implemented, intentionally';
             break;
     }
     if( $test['suiteType'] == 'spec' ) {
@@ -282,7 +290,7 @@ function hbs_generate_test_head(array &$test) {
                 break;
             case 'subexpressions-subexpressions-subexpressions can\'t just be property lookups':
                 $skip = 'true';
-                $reason = 'skip for now'; 
+                $reason = 'skip for now';
                 break;
             case 'regressions-Regressions-should support multiple levels of inline partials':
             case 'regressions-Regressions-GH-1089: should support failover content in multiple levels of inline partials':
@@ -293,13 +301,20 @@ function hbs_generate_test_head(array &$test) {
         }
     }
 
+    if ($test['suiteType'] === 'mustache' && $test['suiteName'] === 'lambdas') {
+        $extraSkip = <<<EOF
+
+if( !defined('Handlebars\\Compiler::MUSTACHE_STYLE_LAMBDAS') ) die('skip configured libhandlebars version has no lambda support');
+EOF;
+    }
+
     return join("\n", array(
         '--TEST--',
         $test['suiteName'] . ' #' . $test['number'] . ' - ' . $test['description'] /* . ' - ' . $test['it']*/,
         '--DESCRIPTION--',
         $test['description'] . ' - ' . $test['it'],
         '--SKIPIF--',
-        "<?php if( $skip ) die('skip $reason'); ?>",
+        "<?php if( $skip ) die('skip $reason');$extraSkip ?>",
         '--FILE--',
         '<?php',
         'use Handlebars\Compiler;',
@@ -317,7 +332,7 @@ function hbs_write_file($file, $contents) {
     if( !is_dir($dir) ) {
         mkdir($dir, 0777, true);
     }
-            
+
     // Write
     return file_put_contents($file, $contents);
 }
@@ -327,13 +342,13 @@ function hbs_write_file($file, $contents) {
 // Test genenerator main
 
 function hbs_generate_export_test_body(array $test) {
-    
+
     $options = isset($test['options']) ? $test['options'] : array();
     $compileOptions = isset($test['compileOptions']) ? $test['compileOptions'] : array();
     $options += $compileOptions;
-    
+
     $expectedOpcodes = patch_context($test['opcodes']);
-    
+
     $output = '';
     $output .= '$options = ' . var_export($options, true) . ';' . PHP_EOL;
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
@@ -374,7 +389,7 @@ function hbs_generate_spec_test_body_generic(array $test) {
         echo "Whoops\n";
         exit(1);
     }
-    
+
     return PHP_EOL . join(PHP_EOL, array_filter(array(
         'use Handlebars\DefaultRegistry;',
         'use Handlebars\SafeString;',
@@ -413,7 +428,7 @@ function hbs_generate_spec_test_body_parser(array $test) {
     } else {
         $expected = false; //$test['message'];
     }
-    
+
     $output = '';
     $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
     $output .= '
@@ -432,7 +447,7 @@ try {
         $output .= var_export('array', true);
     } else {
         $output .= '--EXPECTF--' . PHP_EOL;
-        $output .= 'exception%s'; 
+        $output .= 'exception%s';
         //$output .= $test['message'];
     }
     return $output;
@@ -458,7 +473,7 @@ function hbs_generate_export_test(array $test) {
     if( !$body ) {
         return;
     }
-    
+
     $output = '';
     $output .= hbs_generate_test_head($test);
     $output .= $body;
@@ -472,7 +487,7 @@ function hbs_generate_spec_test(array $test) {
     if( !$body ) {
         return;
     }
-    
+
     $output = '';
     $output .= $head; //hbs_generate_test_head($test);
     $output .= $body;
@@ -483,7 +498,7 @@ function hbs_generate_mustache_spec_test(array $test) {
     // Convert format to handlebars
     $test['description'] = $test['name'];
     $test['it'] = $test['desc'];
-    $test['options'] = array('compat' => true);
+    $test['options'] = array('compat' => true, 'mustacheStyleLambdas' => true);
 
     $file = hbs_test_file($test);
     $head = hbs_generate_test_head($test);
@@ -491,7 +506,7 @@ function hbs_generate_mustache_spec_test(array $test) {
     if( !$body ) {
         return;
     }
-    
+
     $output = '';
     $output .= $head; //hbs_generate_test_head($test);
     $output .= $body;
@@ -550,11 +565,11 @@ foreach( scandir($exportDir) as $file ) {
 // Mustache Spec
 $mustacheSpecDir = $mustacheSpecDir . '/specs/';
 foreach( scandir($mustacheSpecDir) as $file ) {
-    if( $file[0] === '.' || $file[0] === '~' || substr($file, -5) !== '.json' ) {
+    if( $file[0] === '.' || /*$file[0] === '~' ||*/ substr($file, -5) !== '.json' ) {
         continue;
     }
     $filePath = $mustacheSpecDir . $file;
-    $suiteName = substr(basename($filePath), 0, strpos(basename($filePath), '.'));
+    $suiteName = ltrim(substr(basename($filePath), 0, strpos(basename($filePath), '.')), "~");
 
     $tests = json_decode(file_get_contents($filePath), true);
     $number = 0;
