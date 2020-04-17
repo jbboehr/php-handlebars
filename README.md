@@ -28,8 +28,8 @@ or, in a `.nix` file:
 
 ```nix
 (import <nixpkgs> {}).callPackage (import (fetchTarball {
-  url = https://github.com/jbboehr/php-handlebars/archive/v0.8.3.tar.gz;
-  sha256 = "17q3nv3b048bf873g12jzgnj11g4vzwww2rwcwfh7l46f34k3x8d";
+  url = https://github.com/jbboehr/php-handlebars/archive/v0.9.0.tar.gz;
+  sha256 = "01z8ql6pg2apnvrr6kxynbj6c3dax5a77mhadr9k4f5p31h96lhk";
 })) {}
 ```
 

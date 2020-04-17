@@ -15,10 +15,10 @@ in
 buildPecl rec {
   pname = "handlebars";
   name = "handlebars-${version}";
-  version = orDefault phpHandlebarsVersion "v0.8.3";
+  version = orDefault phpHandlebarsVersion "v0.9.0";
   src = orDefault phpHandlebarsSrc (fetchurl {
     url = "https://github.com/jbboehr/php-handlebars/archive/${version}.tar.gz";
-    sha256 = orDefault phpHandlebarsSha256 "1w054335fzz8xs1kxacczsfcyswrs6bjjfm2ma4l9mdqnxdspjzg";
+    sha256 = orDefault phpHandlebarsSha256 "16k182cpz73hpm6jshh6bl4sma5z9l7b98wh43r95h7m09azy6hl";
   });
 
   buildInputs = [ handlebarsc talloc pcre pcre2 php_psr ];
