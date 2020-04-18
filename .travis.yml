@@ -59,7 +59,7 @@ matrix:
 
 env:
   global:
-  - LIBHANDLEBARS_VERSION=v0.7.0
+  - LIBHANDLEBARS_VERSION=v0.7.1
 
 cache: ccache
 

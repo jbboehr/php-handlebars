@@ -4,6 +4,12 @@ All Notable changes to `php-handlebars` will be documented in this file.
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## [Unreleased]
+
+### Changed
+- The compiled template produced by `Handlebars\VM::compile()` should now be deterministic, if using handlebars.c >= 0.7.1.
+- Target handlebars.c v0.7.1. The extension is fully backwards compatible to v0.6.4.
+
 ## [0.9.0] - 2020-04-17
 
 ### Added
