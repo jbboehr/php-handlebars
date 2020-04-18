@@ -9,12 +9,21 @@ $vm = new VM();
 $binaryString = $vm->compile(file_get_contents(__DIR__ . '/../fixture1.hbs'));
 var_dump($vm->renderFromBinaryString($binaryString, array('foo' => 'bar')));
 
+// We want the serialized buffer to be deterministic
+if (version_compare(Handlebars\LIBVERSION, "0.7.1", ">=")) {
+    var_dump($binaryString === $vm->compile(file_get_contents(__DIR__ . '/../fixture1.hbs')));
+} else {
+    var_dump(true); // just consider this skipped
+}
+
+// Make sure a short buffer throws
 try {
     $vm->renderFromBinaryString(substr($binaryString, 0, 3));
 } catch (\Handlebars\InvalidBinaryStringException $e) {
     var_dump($e->getMessage());
 }
 
+// Make sure an invalid hash throws
 try {
     $tmp = $binaryString;
     $tmp[0] = chr(0xFF);
@@ -24,6 +33,7 @@ try {
     var_dump($e->getMessage());
 }
 
+// Make sure an invalid data segment throws
 try {
     $tmp = $binaryString;
     // Hitting only one random bit seems to fail (pass) once in a while
@@ -50,6 +60,7 @@ var_dump($vm->renderFromBinaryString(base64_decode(file_get_contents($tmpfile)),
 
 --EXPECTF--
 string(%d) "bar"
+bool(true)
 string(%d) "Failed to validate precompiled template: buffer not long enough"
 string(%d) "Failed to validate precompiled template: template hash was %s, expected %s"
 string(%d) "Failed to validate precompiled template: template hash was %s, expected %s"

@@ -440,7 +440,9 @@ PHP_METHOD(HandlebarsVM, compile)
         goto done;
     }
 
-    // @todo patch module so it's deterministic
+#if HANDLEBARS_VERSION_INT >= 701
+    handlebars_module_normalize_pointers(module, (void *) 1);
+#endif
 
     hash_type hash = hash_buf((unsigned char *) module, module->size);
 
