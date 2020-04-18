@@ -6,6 +6,10 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ## [Unreleased]
 
+### Fixed
+- Test failure on PHP 8 (@remicollet)
+- Test failure on 32bit
+
 ### Changed
 - The compiled template produced by `Handlebars\VM::compile()` should now be deterministic, if using handlebars.c >= 0.7.1.
 - Target handlebars.c v0.7.1. The extension is fully backwards compatible to v0.6.4.

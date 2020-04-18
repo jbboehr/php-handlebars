@@ -28,10 +28,21 @@ let
             cp $pecl_tgz $out
         '';
 
-    generateHandlebarsTestsForPlatform = { pkgs, php, buildPecl, phpHandlebarsSrc }:
+    generateHandlebarsTestsForPlatform = { pkgs, path, phpAttr, phpHandlebarsSrc }:
         pkgs.recurseIntoAttrs {
-            handlebars = pkgs.callPackage ./default.nix {
-               inherit php buildPecl phpHandlebarsSrc;
+            handlebars = let
+                php = pkgs.${phpAttr};
+            in pkgs.callPackage ./default.nix {
+                inherit phpHandlebarsSrc;
+                php = pkgs.${phpAttr};
+                buildPecl = pkgs.callPackage "${path}/pkgs/build-support/build-pecl.nix" { inherit php; };
+            };
+            # cross-compile for 32bit
+            handlebars32bit = let
+                php = pkgs.pkgsi686Linux.${phpAttr};
+            in pkgs.pkgsi686Linux.callPackage ./default.nix {
+                inherit phpHandlebarsSrc;
+                buildPecl = pkgs.pkgsi686Linux.callPackage "${path}/pkgs/build-support/build-pecl.nix" { inherit php; };
             };
         };
 in
@@ -51,18 +62,14 @@ builtins.mapAttrs (k: _v:
   pkgs.recurseIntoAttrs {
     peclDist = phpHandlebarsSrc;
 
-    php72 = let
-        php = pkgs.php72;
-    in generateHandlebarsTestsForPlatform {
-        inherit pkgs php phpHandlebarsSrc;
-        buildPecl = pkgs.callPackage "${path}/pkgs/build-support/build-pecl.nix" { inherit php; };
+    php72 = generateHandlebarsTestsForPlatform {
+        inherit pkgs path phpHandlebarsSrc;
+        phpAttr = "php72";
     };
 
-    php73 = let
-        php = pkgs.php73;
-    in generateHandlebarsTestsForPlatform {
-        inherit pkgs php phpHandlebarsSrc;
-        buildPecl = pkgs.callPackage "${path}/pkgs/build-support/build-pecl.nix" { inherit php; };
+    php73 = generateHandlebarsTestsForPlatform {
+        inherit pkgs path phpHandlebarsSrc;
+        phpAttr = "php73";
     };
 
     php74 = let
@@ -71,10 +78,9 @@ builtins.mapAttrs (k: _v:
            name = "nixpkgs-20.03";
         };
         pkgs = import (path) { system = k; };
-        php = pkgs.php74;
     in generateHandlebarsTestsForPlatform {
-        inherit pkgs php phpHandlebarsSrc;
-        buildPecl = pkgs.callPackage "${path}/pkgs/build-support/build-pecl.nix" { inherit php; };
+        inherit pkgs path phpHandlebarsSrc;
+        phpAttr = "php74";
     };
   }
 ) {
