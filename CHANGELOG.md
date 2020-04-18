@@ -6,6 +6,8 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 
 ## [Unreleased]
 
+## [0.9.1] - 2020-04-18
+
 ### Fixed
 - Test failure on PHP 8 (@remicollet)
 - Test failure on 32bit
@@ -102,7 +104,8 @@ access to the Options object for other helpers. See `tests/helper-with-options.p
 - New handlebars VM
 
 
-[Unreleased]: https://github.com/jbboehr/php-handlebars/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/jbboehr/php-handlebars/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/jbboehr/php-handlebars/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/jbboehr/php-handlebars/compare/v0.8.3...v0.9.0
 [0.8.3]: https://github.com/jbboehr/php-handlebars/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/jbboehr/php-handlebars/compare/v0.8.1...v0.8.2

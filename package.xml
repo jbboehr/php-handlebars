@@ -10,10 +10,10 @@
   <email>jbboehr@php.net</email>
   <active>yes</active>
  </lead>
- <date>2020-04-17</date>
+ <date>2020-04-18</date>
  <version>
-  <release>0.9.0</release>
-  <api>0.9.0</api>
+  <release>0.9.1</release>
+  <api>0.9.1</api>
  </version>
  <stability>
   <release>stable</release>
@@ -21,13 +21,9 @@
  </stability>
  <license uri="https://opensource.org/licenses/BSD-2-Clause">BSD-2-Clause</license>
  <notes>
-- Preliminary PHP 8 support
-- Support for precompiling templates
-- Mustache-style lambda support
-- Drop max PHP version constraint
-- Selective helper options omission
-- Improved typehints
-See CHANGELOG.md for full details
+- Fixed test failure on PHP 8 (@remicollet)
+- Fixed test failure on 32bit
+- The compiled template produced by `Handlebars\VM::compile()` should now be deterministic, if using handlebars.c >= 0.7.1.
  </notes>
  <contents>
   <dir name="/">
