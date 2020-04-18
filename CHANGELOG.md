@@ -4,6 +4,12 @@ All Notable changes to `php-handlebars` will be documented in this file.
 
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## [Unreleased]
+
+### Fixed
+- Test failure on PHP 8 (@remicollet)
+- Test failure on 32bit
+
 ## [0.9.0] - 2020-04-17
 
 ### Added
