@@ -2,6 +2,9 @@ sudo: false
 
 dist: xenial
 
+services:
+- docker
+
 matrix:
   fast_finish: true
   allow_failures:
@@ -58,6 +61,8 @@ matrix:
     env:
     - NIX_CHANNEL=20.03
     - NIX_PHP_ATTR=php74
+  - env:
+    - DOCKER_IMAGE=fedora31
 #   - language: nix
 #     env:
 #     - NIX_CHANNEL=unstable
@@ -65,7 +70,7 @@ matrix:
 
 env:
   global:
-  - LIBHANDLEBARS_VERSION=v0.7.1
+  - LIBHANDLEBARS_VERSION=v0.7.2
 
 cache: ccache
 
