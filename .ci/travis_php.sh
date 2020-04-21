@@ -14,8 +14,17 @@ export CFLAGS="-L${PREFIX}/lib ${CFLAGS}"
 export CPPFLAGS="-I${PREFIX}/include ${CPPFLAGS}"
 export PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
+if [[ "${HARDENING}" = "true" ]]; then
+	export CFLAGS="$CFLAGS -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fexceptions -fstack-protector-strong -grecord-gcc-switches"
+	export CFLAGS="$CFLAGS -specs=`pwd`/.ci/redhat-hardened-cc1 -specs=`pwd`/.ci/redhat-hardened-ld"
+	export CFLAGS="$CFLAGS -fasynchronous-unwind-tables -fPIC -DPIC"
+	# this is not supported on travis: -fcf-protection
+    # this is only supported on gcc >= ~8.3 (?): -fstack-clash-protection
+fi
+
 function install_libhandlebars() (
     set -e -o pipefail
+    trap "cat config.log" ERR
 
     local dir=third-party/handlebars-c
     rm -rf ${dir}
@@ -31,6 +40,7 @@ function install_libhandlebars() (
 
 function install_php_psr() (
     set -e -o pipefail
+    trap "cat config.log" ERR
 
     local dir=third-party/php-psr
     rm -rf ${dir}
@@ -38,6 +48,21 @@ function install_php_psr() (
     cd ${dir}
     phpize
     ./configure --prefix=${PREFIX}
+    make
+)
+
+function install_php_handlebars() (
+    set -e -o pipefail
+    trap "cat config.log" ERR
+
+    phpize
+    if [[ "${COVERAGE}" = "true" ]]; then
+        ./configure --enable-handlebars \
+            CFLAGS="-fprofile-arcs -ftest-coverage ${CFLAGS}" \
+            LDFLAGS="--coverage ${LDFLAGS}"
+    else
+        ./configure --enable-handlebars
+    fi
     make
 )
 
@@ -59,16 +84,7 @@ function install() (
     if [[ ! -z "${PHP_PSR_VERSION}" ]]; then
         install_php_psr
     fi
-
-    phpize
-    if [[ "${COVERAGE}" = "true" ]]; then
-        ./configure --enable-handlebars \
-            CFLAGS="-fprofile-arcs -ftest-coverage ${CFLAGS}" \
-            LDFLAGS="--coverage ${LDFLAGS}"
-    else
-        ./configure --enable-handlebars
-    fi
-    make
+    install_php_handlebars
 )
 
 function before_script() (
