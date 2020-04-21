@@ -24,6 +24,11 @@ const VERSION = "x.y.z";
 const LIBVERSION = "x.y.z";
 
 /**
+ * libhandlebars version (at compile time)
+ */
+const LIBVERSION2 = "x.y.z";
+
+/**
  * If PSR extension is available
  */
 const PSR = true;
