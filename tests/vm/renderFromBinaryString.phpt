@@ -10,7 +10,7 @@ $binaryString = $vm->compile(file_get_contents(__DIR__ . '/../fixture1.hbs'));
 var_dump($vm->renderFromBinaryString($binaryString, array('foo' => 'bar')));
 
 // We want the serialized buffer to be deterministic
-if (version_compare(Handlebars\LIBVERSION, "0.7.1", ">=")) {
+if (version_compare(Handlebars\LIBVERSION2, "0.7.1", ">=")) {
     var_dump($binaryString === $vm->compile(file_get_contents(__DIR__ . '/../fixture1.hbs')));
 } else {
     var_dump(true); // just consider this skipped

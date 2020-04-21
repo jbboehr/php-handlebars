@@ -95,6 +95,7 @@ static PHP_MINIT_FUNCTION(handlebars)
 
     REGISTER_STRING_CONSTANT("Handlebars\\VERSION", (char *) PHP_HANDLEBARS_VERSION, flags);
     REGISTER_STRING_CONSTANT("Handlebars\\LIBVERSION", (char *) version, flags);
+    REGISTER_STRING_CONSTANT("Handlebars\\LIBVERSION2", (char *) HANDLEBARS_VERSION_STRING, flags);
 
     // Setup root contexts
     HANDLEBARS_G(root) = talloc_new(NULL);
@@ -180,6 +181,7 @@ static PHP_MINFO_FUNCTION(handlebars)
     php_info_print_table_row(2, "Spec Version", PHP_HANDLEBARS_SPEC);
     php_info_print_table_row(2, "PSR support", handlebars_has_psr ? "active" : "inactive");
     php_info_print_table_row(2, "libhandlebars Version", handlebars_version_string());
+    php_info_print_table_row(2, "libhandlebars Version (compile-time)", HANDLEBARS_VERSION_STRING);
     php_info_print_table_row(2, "libhandlebars Handlebars Spec Version", handlebars_spec_version_string());
     php_info_print_table_row(2, "libhandlebars Mustache Spec Version", handlebars_mustache_spec_version_string());
 

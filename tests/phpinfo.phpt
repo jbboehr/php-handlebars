@@ -18,6 +18,7 @@ Authors => %s
 Spec Version => %s
 PSR support => %s
 libhandlebars Version => %s
+libhandlebars Version (compile-time) => %s
 libhandlebars Handlebars Spec Version => %s
 libhandlebars Mustache Spec Version => %s
 xxhash version => %s
