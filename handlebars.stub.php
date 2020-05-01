@@ -16,17 +16,17 @@ use Psr\Log\LoggerAwareInterface;
 /**
  * extension version
  */
-const VERSION = "x.y.z";
+const VERSION = "0.9.1";
 
 /**
  * libhandlebars version
  */
-const LIBVERSION = "x.y.z";
+const LIBVERSION = "0.7.2";
 
 /**
  * libhandlebars version (at compile time)
  */
-const LIBVERSION2 = "x.y.z";
+const LIBVERSION2 = "0.7.2";
 
 /**
  * If PSR extension is available

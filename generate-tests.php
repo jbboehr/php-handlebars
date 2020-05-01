@@ -1,6 +1,9 @@
 #!/usr/bin/env php
 <?php
 
+// generate the package.xml test entries with:
+// find tests -type f -not -name .gitignore | sort | xargs -I{} echo '   <file name="{}" role="test" />'
+
 require __DIR__ . '/tests/utils.inc';
 
 if( !extension_loaded('psr') ) {
