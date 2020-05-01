@@ -316,6 +316,7 @@ function hbs_generate_test_head(array &$test) {
         }
     }
 
+    $extraSkip = null;
     if ($test['suiteType'] === 'mustache' && $test['suiteName'] === 'lambdas') {
         $extraSkip = <<<EOF
 

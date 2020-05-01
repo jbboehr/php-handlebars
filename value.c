@@ -342,7 +342,11 @@ bool handlebars_std_zval_iterator_init(struct handlebars_value_iterator * it, st
                 return handlebars_std_zval_iterator_object(it);
             } else if (Z_OBJ_HT_P(intern)->get_properties) {
                 itusr = handlebars_talloc_zero(value->ctx, struct array_it_usr);
+#if PHP_MAJOR_VERSION >= 8
+                itusr->ht = Z_OBJ_HT_P(intern)->get_properties(Z_OBJ_P(intern));
+#else
                 itusr->ht = Z_OBJ_HT_P(intern)->get_properties(intern);
+#endif
                 it->usr = (void *) itusr;
                 it->length = zend_hash_num_elements(itusr->ht);
                 it->next = &handlebars_std_zval_iterator_array;
