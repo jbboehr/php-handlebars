@@ -172,7 +172,7 @@ void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, s
     }
 
     // Alloc the array
-    known_helpers = handlebars_talloc_array(NULL, char *, num + 1);
+    known_helpers = handlebars_talloc_array(compiler, char *, num + 1);
 
     // Copy in the builtins
     for( ptr2 = orig ; *ptr2 ; ++ptr2 ) {
