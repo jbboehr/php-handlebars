@@ -81,12 +81,15 @@ function convertLambdas(&$data)
         if( !is_array($v) ) {
             continue;
         }
+        $unimpl = 'function () { throw new Exception("unimplemented test fixture"); }';
         if( !empty($v['!code']) ) {
-            $js = isset($v['javascript']) ? $v['javascript'] : null;
-            $data[$k] = new ClosureHolder($v['php'] . '/*' . $js . '*/');
+            $js = $v['javascript'] ?? null;
+            $php = $v['php'] ?? 'function () { throw new Exception("unimplemented test fixture"); }';
+            $data[$k] = new ClosureHolder($php . '/*' . $js . '*/');
         } else if (!empty($v['__tag__']) && $v['__tag__'] === 'code') {
-            $js = isset($v['js']) ? $v['js'] : null;
-            $data[$k] = new ClosureHolder('function($text) {' . $v['php'] . '}' . '/*' . $js . '*/');
+            $js = $v['js'] ?? null;
+            $php = $v['php'] ?? $unimpl;
+            $data[$k] = new ClosureHolder('function($text) {' . $php . '}' . '/*' . $js . '*/');
         } else {
             convertLambdas($data[$k]);
         }
@@ -215,7 +218,7 @@ function hbs_test_file(array $test) {
     $testFile = __DIR__ . '/tests'
         . '/' . $st
         . '/' . $test['suiteName']
-        . '/' . sprintf("%03d", $test['number']) /*. '-' . $safeName */ . '.phpt';
+        . '/' . sprintf("%03d", $test['i']) /*. '-' . $safeName */ . '.phpt';
     return $testFile;
 }
 
@@ -224,15 +227,12 @@ function hbs_generate_test_head(array &$test) {
     $skip = "!extension_loaded('handlebars')";
     $reason = '';
     $utilsPrefix = $test['suiteType'] === 'mustache' ? '' : '../';
+    $testName = $test['description'] . ' - ' . $test['it'];
+    if (!empty($test['number'])) {
+        $testName .= ' - ' . $test['number'];
+    }
 
-    switch( $test['description'] . '-' . $test['it'] ) {
-        // case 'basic context-escaping':
-        //     if( $test['number'] != 3 ) {
-        //         break;
-        //     }
-        //     $skip = 'true';
-        //     $reason = 'skip for now';
-        //     break;
+    switch( $test['description'] . ' - ' . $test['it'] ) {
     	// case 'Standalone Indentation-Each line of the partial should be indented before rendering.':
         //     if( $test['number'] != 10 ) {
         //         break;
@@ -250,6 +250,21 @@ function hbs_generate_test_head(array &$test) {
             $reason = 'mustache lambdas with delimter changing syntax are not implemented, intentionally';
             break;
     }
+
+    if( $test['suiteType'] == 'export' ) {
+        switch ($testName) {
+            case 'basic context - escaping - 01':
+            case 'Tokenizer - supports escaping delimiters':
+            case 'Tokenizer - supports escaping multiple delimiters':
+            case 'Tokenizer - supports escaping a triple stash':
+            case 'Tokenizer - supports escaped mustaches after escaped escape characters':
+            case 'Tokenizer - supports escaped escape characters after escaped mustaches':
+                $skip = 'true';
+                $reason = 'this test is correct, but handlebars.js does not join two adjacent content blocks';
+                break;
+        }
+    }
+
     if( $test['suiteType'] == 'spec' ) {
         if( $test['suiteName'] == 'string-params' ) {
             $skip = 'true';
@@ -267,30 +282,28 @@ function hbs_generate_test_head(array &$test) {
             $skip = 'true';
             $reason = 'decorators are not supported by the VM';
         }
-        // switch( $test['suiteName'] . '-' . $test['description'] . '-' . $test['it'] ) {
-        //     case 'basic-basic context-compiling with a string context':
-        //         $skip = 'true';
-        //         $reason = 'PHP does not have string methods';
-        //         break;
-        //     case 'helpers-block params-should take presednece over parent block params':
-        //         $test['expected'] = '15foo';
-        //         break;
-        //     case 'subexpressions-subexpressions-in string params mode,':
-        //     case 'subexpressions-subexpressions-as hashes in string params mode':
-        //         $skip = 'true';
-        //         $reason = 'string params are not supported by the VM';
-        //         break;
-        //     case 'subexpressions-subexpressions-subexpressions can\'t just be property lookups':
-        //         $skip = 'true';
-        //         $reason = 'skip for now';
-        //         break;
-        //     case 'regressions-Regressions-should support multiple levels of inline partials':
-        //     case 'regressions-Regressions-GH-1089: should support failover content in multiple levels of inline partials':
-        //     case 'regressions-Regressions-GH-1099: should support greater than 3 nested levels of inline partials':
-        //         $skip = 'true';
-        //         $reason = 'inline partials are not supported by the VM';
-        //         break;
-        // }
+
+        switch ($testName) {
+            case 'helpers - block params - should take presednece over parent block params';
+                $skip = true;
+                $reason = 'libhandlebars currently does not expose options.blockParams';
+                break;
+            case 'Regressions - should support multiple levels of inline partials':
+            case 'Regressions - GH-1089: should support failover content in multiple levels of inline partials':
+            case 'Regressions - GH-1099: should support greater than 3 nested levels of inline partials':
+                $skip = 'true';
+                $reason = 'inline partials are not supported by the VM';
+                break;
+            case 'Regressions - GH-1186: Support block params for existing programs':
+            case 'Regressions - GH-1341: 4.0.7 release breaks {{#if @partial-block}} usage':
+                $skip = 'true';
+                $reason = 'partial blocks are not supported by the VM';
+                break;
+            case 'Regressions - GH-1135 : Context handling within each iteration':
+                $skip = 'true';
+                $reason = 'need to implement deep equal for this?';
+                break;
+        }
     }
 
     if ($test['suiteType'] === 'mustache' && $test['suiteName'] === 'lambdas') {
@@ -300,13 +313,17 @@ if( !defined('Handlebars\\Compiler::MUSTACHE_STYLE_LAMBDAS') ) die('skip configu
 EOF;
     }
 
-    return join("\n", array(
+    return join("\n", array_filter([
         '--TEST--',
-        $test['description'] . ' - ' . $test['it'],
+        $testName,
         '--DESCRIPTION--',
-        $test['description'] . ' - ' . $test['it'],
+        $testName,
+        $test['message'] ?? null,
         '--SKIPIF--',
-        "<?php if( $skip ) die('skip $reason');$extraSkip ?>",
+        "<?php",
+        "if( $skip ) die('skip $reason');",
+        $extraSkip,
+        "?>",
         '--FILE--',
         '<?php',
         'use Handlebars\Compiler;',
@@ -315,7 +332,7 @@ EOF;
         'use Handlebars\Utils;',
         'use Handlebars\VM;',
         'require __DIR__ . "/' . $utilsPrefix . '../../utils.inc";',
-    ));
+    ])) . "\n";
 }
 
 function hbs_write_file($file, $contents) {
@@ -339,14 +356,14 @@ function hbs_generate_export_test_body(array $test) {
 
     $expectedOpcodes = patch_context($test['opcodes']);
 
-    $output = '';
-    $output .= '$compileOptions = ' . var_export($compileOptions, true) . ';' . PHP_EOL;
-    $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
-    $output .= 'myprint(Compiler::compile($tmpl, $compileOptions), true);' . PHP_EOL;
-    $output .= 'myprint(gettype(Compiler::compilePrint($tmpl, $compileOptions)), true);' . PHP_EOL;
-    $output .= '--EXPECT--' . PHP_EOL;
-    $output .= myprint($expectedOpcodes) . myprint('string') . PHP_EOL;
-    return $output;
+    return join("\n", array_filter([
+        '$compileOptions = ' . var_export($compileOptions, true) . ';',
+        '$tmpl = ' . var_export($test['template'], true) . ';',
+        'myprint(Compiler::compile($tmpl, $compileOptions), true);',
+        'myprint(gettype(Compiler::compilePrint($tmpl, $compileOptions)), true);',
+        '--EXPECT--',
+        myprint($expectedOpcodes) . myprint('string'),
+    ]));
 }
 
 function hbs_generate_spec_test_body_generic(array $test) {
@@ -374,7 +391,7 @@ function hbs_generate_spec_test_body_generic(array $test) {
         exit(1);
     }
 
-    return PHP_EOL . join(PHP_EOL, array_filter(array(
+    return PHP_EOL . join(PHP_EOL, array_filter([
         'use Handlebars\DefaultRegistry;',
         'use Handlebars\SafeString;',
         '$tmpl = ' . var_export($test['template'], true) . ';',
@@ -392,7 +409,7 @@ function hbs_generate_spec_test_body_generic(array $test) {
         $message ? '/* Error message: ' . addcslashes($message, "\r\n") . ' */' : null,
         '--'. ($expectHead ?: 'EXPECT') . '--',
         $expected
-    )));
+    ]));
 }
 
 function hbs_generate_spec_test_body_tokenizer(array $test) {
@@ -512,12 +529,12 @@ foreach( scandir($specDir) as $file ) {
     $filePath = $specDir . $file;
     $suiteName = substr(basename($filePath), 0, strpos(basename($filePath), '.'));
     $tests = json_decode(file_get_contents($filePath), true);
-    $number = 0;
+    $i = 0;
     foreach( $tests as $test ) {
-        ++$number;
+        ++$i;
         $test['suiteType'] = 'spec';
         $test['suiteName'] = $suiteName;
-        $test['number'] = $number;
+        $test['i'] = $i;
         hbs_generate_spec_test($test);
     }
 }
@@ -538,12 +555,12 @@ foreach( scandir($exportDir) as $file ) {
         continue;
     }
 
-    $number = 0;
+    $i = 0;
     foreach( $tests as $test ) {
-        ++$number;
+        ++$i;
         $test['suiteType'] = 'export';
         $test['suiteName'] = $suiteName;
-        $test['number'] = $number;
+        $test['i'] = $i;
         hbs_generate_export_test($test);
     }
 }
@@ -558,13 +575,13 @@ foreach( scandir($mustacheSpecDir) as $file ) {
     $suiteName = ltrim(substr(basename($filePath), 0, strpos(basename($filePath), '.')), "~");
 
     $tests = json_decode(file_get_contents($filePath), true);
-    $number = 0;
+    $i = 0;
 
     foreach( $tests['tests'] as $test ) {
-        ++$number;
+        ++$i;
         $test['suiteType'] = 'mustache';
         $test['suiteName'] = $suiteName;
-        $test['number'] = $number;
+        $test['i'] = $i;
         hbs_generate_mustache_spec_test($test);
     }
 }
