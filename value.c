@@ -239,6 +239,65 @@ static bool handlebars_std_zval_iterator_array(struct handlebars_value_iterator 
     return false;
 }
 
+static bool handlebars_std_zval_iterator_object(struct handlebars_value_iterator * it)
+{
+    zend_object_iterator * zit = it->usr;
+    zval *val;
+    zval key;
+
+    if( it->key ) {
+        handlebars_talloc_free(it->key);
+        it->key = NULL;
+    }
+
+    if( it->current != NULL ) {
+        handlebars_value_delref(it->current);
+        it->current = NULL;
+    }
+
+    if (zit->funcs->valid(zit) != SUCCESS) {
+        goto iterator_err;
+    }
+
+    if (EG(exception)) {
+        goto iterator_err;
+    }
+
+    val = zit->funcs->get_current_data(zit);
+    if (EG(exception)) {
+        goto iterator_err;
+    }
+
+    it->current = handlebars_value_from_zval(it->value->ctx, val);
+    handlebars_value_addref(it->current);
+
+    if (zit->funcs->get_current_key) {
+        zit->funcs->get_current_key(zit, &key);
+        if (EG(exception)) {
+            goto iterator_err;
+        }
+        convert_to_string(&key);
+        it->key = handlebars_string_ctor(it->value->ctx, Z_STRVAL(key), Z_STRLEN(key));
+        zval_ptr_dtor(&key);
+    } else {
+        it->key = NULL;
+        it->index++;
+    }
+
+    zit->funcs->move_forward(zit);
+    if (EG(exception)) {
+        goto iterator_err;
+    }
+
+    return true;
+
+iterator_err:
+    OBJ_RELEASE(&zit->std);
+    it->usr = NULL;
+    it->next = &handlebars_std_zval_iterator_void;
+    return false;
+}
+
 bool handlebars_std_zval_iterator_init(struct handlebars_value_iterator * it, struct handlebars_value * value)
 {
     zval * intern = get_intern_zval(value);
@@ -248,6 +307,21 @@ bool handlebars_std_zval_iterator_init(struct handlebars_value_iterator * it, st
     it->value = value;
 
     switch( Z_TYPE_P(intern) ) {
+        case IS_OBJECT:
+            if (instanceof_function(Z_OBJCE_P(intern), zend_ce_traversable)) {
+                zend_object_iterator * iter = Z_OBJCE_P(intern)->get_iterator(Z_OBJCE_P(intern), intern, 0);
+                if (iter->funcs->rewind) {
+                    iter->funcs->rewind(iter);
+                    if (EG(exception)) {
+                        goto iterator_done;
+                    }
+                }
+                it->usr = (void *) iter;
+                it->next = &handlebars_std_zval_iterator_object;
+                return handlebars_std_zval_iterator_object(it);
+            }
+            // fallthrough
+
         case IS_ARRAY:
             ht = HASH_OF(intern);
             data_pointer = handlebars_talloc_zero(value->ctx, HashPosition);
@@ -274,14 +348,13 @@ bool handlebars_std_zval_iterator_init(struct handlebars_value_iterator * it, st
                 return true;
             }
             break;
-        case IS_OBJECT:
-            // @todo
-            break;
+
         default:
             // Do nothing
             break;
     }
 
+iterator_done:
     it->next = &handlebars_std_zval_iterator_void;
 
     return false;
