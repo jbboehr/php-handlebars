@@ -8,7 +8,7 @@ let
 
             handlebars_spec = pkgs.callPackage (import ((fetchTarball {
                 url = https://github.com/jbboehr/handlebars-spec/archive/v104.7.6.tar.gz;
-                sha256 = "08dvx3s8j6i3npvh65halv18f5ilm0iisbrqxxv9gpfcav0m3hi6";
+                sha256 = "1qb1l5cb7gkj13r3km6d3pwjv79zm4jlglj4axn2zgjjyisfr93x";
             }))) {};
         in
         pkgs.runCommand "pecl-handlebars.tgz" {
