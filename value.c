@@ -313,7 +313,8 @@ bool handlebars_std_zval_iterator_init(struct handlebars_value_iterator * it, st
                 if (iter->funcs->rewind) {
                     iter->funcs->rewind(iter);
                     if (EG(exception)) {
-                        goto iterator_done;
+                        OBJ_RELEASE(&iter->std);
+                        goto done;
                     }
                 }
                 it->usr = (void *) iter;
@@ -354,9 +355,8 @@ bool handlebars_std_zval_iterator_init(struct handlebars_value_iterator * it, st
             break;
     }
 
-iterator_done:
+done:
     it->next = &handlebars_std_zval_iterator_void;
-
     return false;
 }
 
