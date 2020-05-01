@@ -111,7 +111,7 @@ static zend_always_inline short is_integer_string(char * str, size_t len) {
     return 1;
 }
 
-static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * field, zval * return_value)
+void php_handlebars_name_lookup(zval * value, zval * field, zval * return_value)
 {
     long index = -1;
     zval * entry = NULL;

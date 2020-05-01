@@ -19,13 +19,13 @@
   }))) {},
 
   handlebars_spec ? pkgs.callPackage (import ((fetchTarball {
-    url = https://github.com/jbboehr/handlebars-spec/archive/9306f3062b4b03d5179c33834bee7263a621639a.tar.gz;
-    sha256 = "0gn9v88fxdf0wwgd8ix1xfxvif89mgfhxkp316arv5ljbibx2x9h";
+    url = https://github.com/jbboehr/handlebars-spec/archive/v104.7.6.tar.gz;
+    sha256 = "0i2czm6yhiv5xbq93yj249xjxqrfv70mk1qgl0abkbm0qmmkc4vk";
   }))) {},
 
   handlebarsc ? pkgs.callPackage (import (fetchTarball {
-    url = https://github.com/jbboehr/handlebars.c/archive/v0.7.2.tar.gz;
-    sha256 = "1rszprra8pavsw7aq7ixdn3jd00zy3hymmh2z4wcqc9lrw3h6hxb";
+    url = https://github.com/jbboehr/handlebars.c/archive/354923fc39c1a2502dceb15af27f91ff7cf570b3.tar.gz;
+    sha256 = "1qb1l5cb7gkj13r3km6d3pwjv79zm4jlglj4axn2zgjjyisfr93x";
   })) { inherit mustache_spec handlebars_spec; },
 
   php_psr ? pkgs.callPackage (import (fetchTarball {

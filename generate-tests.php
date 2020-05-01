@@ -1,6 +1,9 @@
 #!/usr/bin/env php
 <?php
 
+// generate the package.xml test entries with:
+// find tests -type f -not -name .gitignore | sort | xargs -I{} echo '   <file name="{}" role="test" />'
+
 require __DIR__ . '/tests/utils.inc';
 
 if( !extension_loaded('psr') ) {
@@ -81,12 +84,15 @@ function convertLambdas(&$data)
         if( !is_array($v) ) {
             continue;
         }
+        $unimpl = 'function () { throw new Exception("unimplemented test fixture"); }';
         if( !empty($v['!code']) ) {
-            $js = isset($v['javascript']) ? $v['javascript'] : null;
-            $data[$k] = new ClosureHolder($v['php'] . '/*' . $js . '*/');
+            $js = $v['javascript'] ?? null;
+            $php = $v['php'] ?? 'function () { throw new Exception("unimplemented test fixture"); }';
+            $data[$k] = new ClosureHolder($php . '/*' . $js . '*/');
         } else if (!empty($v['__tag__']) && $v['__tag__'] === 'code') {
-            $js = isset($v['js']) ? $v['js'] : null;
-            $data[$k] = new ClosureHolder('function($text) {' . $v['php'] . '}' . '/*' . $js . '*/');
+            $js = $v['js'] ?? null;
+            $php = $v['php'] ?? $unimpl;
+            $data[$k] = new ClosureHolder('function($text) {' . $php . '}' . '/*' . $js . '*/');
         } else {
             convertLambdas($data[$k]);
         }
@@ -215,7 +221,7 @@ function hbs_test_file(array $test) {
     $testFile = __DIR__ . '/tests'
         . '/' . $st
         . '/' . $test['suiteName']
-        . '/' . sprintf("%03d", $test['number']) /*. '-' . $safeName */ . '.phpt';
+        . '/' . sprintf("%03d", $test['i']) /*. '-' . $safeName */ . '.phpt';
     return $testFile;
 }
 
@@ -224,32 +230,42 @@ function hbs_generate_test_head(array &$test) {
     $skip = "!extension_loaded('handlebars')";
     $reason = '';
     $utilsPrefix = $test['suiteType'] === 'mustache' ? '' : '../';
+    $testName = $test['description'] . ' - ' . $test['it'];
+    if (!empty($test['number'])) {
+        $testName .= ' - ' . $test['number'];
+    }
 
-    switch( $test['description'] . '-' . $test['it'] ) {
-        case 'basic context-escaping':
-            if( $test['number'] != 3 ) {
-                break;
-            }
-            $skip = 'true';
-            $reason = 'skip for now';
-            break;
-    	case 'Standalone Indentation-Each line of the partial should be indented before rendering.':
-            if( $test['number'] != 10 ) {
-                break;
-            }
-            $skip = 'true';
-            $reason = 'skip for now';
-            break;
-        case 'helpers-helper for nested raw block gets raw content':
+    switch( $test['description'] . ' - ' . $test['it'] ) {
+    	case 'Standalone Indentation - Each line of the partial should be indented before rendering.':
             $skip = 'true';
             $reason = 'skip for now';
             break;
 
-        case 'Section - Alternate Delimiters-Lambdas used for sections should parse with the current delimiters.':
+        case 'Section - Alternate Delimiters - Lambdas used for sections should parse with the current delimiters.':
             $skip = 'true';
             $reason = 'mustache lambdas with delimter changing syntax are not implemented, intentionally';
             break;
     }
+
+    if( $test['suiteType'] == 'export' ) {
+        switch ($testName) {
+            case 'basic context - escaping - 01':
+            case 'Tokenizer - supports escaping delimiters':
+            case 'Tokenizer - supports escaping multiple delimiters':
+            case 'Tokenizer - supports escaping a triple stash':
+            case 'Tokenizer - supports escaped mustaches after escaped escape characters':
+            case 'Tokenizer - supports escaped escape characters after escaped mustaches':
+                $skip = 'true';
+                $reason = 'this test is correct, but handlebars.js does not join two adjacent content blocks';
+                break;
+            case 'helpers - helper for nested raw block gets raw content':
+            case 'helpers - raw block parsing (with identity helper-function) - helper for nested raw block gets raw content':
+                $skip = 'true';
+                $reason = 'skip for now';
+                break;
+        }
+    }
+
     if( $test['suiteType'] == 'spec' ) {
         if( $test['suiteName'] == 'string-params' ) {
             $skip = 'true';
@@ -257,50 +273,50 @@ function hbs_generate_test_head(array &$test) {
         } else if( $test['suiteName'] == 'track-ids' ) {
             $skip = 'true';
             $reason = 'track ids are not supported by the VM';
-        } else if( $test['description'] == 'partial blocks' ) {
+        } else if( $test['description'] == 'partials - partial blocks' ) {
             $skip = 'true';
             $reason = 'partial blocks are not supported by the VM';
-        } else if( $test['description'] == 'inline partials' ) {
+        } else if( $test['description'] == 'partials - inline partials' ) {
             $skip = 'true';
             $reason = 'inline partials are not supported by the VM';
+        } else if( $test['description'] == 'blocks - decorators' ) {
+            $skip = 'true';
+            $reason = 'decorators are not supported by the VM';
         }
-        switch( $test['suiteName'] . '-' . $test['description'] . '-' . $test['it'] ) {
-            case 'basic-basic context-compiling with a string context':
+
+        switch ($testName) {
+            case 'helpers - block params - should take presednece over parent block params';
+                $skip = true;
+                $reason = 'libhandlebars currently does not expose options.blockParams';
+                break;
+            case 'Regressions - should support multiple levels of inline partials':
+            case 'Regressions - GH-1089: should support failover content in multiple levels of inline partials':
+            case 'Regressions - GH-1099: should support greater than 3 nested levels of inline partials':
                 $skip = 'true';
-                $reason = 'PHP does not have string methods';
+                $reason = 'inline partials are not supported by the VM';
                 break;
-            case 'blocks-decorators-should apply mustache decorators':
-            case 'blocks-decorators-should apply allow undefined return':
-            case 'blocks-decorators-should apply block decorators':
-            case 'blocks-decorators-should support nested decorators':
-            case 'blocks-decorators-should apply multiple decorators':
-            case 'blocks-decorators-should access parent variables':
-            case 'blocks-decorators-should work with root program':
-            case 'blocks-decorators-should fail when accessing variables from root':
+            case 'Regressions - GH-1186: Support block params for existing programs':
+            case 'Regressions - GH-1341: 4.0.7 release breaks {{#if @partial-block}} usage':
                 $skip = 'true';
-                $reason = 'decorators are not currently supported';
+                $reason = 'partial blocks are not supported by the VM';
                 break;
-            case 'helpers-block params-should take presednece over parent block params':
-                $test['expected'] = '15foo';
+            case 'Regressions - GH-1135 : Context handling within each iteration':
+                $skip = 'true';
+                $reason = 'need to implement deep equal for this?';
                 break;
-            case 'subexpressions-subexpressions-in string params mode,':
-            case 'subexpressions-subexpressions-as hashes in string params mode':
+            case 'subexpressions - in string params mode,':
+            case 'subexpressions - as hashes in string params mode':
                 $skip = 'true';
                 $reason = 'string params are not supported by the VM';
                 break;
-            case 'subexpressions-subexpressions-subexpressions can\'t just be property lookups':
+            case "subexpressions - subexpressions can't just be property lookups":
                 $skip = 'true';
                 $reason = 'skip for now';
-                break;
-            case 'regressions-Regressions-should support multiple levels of inline partials':
-            case 'regressions-Regressions-GH-1089: should support failover content in multiple levels of inline partials':
-            case 'regressions-Regressions-GH-1099: should support greater than 3 nested levels of inline partials':
-                $skip = 'true';
-                $reason = 'inline partials are not supported by the VM';
                 break;
         }
     }
 
+    $extraSkip = null;
     if ($test['suiteType'] === 'mustache' && $test['suiteName'] === 'lambdas') {
         $extraSkip = <<<EOF
 
@@ -308,13 +324,17 @@ if( !defined('Handlebars\\Compiler::MUSTACHE_STYLE_LAMBDAS') ) die('skip configu
 EOF;
     }
 
-    return join("\n", array(
+    return join("\n", array_filter([
         '--TEST--',
-        $test['suiteName'] . ' #' . $test['number'] . ' - ' . $test['description'] /* . ' - ' . $test['it']*/,
+        $testName,
         '--DESCRIPTION--',
-        $test['description'] . ' - ' . $test['it'],
+        $testName,
+        $test['message'] ?? null,
         '--SKIPIF--',
-        "<?php if( $skip ) die('skip $reason');$extraSkip ?>",
+        "<?php",
+        "if( $skip ) die('skip $reason');",
+        $extraSkip,
+        "?>",
         '--FILE--',
         '<?php',
         'use Handlebars\Compiler;',
@@ -323,7 +343,7 @@ EOF;
         'use Handlebars\Utils;',
         'use Handlebars\VM;',
         'require __DIR__ . "/' . $utilsPrefix . '../../utils.inc";',
-    ));
+    ])) . "\n";
 }
 
 function hbs_write_file($file, $contents) {
@@ -343,41 +363,33 @@ function hbs_write_file($file, $contents) {
 
 function hbs_generate_export_test_body(array $test) {
 
-    $options = isset($test['options']) ? $test['options'] : array();
-    $compileOptions = isset($test['compileOptions']) ? $test['compileOptions'] : array();
-    $options += $compileOptions;
+    $compileOptions = $test['compileOptions'] ?? [];
 
     $expectedOpcodes = patch_context($test['opcodes']);
 
-    $output = '';
-    $output .= '$options = ' . var_export($options, true) . ';' . PHP_EOL;
-    $output .= '$tmpl = ' . var_export($test['template'], true) . ';' . PHP_EOL;
-    $output .= 'myprint(Compiler::compile($tmpl, $options), true);' . PHP_EOL;
-    $output .= 'myprint(gettype(Compiler::compilePrint($tmpl, $options)), true);' . PHP_EOL;
-    $output .= '--EXPECT--' . PHP_EOL;
-    $output .= myprint($expectedOpcodes) . myprint('string') . PHP_EOL;
-    return $output;
+    return join("\n", array_filter([
+        '$compileOptions = ' . var_export($compileOptions, true) . ';',
+        '$tmpl = ' . var_export($test['template'], true) . ';',
+        'myprint(Compiler::compile($tmpl, $compileOptions), true);',
+        'myprint(gettype(Compiler::compilePrint($tmpl, $compileOptions)), true);',
+        '--EXPECT--',
+        myprint($expectedOpcodes) . myprint('string'),
+    ]));
 }
 
 function hbs_generate_spec_test_body_generic(array $test) {
-    $options = isset($test['options']) ? $test['options'] : array();
-    $compileOptions = isset($test['compileOptions']) ? $test['compileOptions'] : array();
-    $options += $compileOptions;
+    $runtimeOptions = $test['runtimeOptions'] ?? [];
+    $compileOptions = $test['compileOptions'] ?? [];
+    $allOptions = array_merge($compileOptions, $runtimeOptions);
     $helpers = (array) @$test['helpers'];
     $partials = (array) @$test['partials'];
     $context = isset($test['data']) ? $test['data'] : null;
     $expectHead = null;
     $message = null;
-    if( !empty($test['globalHelpers']) ) {
-        $helpers += $test['globalHelpers'];
-    }
-    if( !empty($test['globalPartials']) ) {
-        $partials += $test['globalPartials'];
-    }
     if( array_key_exists('expected', $test) ) {
         $expected = $test['expected'];
     } else if( !empty($test['exception']) ) {
-    $expectHead = 'EXPECTF';
+        $expectHead = 'EXPECTF';
         // @todo improve this
         $expected = '%AUncaught%A';
         if( !empty($test['message']) ) {
@@ -390,23 +402,25 @@ function hbs_generate_spec_test_body_generic(array $test) {
         exit(1);
     }
 
-    return PHP_EOL . join(PHP_EOL, array_filter(array(
+    return PHP_EOL . join(PHP_EOL, array_filter([
         'use Handlebars\DefaultRegistry;',
         'use Handlebars\SafeString;',
         '$tmpl = ' . var_export($test['template'], true) . ';',
         '$context = ' . varExport($context, true) . ';',
         $helpers ? '$helpers = new DefaultRegistry(' . varExport($helpers, true) . ');' : null,
         $partials ? '$partials = new DefaultRegistry(' . varExport($partials, true) . ');' : null,
-        '$options = ' . varExport($options, true) . ';',
+        '$compileOptions = ' . varExport($compileOptions, true) . ';',
+        '$runtimeOptions = ' . varExport($runtimeOptions, true) . ';',
+        '$allOptions = ' . varExport($allOptions, true) . ';',
         //'$knownHelpers = ' . var_export($knownHelpers, true) . ';',
         '$vm = new VM();',
         $helpers ? '$vm->setHelpers($helpers);' : null,
         $partials ? '$vm->setPartials($partials);' : null,
-        'echo $vm->render($tmpl, $context, $options);',
-    $message ? '/* Error message: ' . addcslashes($message, "\r\n") . ' */' : null,
+        'echo $vm->render($tmpl, $context, $allOptions);',
+        $message ? '/* Error message: ' . addcslashes($message, "\r\n") . ' */' : null,
         '--'. ($expectHead ?: 'EXPECT') . '--',
         $expected
-    )));
+    ]));
 }
 
 function hbs_generate_spec_test_body_tokenizer(array $test) {
@@ -498,7 +512,7 @@ function hbs_generate_mustache_spec_test(array $test) {
     // Convert format to handlebars
     $test['description'] = $test['name'];
     $test['it'] = $test['desc'];
-    $test['options'] = array('compat' => true, 'mustacheStyleLambdas' => true);
+    $test['compileOptions'] = array('compat' => true, 'mustacheStyleLambdas' => true);
 
     $file = hbs_test_file($test);
     $head = hbs_generate_test_head($test);
@@ -526,12 +540,12 @@ foreach( scandir($specDir) as $file ) {
     $filePath = $specDir . $file;
     $suiteName = substr(basename($filePath), 0, strpos(basename($filePath), '.'));
     $tests = json_decode(file_get_contents($filePath), true);
-    $number = 0;
+    $i = 0;
     foreach( $tests as $test ) {
-        ++$number;
+        ++$i;
         $test['suiteType'] = 'spec';
         $test['suiteName'] = $suiteName;
-        $test['number'] = $number;
+        $test['i'] = $i;
         hbs_generate_spec_test($test);
     }
 }
@@ -552,12 +566,12 @@ foreach( scandir($exportDir) as $file ) {
         continue;
     }
 
-    $number = 0;
+    $i = 0;
     foreach( $tests as $test ) {
-        ++$number;
+        ++$i;
         $test['suiteType'] = 'export';
         $test['suiteName'] = $suiteName;
-        $test['number'] = $number;
+        $test['i'] = $i;
         hbs_generate_export_test($test);
     }
 }
@@ -572,13 +586,13 @@ foreach( scandir($mustacheSpecDir) as $file ) {
     $suiteName = ltrim(substr(basename($filePath), 0, strpos(basename($filePath), '.')), "~");
 
     $tests = json_decode(file_get_contents($filePath), true);
-    $number = 0;
+    $i = 0;
 
     foreach( $tests['tests'] as $test ) {
-        ++$number;
+        ++$i;
         $test['suiteType'] = 'mustache';
         $test['suiteName'] = $suiteName;
-        $test['number'] = $number;
+        $test['i'] = $i;
         hbs_generate_mustache_spec_test($test);
     }
 }

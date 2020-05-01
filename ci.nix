@@ -7,8 +7,8 @@ let
             }))) {};
 
             handlebars_spec = pkgs.callPackage (import ((fetchTarball {
-                url = https://github.com/jbboehr/handlebars-spec/archive/9306f3062b4b03d5179c33834bee7263a621639a.tar.gz;
-                sha256 = "0gn9v88fxdf0wwgd8ix1xfxvif89mgfhxkp316arv5ljbibx2x9h";
+                url = https://github.com/jbboehr/handlebars-spec/archive/v104.7.6.tar.gz;
+                sha256 = "0i2czm6yhiv5xbq93yj249xjxqrfv70mk1qgl0abkbm0qmmkc4vk";
             }))) {};
         in
         pkgs.runCommand "pecl-handlebars.tgz" {

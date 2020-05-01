@@ -7,7 +7,12 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ## [Unreleased]
 
 ### Changed
-- Target handlebars.c v0.7.2.
+- Target handlebars.c v0.7.2
+- Target handlebars.js v4.7.6
+
+### Fixed
+- Objects can now be iterated with `#each`
+- `known_helpers` is now passed properly to the compiler in `render`
 
 ## [0.9.1] - 2020-04-18
 

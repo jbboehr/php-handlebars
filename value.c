@@ -106,7 +106,7 @@ static enum handlebars_value_type handlebars_std_zval_type(struct handlebars_val
             return HANDLEBARS_VALUE_TYPE_MAP;
 
         default: // LCOV_EXCL_START
-            assert(0);
+            handlebars_throw(value->ctx, HANDLEBARS_ERROR, "Unimplemented handlebars value type for: %d", Z_TYPE_P(intern));
             break; // LCOV_EXCL_STOP
     }
     return HANDLEBARS_VALUE_TYPE_NULL;
@@ -202,12 +202,18 @@ static bool handlebars_std_zval_iterator_void(struct handlebars_value_iterator *
     return false;
 }
 
+struct array_it_usr {
+    HashTable * ht;
+    HashPosition data_pointer;
+};
+
 static bool handlebars_std_zval_iterator_array(struct handlebars_value_iterator * it)
 {
     struct handlebars_value * value = it->value;
     zval * intern = get_intern_zval(value);
-    HashTable * ht = Z_ARRVAL_P(intern);
-    HashPosition * data_pointer = (HashPosition *) it->usr;
+    struct array_it_usr * itusr = it->usr;
+    HashTable * ht = itusr->ht;
+    HashPosition * data_pointer = &itusr->data_pointer;
 
     if( it->key ) {
         handlebars_talloc_free(it->key);
@@ -220,70 +226,152 @@ static bool handlebars_std_zval_iterator_array(struct handlebars_value_iterator 
     }
 
     zval * entry = zend_hash_get_current_data_ex(ht, data_pointer);
-    zend_string *string_key;
-    zend_ulong num_key;
-    if( entry ) {
-        if( HASH_KEY_IS_STRING == zend_hash_get_current_key_ex(ht, &string_key, &num_key, data_pointer) ) {
-            it->key = handlebars_string_ctor(value->ctx, ZSTR_VAL(string_key), ZSTR_LEN(string_key));
-            it->index = 0;
-        } else {
-            it->key = NULL;
-            it->index = num_key;
-        }
-        it->current = handlebars_value_from_zval(value->ctx, entry);
-        handlebars_value_addref(it->current);
-        zend_hash_move_forward_ex(ht, data_pointer);
-        return true;
+    if (!entry) {
+        goto finished;
     }
 
+    zend_string *string_key;
+    zend_ulong num_key;
+    switch (zend_hash_get_current_key_ex(ht, &string_key, &num_key, data_pointer)) {
+        case HASH_KEY_NON_EXISTENT:
+            goto finished;
+
+        case HASH_KEY_IS_STRING:
+            it->key = handlebars_string_ctor(value->ctx, ZSTR_VAL(string_key), ZSTR_LEN(string_key));
+            it->index = 0;
+            break;
+
+        case HASH_KEY_IS_LONG:
+            it->key = NULL;
+            it->index = num_key;
+            break;
+    }
+
+    it->current = handlebars_value_from_zval(value->ctx, entry);
+    handlebars_value_addref(it->current);
+    zend_hash_move_forward_ex(ht, data_pointer);
+
+    return true;
+
+finished:
+    handlebars_talloc_free(it->usr);
+    it->usr = NULL;
+    it->next = &handlebars_std_zval_iterator_void;
+    return false;
+}
+
+static bool handlebars_std_zval_iterator_object(struct handlebars_value_iterator * it)
+{
+    zend_object_iterator * zit = it->usr;
+    zval *val;
+    zval key;
+
+    if( it->key ) {
+        handlebars_talloc_free(it->key);
+        it->key = NULL;
+    }
+
+    if( it->current != NULL ) {
+        handlebars_value_delref(it->current);
+        it->current = NULL;
+    }
+
+    if (zit->funcs->valid(zit) != SUCCESS) {
+        goto iterator_err;
+    }
+
+    if (EG(exception)) {
+        goto iterator_err;
+    }
+
+    val = zit->funcs->get_current_data(zit);
+    if (EG(exception)) {
+        goto iterator_err;
+    }
+
+    it->current = handlebars_value_from_zval(it->value->ctx, val);
+    handlebars_value_addref(it->current);
+
+    if (zit->funcs->get_current_key) {
+        zit->funcs->get_current_key(zit, &key);
+        if (EG(exception)) {
+            goto iterator_err;
+        }
+        convert_to_string(&key);
+        it->key = handlebars_string_ctor(it->value->ctx, Z_STRVAL(key), Z_STRLEN(key));
+        zval_ptr_dtor(&key);
+    } else {
+        it->key = NULL;
+        it->index++;
+    }
+
+    zit->funcs->move_forward(zit);
+    if (EG(exception)) {
+        goto iterator_err;
+    }
+
+    return true;
+
+iterator_err:
+    OBJ_RELEASE(&zit->std);
+    it->usr = NULL;
+    it->next = &handlebars_std_zval_iterator_void;
     return false;
 }
 
 bool handlebars_std_zval_iterator_init(struct handlebars_value_iterator * it, struct handlebars_value * value)
 {
     zval * intern = get_intern_zval(value);
-    HashPosition * data_pointer = handlebars_talloc_zero(value->ctx, HashPosition);
-    HashTable * ht;
+    struct array_it_usr * itusr;
 
     it->value = value;
 
     switch( Z_TYPE_P(intern) ) {
-        case IS_ARRAY:
-            ht = HASH_OF(intern);
-            data_pointer = handlebars_talloc_zero(value->ctx, HashPosition);
-            it->usr = (void *) data_pointer;
-            it->length = zend_hash_num_elements(ht);
-            zval * entry;
-            zend_string *string_key;
-            zend_ulong num_key;
-
-            zend_hash_internal_pointer_reset_ex(ht, data_pointer);
-            entry = zend_hash_get_current_data_ex(ht, data_pointer);
-            if( entry ) {
-                if( HASH_KEY_IS_STRING == zend_hash_get_current_key_ex(ht, &string_key, &num_key, data_pointer) ) {
-                    it->key = handlebars_string_ctor(value->ctx, ZSTR_VAL(string_key), ZSTR_LEN(string_key));
-                    it->index = 0;
-                } else {
-                    it->key = NULL;
-                    it->index = num_key;
+        case IS_OBJECT:
+            if (instanceof_function(Z_OBJCE_P(intern), zend_ce_traversable)) {
+                zend_object_iterator * iter = Z_OBJCE_P(intern)->get_iterator(Z_OBJCE_P(intern), intern, 0);
+                if (iter->funcs->rewind) {
+                    iter->funcs->rewind(iter);
+                    if (EG(exception)) {
+                        OBJ_RELEASE(&iter->std);
+                        goto done;
+                    }
                 }
-                it->current = handlebars_value_from_zval(value->ctx, entry);
+                it->usr = (void *) iter;
+                it->next = &handlebars_std_zval_iterator_object;
+                return handlebars_std_zval_iterator_object(it);
+            } else if (Z_OBJ_HT_P(intern)->get_properties) {
+                itusr = handlebars_talloc_zero(value->ctx, struct array_it_usr);
+#if PHP_MAJOR_VERSION >= 8
+                itusr->ht = Z_OBJ_HT_P(intern)->get_properties(Z_OBJ_P(intern));
+#else
+                itusr->ht = Z_OBJ_HT_P(intern)->get_properties(intern);
+#endif
+                it->usr = (void *) itusr;
+                it->length = zend_hash_num_elements(itusr->ht);
                 it->next = &handlebars_std_zval_iterator_array;
-                handlebars_value_addref(it->current);
-                zend_hash_move_forward_ex(ht, data_pointer);
-                return true;
+                zend_hash_internal_pointer_reset_ex(itusr->ht, &itusr->data_pointer);
+                return handlebars_std_zval_iterator_array(it);
             }
             break;
-        case IS_OBJECT:
-            // @todo
-            break;
+
+        case IS_ARRAY: {
+            itusr = handlebars_talloc_zero(value->ctx, struct array_it_usr);
+            itusr->ht = Z_ARRVAL_P(intern);
+            it->usr = (void *) itusr;
+            it->length = zend_hash_num_elements(itusr->ht);
+            it->next = &handlebars_std_zval_iterator_array;
+            zend_hash_internal_pointer_reset_ex(itusr->ht, &itusr->data_pointer);
+            return handlebars_std_zval_iterator_array(it);
+        }
+
         default:
             // Do nothing
             break;
     }
 
+done:
     it->next = &handlebars_std_zval_iterator_void;
-
     return false;
 }
 
@@ -562,7 +650,7 @@ PHP_HANDLEBARS_API struct handlebars_value * handlebars_value_from_zval(struct h
             break;
 
         default: // LCOV_EXCL_START
-            assert(0);
+            handlebars_throw(value->ctx, HANDLEBARS_ERROR, "Unimplemented handlebars value conversion for: %d", Z_TYPE_P(val));
             break; // LCOV_EXCL_STOP
     }
 

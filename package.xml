@@ -271,7 +271,6 @@
    <file name="tests/handlebars/export/builtins/039.phpt" role="test" />
    <file name="tests/handlebars/export/builtins/040.phpt" role="test" />
    <file name="tests/handlebars/export/builtins/041.phpt" role="test" />
-   <file name="tests/handlebars/export/builtins/042.phpt" role="test" />
    <file name="tests/handlebars/export/data/001.phpt" role="test" />
    <file name="tests/handlebars/export/data/002.phpt" role="test" />
    <file name="tests/handlebars/export/data/003.phpt" role="test" />
@@ -368,6 +367,80 @@
    <file name="tests/handlebars/export/helpers/073.phpt" role="test" />
    <file name="tests/handlebars/export/helpers/074.phpt" role="test" />
    <file name="tests/handlebars/export/helpers/075.phpt" role="test" />
+   <file name="tests/handlebars/export/helpers/076.phpt" role="test" />
+   <file name="tests/handlebars/export/helpers/077.phpt" role="test" />
+   <file name="tests/handlebars/export/helpers/078.phpt" role="test" />
+   <file name="tests/handlebars/export/helpers/079.phpt" role="test" />
+   <file name="tests/handlebars/export/helpers/080.phpt" role="test" />
+   <file name="tests/handlebars/export/helpers/081.phpt" role="test" />
+   <file name="tests/handlebars/export/helpers/082.phpt" role="test" />
+   <file name="tests/handlebars/export/helpers/083.phpt" role="test" />
+   <file name="tests/handlebars/export/helpers/084.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/001.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/002.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/003.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/004.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/005.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/006.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/007.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/008.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/009.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/010.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/011.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/012.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/013.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/014.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/015.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/016.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/017.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/018.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/019.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/020.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/021.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/022.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/023.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/024.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/025.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/026.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/027.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/028.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/029.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/030.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/031.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/032.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/033.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/034.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/035.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/036.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/037.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/038.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/039.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/040.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/041.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/042.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/043.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/044.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/045.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/046.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/047.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/048.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/049.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/050.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/051.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/052.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/053.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/054.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/055.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/056.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/057.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/058.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/059.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/060.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/061.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/062.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/063.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/064.phpt" role="test" />
+   <file name="tests/handlebars/export/parser/065.phpt" role="test" />
    <file name="tests/handlebars/export/partials/001.phpt" role="test" />
    <file name="tests/handlebars/export/partials/002.phpt" role="test" />
    <file name="tests/handlebars/export/partials/003.phpt" role="test" />
@@ -417,6 +490,15 @@
    <file name="tests/handlebars/export/partials/047.phpt" role="test" />
    <file name="tests/handlebars/export/partials/048.phpt" role="test" />
    <file name="tests/handlebars/export/partials/049.phpt" role="test" />
+   <file name="tests/handlebars/export/partials/050.phpt" role="test" />
+   <file name="tests/handlebars/export/partials/051.phpt" role="test" />
+   <file name="tests/handlebars/export/partials/052.phpt" role="test" />
+   <file name="tests/handlebars/export/partials/053.phpt" role="test" />
+   <file name="tests/handlebars/export/partials/054.phpt" role="test" />
+   <file name="tests/handlebars/export/partials/055.phpt" role="test" />
+   <file name="tests/handlebars/export/partials/056.phpt" role="test" />
+   <file name="tests/handlebars/export/partials/057.phpt" role="test" />
+   <file name="tests/handlebars/export/partials/058.phpt" role="test" />
    <file name="tests/handlebars/export/regressions/001.phpt" role="test" />
    <file name="tests/handlebars/export/regressions/002.phpt" role="test" />
    <file name="tests/handlebars/export/regressions/003.phpt" role="test" />
@@ -442,6 +524,12 @@
    <file name="tests/handlebars/export/regressions/023.phpt" role="test" />
    <file name="tests/handlebars/export/regressions/024.phpt" role="test" />
    <file name="tests/handlebars/export/regressions/025.phpt" role="test" />
+   <file name="tests/handlebars/export/regressions/026.phpt" role="test" />
+   <file name="tests/handlebars/export/regressions/027.phpt" role="test" />
+   <file name="tests/handlebars/export/regressions/028.phpt" role="test" />
+   <file name="tests/handlebars/export/regressions/029.phpt" role="test" />
+   <file name="tests/handlebars/export/regressions/030.phpt" role="test" />
+   <file name="tests/handlebars/export/regressions/031.phpt" role="test" />
    <file name="tests/handlebars/export/strict/001.phpt" role="test" />
    <file name="tests/handlebars/export/strict/002.phpt" role="test" />
    <file name="tests/handlebars/export/strict/003.phpt" role="test" />
@@ -461,6 +549,9 @@
    <file name="tests/handlebars/export/strict/017.phpt" role="test" />
    <file name="tests/handlebars/export/strict/018.phpt" role="test" />
    <file name="tests/handlebars/export/strict/019.phpt" role="test" />
+   <file name="tests/handlebars/export/strict/020.phpt" role="test" />
+   <file name="tests/handlebars/export/strict/021.phpt" role="test" />
+   <file name="tests/handlebars/export/strict/022.phpt" role="test" />
    <file name="tests/handlebars/export/string-params/001.phpt" role="test" />
    <file name="tests/handlebars/export/string-params/002.phpt" role="test" />
    <file name="tests/handlebars/export/string-params/003.phpt" role="test" />
@@ -469,7 +560,6 @@
    <file name="tests/handlebars/export/string-params/006.phpt" role="test" />
    <file name="tests/handlebars/export/string-params/007.phpt" role="test" />
    <file name="tests/handlebars/export/string-params/008.phpt" role="test" />
-   <file name="tests/handlebars/export/string-params/009.phpt" role="test" />
    <file name="tests/handlebars/export/subexpressions/001.phpt" role="test" />
    <file name="tests/handlebars/export/subexpressions/002.phpt" role="test" />
    <file name="tests/handlebars/export/subexpressions/003.phpt" role="test" />
@@ -488,7 +578,71 @@
    <file name="tests/handlebars/export/subexpressions/016.phpt" role="test" />
    <file name="tests/handlebars/export/subexpressions/017.phpt" role="test" />
    <file name="tests/handlebars/export/subexpressions/018.phpt" role="test" />
-   <file name="tests/handlebars/export/subexpressions/019.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/001.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/002.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/003.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/004.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/005.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/006.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/007.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/008.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/009.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/010.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/011.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/012.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/013.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/014.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/015.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/016.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/017.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/018.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/019.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/020.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/021.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/022.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/023.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/024.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/025.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/026.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/027.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/028.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/029.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/030.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/031.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/032.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/033.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/034.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/035.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/036.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/037.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/038.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/039.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/040.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/041.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/042.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/043.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/044.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/045.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/046.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/047.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/048.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/049.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/050.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/051.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/052.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/053.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/054.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/055.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/056.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/057.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/058.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/059.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/060.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/061.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/062.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/063.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/064.phpt" role="test" />
+   <file name="tests/handlebars/export/tokenizer/065.phpt" role="test" />
    <file name="tests/handlebars/export/track-ids/001.phpt" role="test" />
    <file name="tests/handlebars/export/track-ids/002.phpt" role="test" />
    <file name="tests/handlebars/export/track-ids/003.phpt" role="test" />
@@ -727,7 +881,6 @@
    <file name="tests/handlebars/spec/builtins/039.phpt" role="test" />
    <file name="tests/handlebars/spec/builtins/040.phpt" role="test" />
    <file name="tests/handlebars/spec/builtins/041.phpt" role="test" />
-   <file name="tests/handlebars/spec/builtins/042.phpt" role="test" />
    <file name="tests/handlebars/spec/data/001.phpt" role="test" />
    <file name="tests/handlebars/spec/data/002.phpt" role="test" />
    <file name="tests/handlebars/spec/data/003.phpt" role="test" />
@@ -826,6 +979,17 @@
    <file name="tests/handlebars/spec/helpers/074.phpt" role="test" />
    <file name="tests/handlebars/spec/helpers/075.phpt" role="test" />
    <file name="tests/handlebars/spec/helpers/076.phpt" role="test" />
+   <file name="tests/handlebars/spec/helpers/077.phpt" role="test" />
+   <file name="tests/handlebars/spec/helpers/078.phpt" role="test" />
+   <file name="tests/handlebars/spec/helpers/079.phpt" role="test" />
+   <file name="tests/handlebars/spec/helpers/080.phpt" role="test" />
+   <file name="tests/handlebars/spec/helpers/081.phpt" role="test" />
+   <file name="tests/handlebars/spec/helpers/082.phpt" role="test" />
+   <file name="tests/handlebars/spec/helpers/083.phpt" role="test" />
+   <file name="tests/handlebars/spec/helpers/084.phpt" role="test" />
+   <file name="tests/handlebars/spec/helpers/085.phpt" role="test" />
+   <file name="tests/handlebars/spec/helpers/086.phpt" role="test" />
+   <file name="tests/handlebars/spec/helpers/087.phpt" role="test" />
    <file name="tests/handlebars/spec/parser/001.phpt" role="test" />
    <file name="tests/handlebars/spec/parser/002.phpt" role="test" />
    <file name="tests/handlebars/spec/parser/003.phpt" role="test" />
@@ -957,6 +1121,15 @@
    <file name="tests/handlebars/spec/partials/050.phpt" role="test" />
    <file name="tests/handlebars/spec/partials/051.phpt" role="test" />
    <file name="tests/handlebars/spec/partials/052.phpt" role="test" />
+   <file name="tests/handlebars/spec/partials/053.phpt" role="test" />
+   <file name="tests/handlebars/spec/partials/054.phpt" role="test" />
+   <file name="tests/handlebars/spec/partials/055.phpt" role="test" />
+   <file name="tests/handlebars/spec/partials/056.phpt" role="test" />
+   <file name="tests/handlebars/spec/partials/057.phpt" role="test" />
+   <file name="tests/handlebars/spec/partials/058.phpt" role="test" />
+   <file name="tests/handlebars/spec/partials/059.phpt" role="test" />
+   <file name="tests/handlebars/spec/partials/060.phpt" role="test" />
+   <file name="tests/handlebars/spec/partials/061.phpt" role="test" />
    <file name="tests/handlebars/spec/regressions/001.phpt" role="test" />
    <file name="tests/handlebars/spec/regressions/002.phpt" role="test" />
    <file name="tests/handlebars/spec/regressions/003.phpt" role="test" />
@@ -984,6 +1157,12 @@
    <file name="tests/handlebars/spec/regressions/025.phpt" role="test" />
    <file name="tests/handlebars/spec/regressions/026.phpt" role="test" />
    <file name="tests/handlebars/spec/regressions/027.phpt" role="test" />
+   <file name="tests/handlebars/spec/regressions/028.phpt" role="test" />
+   <file name="tests/handlebars/spec/regressions/029.phpt" role="test" />
+   <file name="tests/handlebars/spec/regressions/030.phpt" role="test" />
+   <file name="tests/handlebars/spec/regressions/031.phpt" role="test" />
+   <file name="tests/handlebars/spec/regressions/032.phpt" role="test" />
+   <file name="tests/handlebars/spec/regressions/033.phpt" role="test" />
    <file name="tests/handlebars/spec/strict/001.phpt" role="test" />
    <file name="tests/handlebars/spec/strict/002.phpt" role="test" />
    <file name="tests/handlebars/spec/strict/003.phpt" role="test" />
@@ -1003,6 +1182,9 @@
    <file name="tests/handlebars/spec/strict/017.phpt" role="test" />
    <file name="tests/handlebars/spec/strict/018.phpt" role="test" />
    <file name="tests/handlebars/spec/strict/019.phpt" role="test" />
+   <file name="tests/handlebars/spec/strict/020.phpt" role="test" />
+   <file name="tests/handlebars/spec/strict/021.phpt" role="test" />
+   <file name="tests/handlebars/spec/strict/022.phpt" role="test" />
    <file name="tests/handlebars/spec/string-params/001.phpt" role="test" />
    <file name="tests/handlebars/spec/string-params/002.phpt" role="test" />
    <file name="tests/handlebars/spec/string-params/003.phpt" role="test" />
@@ -1011,7 +1193,6 @@
    <file name="tests/handlebars/spec/string-params/006.phpt" role="test" />
    <file name="tests/handlebars/spec/string-params/007.phpt" role="test" />
    <file name="tests/handlebars/spec/string-params/008.phpt" role="test" />
-   <file name="tests/handlebars/spec/string-params/009.phpt" role="test" />
    <file name="tests/handlebars/spec/subexpressions/001.phpt" role="test" />
    <file name="tests/handlebars/spec/subexpressions/002.phpt" role="test" />
    <file name="tests/handlebars/spec/subexpressions/003.phpt" role="test" />
@@ -1030,7 +1211,6 @@
    <file name="tests/handlebars/spec/subexpressions/016.phpt" role="test" />
    <file name="tests/handlebars/spec/subexpressions/017.phpt" role="test" />
    <file name="tests/handlebars/spec/subexpressions/018.phpt" role="test" />
-   <file name="tests/handlebars/spec/subexpressions/019.phpt" role="test" />
    <file name="tests/handlebars/spec/tokenizer/001.phpt" role="test" />
    <file name="tests/handlebars/spec/tokenizer/002.phpt" role="test" />
    <file name="tests/handlebars/spec/tokenizer/003.phpt" role="test" />
@@ -1108,6 +1288,7 @@
    <file name="tests/handlebars/spec/tokenizer/075.phpt" role="test" />
    <file name="tests/handlebars/spec/tokenizer/076.phpt" role="test" />
    <file name="tests/handlebars/spec/tokenizer/077.phpt" role="test" />
+   <file name="tests/handlebars/spec/tokenizer/078.phpt" role="test" />
    <file name="tests/handlebars/spec/track-ids/001.phpt" role="test" />
    <file name="tests/handlebars/spec/track-ids/002.phpt" role="test" />
    <file name="tests/handlebars/spec/track-ids/003.phpt" role="test" />
@@ -1243,6 +1424,16 @@
    <file name="tests/mustache/inverted/019.phpt" role="test" />
    <file name="tests/mustache/inverted/020.phpt" role="test" />
    <file name="tests/mustache/inverted/021.phpt" role="test" />
+   <file name="tests/mustache/lambdas/001.phpt" role="test" />
+   <file name="tests/mustache/lambdas/002.phpt" role="test" />
+   <file name="tests/mustache/lambdas/003.phpt" role="test" />
+   <file name="tests/mustache/lambdas/004.phpt" role="test" />
+   <file name="tests/mustache/lambdas/005.phpt" role="test" />
+   <file name="tests/mustache/lambdas/006.phpt" role="test" />
+   <file name="tests/mustache/lambdas/007.phpt" role="test" />
+   <file name="tests/mustache/lambdas/008.phpt" role="test" />
+   <file name="tests/mustache/lambdas/009.phpt" role="test" />
+   <file name="tests/mustache/lambdas/010.phpt" role="test" />
    <file name="tests/mustache/partials/001.phpt" role="test" />
    <file name="tests/mustache/partials/002.phpt" role="test" />
    <file name="tests/mustache/partials/003.phpt" role="test" />
@@ -1311,6 +1502,7 @@
    <file name="tests/utils/nameLookup.phpt" role="test" />
    <file name="tests/utils/nameLookup-win64.phpt" role="test" />
    <file name="tests/vm/__construct.phpt" role="test" />
+   <file name="tests/vm/__construct-without-psr.phpt" role="test" />
    <file name="tests/vm/getDecorators.phpt" role="test" />
    <file name="tests/vm/getHelpers.phpt" role="test" />
    <file name="tests/vm/getPartials.phpt" role="test" />

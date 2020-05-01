@@ -148,39 +148,42 @@ static zend_object * php_handlebars_vm_obj_create(zend_class_entry * ce)
 /* }}} */
 
 /* {{{ php_handlebars_fetch_known_helpers */
-void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, zval * helpers)
+void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, struct handlebars_value * helpers)
 {
     HashTable * data_hash = NULL;
-    long num;
+    const char ** orig = compiler->known_helpers; //handlebars_builtins_names();
+    long num = 0;
     long idx = 0;
     char ** known_helpers;
+    const char ** ptr2;
+    struct handlebars_value_iterator it;
 
-    if( Z_TYPE_P(helpers) == IS_ARRAY ) {
-        data_hash = Z_ARRVAL_P(helpers);
-    } else if( Z_TYPE_P(helpers) == IS_OBJECT && Z_OBJ_HT_P(helpers)->get_properties != NULL ) {
-#if PHP_MAJOR_VERSION >= 8
-        data_hash = Z_OBJ_HT_P(helpers)->get_properties(Z_OBJ_P(helpers));
-#else
-        data_hash = Z_OBJ_HT_P(helpers)->get_properties(helpers);
-#endif
-    } else {
-        return;
+    // Count the number of builtins
+    for( ptr2 = orig ; *ptr2 ; ++ptr2 ) {
+        num++;
     }
 
-    // @todo merge with existing helpers?
+    // Count the number of helpers
+    // this can be wrong?
+    // num += handlebars_value_count(helpers);
+    handlebars_value_iterator_init(&it, helpers);
+    for( ; it.current != NULL; it.next(&it) ) {
+        num++;
+    }
 
-    num = zend_hash_num_elements(data_hash);
+    // Alloc the array
     known_helpers = handlebars_talloc_array(compiler, char *, num + 1);
 
-    zend_string *key;
-    zend_ulong index;
-    ZEND_HASH_FOREACH_KEY(data_hash, index, key) {
-        if( key ) {
-            known_helpers[idx++] = handlebars_talloc_strndup(known_helpers, ZSTR_VAL(key), ZSTR_LEN(key));
-        } else {
-            (void) index;
-        }
-    } ZEND_HASH_FOREACH_END();
+    // Copy in the builtins
+    for( ptr2 = orig ; *ptr2 ; ++ptr2 ) {
+        known_helpers[idx++] = handlebars_talloc_strdup(known_helpers, *ptr2);
+    }
+
+    // Copy in the helpers
+    handlebars_value_iterator_init(&it, helpers);
+    for( ; it.current != NULL; it.next(&it) ) {
+        known_helpers[idx++] = handlebars_talloc_strndup(known_helpers, it.key->val, it.key->len);
+    }
 
     known_helpers[idx++] = 0;
     compiler->known_helpers = (const char **) known_helpers;
@@ -301,9 +304,9 @@ static inline struct handlebars_module * compile(
 
     // Set compiler options
     php_handlebars_process_options_zval(compiler, vm, z_options);
-    //if( z_helpers ) {
-    //    php_handlebars_fetch_known_helpers(compiler, z_helpers);
-    //}
+    if( vm && vm->helpers ) {
+       php_handlebars_fetch_known_helpers(compiler, vm->helpers);
+    }
 
     // Preprocess template
 #if defined(HANDLEBARS_VERSION_INT) && HANDLEBARS_VERSION_INT >= 604

@@ -28,6 +28,8 @@ static zend_string *INTERNED_SCOPE;
 static zend_string *INTERNED_HASH;
 static zend_string *INTERNED_DATA;
 static zend_string *INTERNED_BLOCK_PARAMS;
+
+void php_handlebars_name_lookup(zval * value, zval * field, zval * return_value);
 /* }}} Variables & Prototypes */
 
 struct php_handlebars_options_obj {
@@ -74,6 +76,12 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(HandlebarsOptions_fn_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsOptions_lookupProperty_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 2)
+    ZEND_ARG_INFO(0, objOrArray)
+    ZEND_ARG_TYPE_INFO(0, field, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
 /* }}} Argument Info */
 
 /* {{{ Z_HANDLEBARS_OPTIONS_P */
@@ -488,6 +496,20 @@ PHP_METHOD(HandlebarsOptions, offsetUnset)
     zend_throw_exception(HandlebarsRuntimeException_ce_ptr, "offsetUnset is not implemented", 0);
 }
 
+// basically an alias of nameLookup ?
+PHP_METHOD(HandlebarsOptions, lookupProperty)
+{
+    zval * value;
+    zval * field;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+	    Z_PARAM_ZVAL(value)
+	    Z_PARAM_ZVAL(field)
+    ZEND_PARSE_PARAMETERS_END();
+
+    php_handlebars_name_lookup(value, field, return_value);
+}
+
 /* {{{ Handlebars\Options methods */
 static zend_function_entry HandlebarsOptions_methods[] = {
     PHP_ME(HandlebarsOptions, __construct, HandlebarsOptions_construct_args, ZEND_ACC_PUBLIC)
@@ -497,6 +519,7 @@ static zend_function_entry HandlebarsOptions_methods[] = {
     PHP_ME(HandlebarsOptions, offsetGet, HandlebarsOptions_offsetExists_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsOptions, offsetSet, HandlebarsOptions_offsetSet_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsOptions, offsetUnset, HandlebarsOptions_offsetExists_args, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsOptions, lookupProperty, HandlebarsOptions_lookupProperty_args, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
 /* }}} Handlebars\Options methods */
