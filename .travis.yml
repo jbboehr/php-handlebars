@@ -15,10 +15,6 @@ matrix:
   - language: nix
     env:
       - NIX_CHANNEL=unstable
-      - NIX_PHP_ATTR=php74
-  - language: nix
-    env:
-      - NIX_CHANNEL=unstable
       - NIX_PHP_ATTR=php
   include:
   - language: php
@@ -49,24 +45,24 @@ matrix:
     php: 'master'
     env:
     - PHP_PSR_VERSION=v1.0.0
+  - env:
+    - DOCKER_IMAGE=fedora31
   - language: nix
     env:
-    - NIX_CHANNEL=18.09
+    - NIX_CHANNEL=20.03
     - NIX_PHP_ATTR=php72
   - language: nix
     env:
-    - NIX_CHANNEL=19.03
+    - NIX_CHANNEL=20.03
     - NIX_PHP_ATTR=php73
   - language: nix
     env:
     - NIX_CHANNEL=20.03
     - NIX_PHP_ATTR=php74
-  - env:
-    - DOCKER_IMAGE=fedora31
-#   - language: nix
-#     env:
-#     - NIX_CHANNEL=unstable
-#     - NIX_PHP_ATTR=php
+  - language: nix
+    env:
+    - NIX_CHANNEL=unstable
+    - NIX_PHP_ATTR=php
 
 env:
   global:
