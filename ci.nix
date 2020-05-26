@@ -49,8 +49,8 @@ in
 builtins.mapAttrs (k: _v:
   let
     path = builtins.fetchTarball {
-       url = https://github.com/NixOS/nixpkgs/archive/release-19.09.tar.gz;
-       name = "nixpkgs-19.09";
+       url = https://github.com/NixOS/nixpkgs/archive/release-20.03.tar.gz;
+       name = "nixpkgs-20.03";
     };
     pkgs = import (path) { system = k; };
 
@@ -72,13 +72,7 @@ builtins.mapAttrs (k: _v:
         phpAttr = "php73";
     };
 
-    php74 = let
-        path = builtins.fetchTarball {
-           url = https://github.com/NixOS/nixpkgs/archive/release-20.03.tar.gz;
-           name = "nixpkgs-20.03";
-        };
-        pkgs = import (path) { system = k; };
-    in generateHandlebarsTestsForPlatform {
+    php74 = generateHandlebarsTestsForPlatform {
         inherit pkgs path phpHandlebarsSrc;
         phpAttr = "php74";
     };
