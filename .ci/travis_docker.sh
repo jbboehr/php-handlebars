@@ -8,6 +8,8 @@ function before_install() (
 )
 
 function install() {
+    set -e -o pipefail
+
     docker build \
         --build-arg LIBHANDLEBARS_VERSION="${LIBHANDLEBARS_VERSION}" \
         -f .ci/${DOCKER_IMAGE}.Dockerfile \

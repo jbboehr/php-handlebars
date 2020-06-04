@@ -20,7 +20,7 @@ RUN git clone https://github.com/jbboehr/handlebars.c && \
 # build extension
 ADD . .
 RUN phpize && \
-    ./configure PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig" CFLAGS="$CFLAGS -Wno-shadow -Wno-error=shadow" && \
+    ./configure PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig" CFLAGS="$CFLAGS -Wno-shadow -Wno-error=shadow -g -O2" && \
     make
 
 CMD ["./.ci/entry.sh"]
