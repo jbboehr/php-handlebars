@@ -17,6 +17,8 @@ function print_test_outputs() {
 
 trap "print_test_outputs" ERR
 
+export LD_LIBRARY_PATH="/usr/local/lib:/usr/local:$LD_LIBRARY_PATH"
+
 make test
 
 exit 0

@@ -11,6 +11,7 @@
 #include "Zend/zend_types.h"
 #include "main/php.h"
 
+#include <assert.h>
 #include <talloc.h>
 
 #include "handlebars.h"
@@ -35,17 +36,21 @@ static struct handlebars_value_handlers handlebars_value_std_zval_handlers;
 /* }}} Variables & Prototypes */
 
 /* {{{ Utils */
-static void handlebars_zval_intern_dtor(struct handlebars_zval * intern) {
+HBS_ATTR_NONNULL_ALL
+static int handlebars_zval_intern_dtor(struct handlebars_zval * intern) {
     zval_ptr_dtor(&intern->intern);
+    return 0;
 }
+
+HBS_ATTR_RETURNS_NONNULL HBS_ATTR_NONNULL_ALL
 static inline zval * get_intern_zval(struct handlebars_value * value) {
     //struct handlebars_zval * obj = talloc_get_type(value->v.usr, struct handlebars_zval);
     struct handlebars_zval * obj = (struct handlebars_zval *) value->v.usr;
-    if( !obj ) {
-        return NULL;
-    }
+    PHP_HBS_ASSERT(obj);
     return &obj->intern;
 }
+
+HBS_ATTR_NONNULL_ALL
 static inline void set_intern_zval(struct handlebars_value * value, zval * val) {
     struct handlebars_zval * obj;
     if( !value->v.usr ) {
@@ -171,6 +176,8 @@ static struct handlebars_value * handlebars_std_zval_map_find(struct handlebars_
                 }
             }
             break;
+
+        default: assert(0); break; // LCOV_EXCL_LINE
     }
 
     if( entry != NULL ) {
@@ -210,7 +217,6 @@ struct array_it_usr {
 static bool handlebars_std_zval_iterator_array(struct handlebars_value_iterator * it)
 {
     struct handlebars_value * value = it->value;
-    zval * intern = get_intern_zval(value);
     struct array_it_usr * itusr = it->usr;
     HashTable * ht = itusr->ht;
     HashPosition * data_pointer = &itusr->data_pointer;
@@ -245,6 +251,8 @@ static bool handlebars_std_zval_iterator_array(struct handlebars_value_iterator 
             it->key = NULL;
             it->index = num_key;
             break;
+
+        default: assert(0); break; // LCOV_EXCL_LINE
     }
 
     it->current = handlebars_value_from_zval(value->ctx, entry);
@@ -396,9 +404,8 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     zval * intern = get_intern_zval(value);
     zval * z_ret;
     zend_function *fptr;
-    zend_bool is_closure = 0;
 	zend_class_entry *ce = NULL;
-	uint32_t num_args;
+	int num_args;
 	struct _zend_arg_info *arg_info;
     short send_options = 0;
 
@@ -468,7 +475,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     // Convert paramsma
     int n_args = argc + (send_options ? 1 : 0);
     zval *z_args = alloca(sizeof(zval) * n_args);
-    memset(z_args, 0, sizeof(z_args));
+    memset(z_args, 0, sizeof(zval) * n_args);
 
     int i;
     for( i = 0; i < argc; i++ ) {
@@ -496,11 +503,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     ZVAL_STRING(&fci.function_name, "__invoke");
 
     if( zend_call_function(&fci, &obj->fcc) == FAILURE ) {
-#if PHP_MAJOR_VERSION >= 8
         zend_throw_exception_ex(zend_ce_exception, 0, "Could not execute %s::%s()", ZSTR_VAL(Z_OBJCE_P(intern)->name), ZSTR_VAL(Z_OBJCE_P(intern)->constructor->common.function_name));
-#else
-        zend_throw_exception_ex(zend_ce_exception, 0, "Could not execute %s::%s()", Z_OBJCE_P(intern)->name, Z_OBJCE_P(intern)->constructor->common.function_name);
-#endif
     }
 
     for( i = 0; i < n_args; i++ ) {
@@ -603,9 +606,12 @@ PHP_HANDLEBARS_API zval * handlebars_value_to_zval(struct handlebars_value * val
             ZVAL_ZVAL(val, intern, 1, 0);
             break;
 
-        default: // This shouldn't happen
+        case HANDLEBARS_VALUE_TYPE_PTR: // LCOV_EXCL_START
+        case HANDLEBARS_VALUE_TYPE_HELPER:
+        default:
+            assert(0);
             ZVAL_NULL(val);
-            break;
+            break; // LCOV_EXCL_STOP
     }
 
     return val;

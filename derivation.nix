@@ -6,7 +6,10 @@
   phpHandlebarsVersion ? null,
   phpHandlebarsSrc ? null,
   phpHandlebarsSha256 ? null,
-  phpHandlebarsAllTheTests ? false }:
+  phpHandlebarsAllTheTests ? false,
+
+  hardeningSupport ? true
+}:
 
 let
   orDefault = x: y: (if (!isNull x) then x else y);
@@ -23,6 +26,12 @@ buildPecl rec {
 
   buildInputs = [ handlebarsc talloc pcre pcre2 php_psr ];
   nativeBuildInputs = [ mustache_spec handlebars_spec ];
+
+  configureFlags = []
+    ++ lib.optional  hardeningSupport "--enable-handlebars-hardening"
+    ++ lib.optional  (!hardeningSupport) "--disable-handlebars-hardening"
+    ;
+
   makeFlags = ["phpincludedir=$(out)/include/php/ext/handlebars"];
 
   postBuild = lib.optionalString phpHandlebarsAllTheTests ''

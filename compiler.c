@@ -3,6 +3,7 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
 #include <setjmp.h>
 
 #include "Zend/zend_API.h"
@@ -85,6 +86,7 @@ static void php_handlebars_operand_append_zval(struct handlebars_operand * opera
             add_next_index_zval(arr, &current);
             break;
         }
+        default: assert(0); break;
     }
 }
 
@@ -176,7 +178,6 @@ static void php_handlebars_program_to_zval(struct handlebars_program * program, 
     zval z_const = {0};
     zval z_ret = {0};
     zval z_const_args[3];
-    zval tmp;
 
     // Opcodes
     ZVAL_NULL(&opcodes);
@@ -375,7 +376,7 @@ PHP_HANDLEBARS_API void php_handlebars_process_options_zval(struct handlebars_co
 /* }}} php_handlebars_process_options_zval */
 
 /* {{{ proto mixed Handlebars\Compiler::compile(string tmpl[, long flags[, array knownHelpers]]) */
-static inline void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short print)
+static void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short print)
 {
     zend_string * tmpl = NULL;
     zval * options = NULL;

@@ -3,6 +3,8 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
+
 #include "Zend/zend_API.h"
 #include "Zend/zend_constants.h"
 #include "Zend/zend_exceptions.h"
@@ -31,9 +33,12 @@
 
 #include "php_handlebars.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch-default"
 #define XXH_PRIVATE_API
 #define XXH_INLINE_ALL
 #include "xxhash.h"
+#pragma GCC diagnostic pop
 
 
 
@@ -107,7 +112,7 @@ static void php_handlebars_log(
 
         zval z_fn = {0};
         zval z_ret = {0};
-        zval z_args[2] = {{0}, {0}};
+        zval z_args[2] = {0};
         ZVAL_STRING(&z_fn, level_str);
         ZVAL_STRINGL(&z_args[0], message, message_len);
         array_init(&z_args[1]);
@@ -148,9 +153,9 @@ static zend_object * php_handlebars_vm_obj_create(zend_class_entry * ce)
 /* }}} */
 
 /* {{{ php_handlebars_fetch_known_helpers */
+HBS_ATTR_NONNULL_ALL
 void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, struct handlebars_value * helpers)
 {
-    HashTable * data_hash = NULL;
     const char ** orig = compiler->known_helpers; //handlebars_builtins_names();
     long num = 0;
     long idx = 0;
@@ -190,6 +195,7 @@ void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, s
 }
 /* }}} php_handlebars_fetch_known_helpers */
 
+HBS_ATTR_NONNULL_ALL
 static void php_handlebars_vm_set_helpers(zval * _this_zval, zval * helpers)
 {
     jmp_buf buf;
@@ -218,6 +224,7 @@ PHP_METHOD(HandlebarsVM, setHelpers)
     RETURN_ZVAL(_this_zval, 1, 0);
 }
 
+HBS_ATTR_NONNULL_ALL
 static void php_handlebars_vm_set_partials(zval * _this_zval, zval * partials)
 {
     jmp_buf buf;
@@ -279,15 +286,20 @@ PHP_METHOD(HandlebarsVM, __construct)
     }
 }
 
+HBS_ATTR_NONNULL_ALL HBS_ATTR_RETURNS_NONNULL
 static inline void *make_mctx(struct php_handlebars_vm_obj *intern) {
+    void * rv;
     if( HANDLEBARS_G(pool_size) > 0 ) {
-        return talloc_pool(intern->context, HANDLEBARS_G(pool_size));
+        rv = talloc_pool(intern->context, HANDLEBARS_G(pool_size));
     } else {
-        return talloc_new(intern->context);
+        rv = talloc_new(intern->context);
     }
+    PHP_HBS_ASSERT(rv);
+    return rv;
 }
 
-static inline struct handlebars_module * compile(
+HBS_ATTR_NONNULL(1, 3, 4)
+static struct handlebars_module * compile(
     struct handlebars_context *ctx,
     struct handlebars_vm *vm,
     struct handlebars_string *tmpl,
@@ -348,7 +360,7 @@ static inline void hash_pack(hash_type val, char *out) {
     out[7] = (int)((val & 0XFF));
 }
 
-static inline void hash_bin2hex(const unsigned char *in, char *out) {
+static void hash_bin2hex(const unsigned char *in, char *out) {
     static char hexconvtab[] = "0123456789abcdef";
 	size_t i, j;
 
@@ -366,6 +378,7 @@ static hash_type hash_buf(unsigned char * buf, size_t len) {
     return XXH3_64bits_digest(&state);
 }
 
+HBS_ATTR_NONNULL_ALL
 static inline struct handlebars_module * verify_and_load_module(
     struct handlebars_context * ctx,
     zend_string *buf
@@ -385,8 +398,8 @@ static inline struct handlebars_module * verify_and_load_module(
     if (0 != memcmp(hash_arr, ZSTR_VAL(buf), HASH_LEN)) {
         char actual_hex[HASH_LEN * 2 + 1] = {0};
         char expected_hex[HASH_LEN * 2 + 1] = {0};
-        hash_bin2hex(hash_arr, actual_hex);
-        hash_bin2hex(ZSTR_VAL(buf), expected_hex);
+        hash_bin2hex((unsigned char *) hash_arr, actual_hex);
+        hash_bin2hex((unsigned char *) ZSTR_VAL(buf), expected_hex);
         zend_throw_exception_ex(HandlebarsInvalidBinaryStringException_ce_ptr, 0,
             "Failed to validate precompiled template: template hash was %s, expected %s",
             actual_hex,
@@ -394,7 +407,7 @@ static inline struct handlebars_module * verify_and_load_module(
         return NULL;
     } else if (UNSAFE_module->size != size) {
         zend_throw_exception_ex(HandlebarsInvalidBinaryStringException_ce_ptr, 0,
-            "Failed to validate precompiled template: template data segment was %lu bytes, expected %lu",
+            "Failed to validate precompiled template: template data segment was %zu bytes, expected %zu",
             size,
             UNSAFE_module->size);
         return NULL;
@@ -413,10 +426,6 @@ static inline struct handlebars_module * verify_and_load_module(
     handlebars_module_patch_pointers(module);
 
     return module;
-
-err:
-    zend_throw_exception(HandlebarsInvalidBinaryStringException_ce_ptr, "Failed to validate precompiled template", 0);
-    return NULL;
 }
 
 PHP_METHOD(HandlebarsVM, compile)
@@ -425,6 +434,7 @@ PHP_METHOD(HandlebarsVM, compile)
     zval * z_options = NULL;
 
     zval * _this_zval = getThis();
+    PHP_HBS_ASSERT(_this_zval);
     struct php_handlebars_vm_obj *intern = Z_HANDLEBARS_VM_P(_this_zval);
     void *mctx = make_mctx(intern);
     struct handlebars_context *ctx = handlebars_context_ctor_ex(mctx);
@@ -468,7 +478,8 @@ enum input_type {
     input_type_binary = 2
 };
 
-static inline void render(INTERNAL_FUNCTION_PARAMETERS, enum input_type type)
+HBS_ATTR_NONNULL_ALL
+static void render(INTERNAL_FUNCTION_PARAMETERS, enum input_type type)
 {
     zend_string * zstr_input;
     zval * z_context = NULL;
@@ -482,6 +493,7 @@ static inline void render(INTERNAL_FUNCTION_PARAMETERS, enum input_type type)
     zval * tmp = NULL;
 
     zval *_this_zval = getThis();
+    PHP_HBS_ASSERT(_this_zval);
     struct php_handlebars_vm_obj *intern = Z_HANDLEBARS_VM_P(_this_zval);
     void *mctx = make_mctx(intern);
     struct handlebars_context *ctx = handlebars_context_ctor_ex(mctx);
@@ -581,6 +593,8 @@ static inline void render(INTERNAL_FUNCTION_PARAMETERS, enum input_type type)
                 goto skip_compile;
                 break;
             }
+
+            default: assert(0); break; // LCOV_EXCL_LINE
         }
 
         module = compile(ctx, vm, tmpl, z_options);

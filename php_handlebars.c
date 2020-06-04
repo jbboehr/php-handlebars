@@ -22,9 +22,14 @@
 
 #include "handlebars_cache.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch-default"
 #define XXH_PRIVATE_API
 #define XXH_INLINE_ALL
 #include "xxhash.h"
+#pragma GCC diagnostic pop
+
+
 
 /* {{{ Prototypes */
 extern PHP_MINIT_FUNCTION(handlebars_compiler);
@@ -188,53 +193,58 @@ static PHP_MINFO_FUNCTION(handlebars)
     snprintf(buf, sizeof(buf), "%d.%d.%d", XXH_VERSION_MAJOR, XXH_VERSION_MINOR, XXH_VERSION_RELEASE);
     php_info_print_table_row(2, "xxhash version",  buf);
 
-    snprintf(buf, sizeof(buf), "%ld", talloc_total_size(HANDLEBARS_G(root)));
+    snprintf(buf, sizeof(buf), "%zu", talloc_total_size(HANDLEBARS_G(root)));
     php_info_print_table_row(2, "Local memory usage", buf);
     php_info_print_table_end();
 
     if( HANDLEBARS_G(cache) ) {
         struct handlebars_cache_stat stat = handlebars_cache_stat(HANDLEBARS_G(cache));
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdiscarded-qualifiers"
+
         php_info_print_table_start();
         php_info_print_table_colspan_header(2, "Cache");
 
         php_info_print_table_row(2, "Backend", stat.name);
 
-        snprintf(buf, sizeof(buf), "%ld", stat.total_size);
+        snprintf(buf, sizeof(buf), "%zu", stat.total_size);
         php_info_print_table_row(2, "Block size", buf);
 
-        snprintf(buf, sizeof(buf), "%ld", stat.total_table_size);
+        snprintf(buf, sizeof(buf), "%zu", stat.total_table_size);
         php_info_print_table_row(2, "Table size", buf);
 
-        snprintf(buf, sizeof(buf), "%ld", stat.total_entries);
+        snprintf(buf, sizeof(buf), "%zu", stat.total_entries);
         php_info_print_table_row(2, "Table entries", buf);
 
-        snprintf(buf, sizeof(buf), "%ld", stat.current_entries);
+        snprintf(buf, sizeof(buf), "%zu", stat.current_entries);
         php_info_print_table_row(2, "Table entries used", buf);
 
-        snprintf(buf, sizeof(buf), "%ld", stat.total_entries > 0 ? stat.total_entries - stat.current_entries : 0);
+        snprintf(buf, sizeof(buf), "%zu", stat.total_entries > 0 ? stat.total_entries - stat.current_entries : 0);
         php_info_print_table_row(2, "Table entries free", buf);
 
-        snprintf(buf, sizeof(buf), "%ld", stat.total_data_size);
+        snprintf(buf, sizeof(buf), "%zu", stat.total_data_size);
         php_info_print_table_row(2, "Data segment size", buf);
 
-        snprintf(buf, sizeof(buf), "%ld", stat.current_data_size);
+        snprintf(buf, sizeof(buf), "%zu", stat.current_data_size);
         php_info_print_table_row(2, "Data segment used", buf);
 
-        snprintf(buf, sizeof(buf), "%ld", stat.total_data_size > 0 ? stat.total_data_size - stat.current_data_size : 0);
+        snprintf(buf, sizeof(buf), "%zu", stat.total_data_size > 0 ? stat.total_data_size - stat.current_data_size : 0);
         php_info_print_table_row(2, "Data segment free", buf);
 
-        snprintf(buf, sizeof(buf), "%ld", stat.hits);
+        snprintf(buf, sizeof(buf), "%zu", stat.hits);
         php_info_print_table_row(2, "Hits", buf);
 
-        snprintf(buf, sizeof(buf), "%ld", stat.misses);
+        snprintf(buf, sizeof(buf), "%zu", stat.misses);
         php_info_print_table_row(2, "Misses", buf);
 
-        snprintf(buf, sizeof(buf), "%ld", stat.refcount);
+        snprintf(buf, sizeof(buf), "%zu", stat.refcount);
         php_info_print_table_row(2, "Refcount", buf);
 
-        snprintf(buf, sizeof(buf), "%ld", stat.collisions);
+        snprintf(buf, sizeof(buf), "%zu", stat.collisions);
         php_info_print_table_row(2, "Collisions", buf);
+
+#pragma GCC diagnostic pop
 
         php_info_print_table_end();
     }
@@ -246,12 +256,12 @@ static PHP_MINFO_FUNCTION(handlebars)
 /* {{{ PHP_GINIT_FUNCTION */
 static PHP_GINIT_FUNCTION(handlebars)
 {
-    handlebars_globals->root = NULL;
-    handlebars_globals->context = NULL;
-    handlebars_globals->cache = NULL;
+#if defined(COMPILE_DL_HANDLEBARS) && defined(ZTS) && ZTS
+	ZEND_TSRMLS_CACHE_UPDATE();
+#endif
+	memset(handlebars_globals, 0, sizeof(zend_handlebars_globals));
     handlebars_globals->pool_size = 128 * 1024;
     handlebars_globals->cache_enable = 1;
-    handlebars_globals->cache_enable_cli = 0;
     handlebars_globals->cache_backend = "mmap";
     handlebars_globals->cache_save_path = "/tmp/php-handlebars-cache";
     handlebars_globals->cache_max_age = -1;
@@ -295,6 +305,9 @@ zend_module_entry handlebars_module_entry = {
     STANDARD_MODULE_PROPERTIES_EX
 };
 #ifdef COMPILE_DL_HANDLEBARS
+#if defined(ZTS) && ZTS
+    ZEND_TSRMLS_CACHE_DEFINE()
+#endif
     ZEND_GET_MODULE(handlebars)      // Common for all PHP extensions which are build as shared modules
 #endif
 /* }}} */

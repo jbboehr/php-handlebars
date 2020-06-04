@@ -26,11 +26,11 @@ struct handlebars_vm;
 extern zend_module_entry handlebars_module_entry;
 #define phpext_handlebars_ptr &handlebars_module_entry
 
-#ifdef ZTS
+#if defined(ZTS) && ZTS
 #include "TSRM.h"
 #endif
 
-#ifdef ZTS
+#if defined(ZTS) && ZTS
 #define HANDLEBARS_G(v) TSRMG(handlebars_globals_id, zend_handlebars_globals *, v)
 #else
 #define HANDLEBARS_G(v) (handlebars_globals.v)
@@ -107,6 +107,8 @@ PHP_HANDLEBARS_API zval * handlebars_value_to_zval(struct handlebars_value * val
             php_handlebars_throw(ce, ctx1); \
         } \
     } while(0)
+
+#define PHP_HBS_ASSERT(exp) if (!(exp)) zend_error_noreturn(E_ERROR, "Invalid assertion %s in %s:%d", #exp, __FILE__, __LINE__)
 
 #define PHP_HANDLEBARS_BEGIN_ARG_INFO(c, f, n) ZEND_BEGIN_ARG_INFO_EX(arginfo_ ## c ## _ ## f, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, n)
 #define PHP_HANDLEBARS_END_ARG_INFO ZEND_END_ARG_INFO

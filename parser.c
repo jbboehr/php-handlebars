@@ -3,6 +3,8 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
+
 #include "Zend/zend_API.h"
 #include "Zend/zend_exceptions.h"
 #include "main/php.h"
@@ -311,6 +313,7 @@ static void php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node, z
         case HANDLEBARS_AST_NODE_NIL:
         case HANDLEBARS_AST_NODE_PARTIAL_BLOCK: // ?
             break;
+        default: assert(0); break;
         // LCOV_EXCL_STOP
     }
 }

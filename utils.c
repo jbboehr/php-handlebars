@@ -56,6 +56,7 @@ PHP_METHOD(HandlebarsUtils, appendContextPath)
         case IS_STRING:
             tmp = Z_STR_P(context_path);
             break;
+        default: assert(0); break;
     }
 
     if( tmp != NULL && ZSTR_LEN(tmp) > 0 ) {
@@ -166,6 +167,7 @@ void php_handlebars_name_lookup(zval * value, zval * field, zval * return_value)
                 entry = zend_read_property_ex(Z_OBJCE_P(value), value, Z_STR_P(field), 1, NULL);
             }
             break;
+        default: assert(0); break;
     }
 
     if( entry ) {
@@ -354,7 +356,7 @@ static zend_always_inline void php_handlebars_escape_expression(zval * val, zval
     }
 
     convert_to_string(val);
-    replaced = php_escape_html_entities_ex((unsigned char *) Z_STRVAL_P(val), Z_STRLEN_P(val), 0, (int) ENT_QUOTES, "UTF-8", 1);
+    replaced = php_escape_html_entities_ex((unsigned char *) Z_STRVAL_P(val), Z_STRLEN_P(val), 0, (int) ENT_QUOTES, (char *) "UTF-8", 1);
     RETURN_STR(replaced);
 }
 
@@ -392,6 +394,7 @@ static zend_always_inline char * php_handlebars_escape_expression_replace_helper
             case '\'':
                 occurrences++;
                 break;
+            default: break;
         }
     }
 
@@ -452,7 +455,7 @@ static zend_always_inline void php_handlebars_escape_expression_compat(zval * va
         return;
     }
 
-    replaced = php_escape_html_entities_ex((unsigned char *) Z_STRVAL(tmp), Z_STRLEN(tmp), 0, (int) ENT_COMPAT, "UTF-8", 1);
+    replaced = php_escape_html_entities_ex((unsigned char *) Z_STRVAL(tmp), Z_STRLEN(tmp), 0, (int) ENT_COMPAT, (char *) "UTF-8", 1);
     zval_dtor(&tmp);
 
     replaced2 = php_handlebars_escape_expression_replace_helper(replaced->val);
