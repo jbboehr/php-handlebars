@@ -73,7 +73,9 @@ if test "$PHP_HANDLEBARS" != "no"; then
         -Wno-redundant-decls -Wno-error=redundant-decls \
         -Wno-jump-misses-init -Wno-error=jump-misses-init \
         -Wno-clobbered -Wno-error=clobbered \
+        -Wno-switch-enum -Wno-error=switch-enum \
     ])
+    # @TODO we can remove -Wno-switch-enum -Wno-error=switch-enum in handlebars.c dev-1.x
     CFLAGS="$WARN_CFLAGS $CFLAGS"
     LDFLAGS="$WARN_LDFLAGS $LDFLAGS"
 
