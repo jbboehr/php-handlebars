@@ -26,11 +26,11 @@ struct handlebars_vm;
 extern zend_module_entry handlebars_module_entry;
 #define phpext_handlebars_ptr &handlebars_module_entry
 
-#ifdef ZTS
+#if defined(ZTS) && ZTS
 #include "TSRM.h"
 #endif
 
-#ifdef ZTS
+#if defined(ZTS) && ZTS
 #define HANDLEBARS_G(v) TSRMG(handlebars_globals_id, zend_handlebars_globals *, v)
 #else
 #define HANDLEBARS_G(v) (handlebars_globals.v)

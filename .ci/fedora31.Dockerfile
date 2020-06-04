@@ -5,23 +5,25 @@ RUN dnf install gcc automake autoconf libtool libyaml-devel json-c-devel libtall
 
 # build handlebars
 ARG LIBHANDLEBARS_VERSION=master
-RUN git clone https://github.com/jbboehr/handlebars.c && \
-    cd handlebars.c && \
+WORKDIR /build/handlebars.c
+RUN git clone https://github.com/jbboehr/handlebars.c . && \
     git checkout $LIBHANDLEBARS_VERSION && \
     git submodule update --init && \
     ./bootstrap && \
-    ./configure && \
+    ./configure --prefix=/usr/local && \
     make && \
     make test && \
     make install && \
+    ldconfig && \
     cd .. && \
     rm -rf handlebars.c
 
 # build extension
+WORKDIR /build/php-handlebars
 ADD . .
 RUN phpize && \
-    ./configure PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig" CFLAGS="$CFLAGS -Wno-shadow -Wno-error=shadow -g -O2" && \
+    ./configure --prefix=/usr/local PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig" CFLAGS="$CFLAGS -Wno-shadow -Wno-error=shadow -g -O2" && \
+    make clean && \
     make
 
-CMD ["./.ci/entry.sh"]
-
+CMD "./.ci/entry.sh"

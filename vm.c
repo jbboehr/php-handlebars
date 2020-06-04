@@ -493,6 +493,7 @@ static void render(INTERNAL_FUNCTION_PARAMETERS, enum input_type type)
     zval * tmp = NULL;
 
     zval *_this_zval = getThis();
+    PHP_HBS_ASSERT(_this_zval);
     struct php_handlebars_vm_obj *intern = Z_HANDLEBARS_VM_P(_this_zval);
     void *mctx = make_mctx(intern);
     struct handlebars_context *ctx = handlebars_context_ctor_ex(mctx);

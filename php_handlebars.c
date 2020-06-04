@@ -256,12 +256,12 @@ static PHP_MINFO_FUNCTION(handlebars)
 /* {{{ PHP_GINIT_FUNCTION */
 static PHP_GINIT_FUNCTION(handlebars)
 {
-    handlebars_globals->root = NULL;
-    handlebars_globals->context = NULL;
-    handlebars_globals->cache = NULL;
+#if defined(COMPILE_DL_HANDLEBARS) && defined(ZTS) && ZTS
+	ZEND_TSRMLS_CACHE_UPDATE();
+#endif
+	memset(handlebars_globals, 0, sizeof(zend_handlebars_globals));
     handlebars_globals->pool_size = 128 * 1024;
     handlebars_globals->cache_enable = 1;
-    handlebars_globals->cache_enable_cli = 0;
     handlebars_globals->cache_backend = "mmap";
     handlebars_globals->cache_save_path = "/tmp/php-handlebars-cache";
     handlebars_globals->cache_max_age = -1;
@@ -305,6 +305,9 @@ zend_module_entry handlebars_module_entry = {
     STANDARD_MODULE_PROPERTIES_EX
 };
 #ifdef COMPILE_DL_HANDLEBARS
+#if defined(ZTS) && ZTS
+    ZEND_TSRMLS_CACHE_DEFINE()
+#endif
     ZEND_GET_MODULE(handlebars)      // Common for all PHP extensions which are build as shared modules
 #endif
 /* }}} */
