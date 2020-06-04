@@ -34,7 +34,7 @@ void php_handlebars_name_lookup(zval * value, zval * field, zval * return_value)
 
 struct php_handlebars_options_obj {
     struct handlebars_options options;
-    zend_object_handlers * std_hnd;
+    const zend_object_handlers * std_hnd;
     zend_object std;
 };
 
@@ -347,7 +347,7 @@ PHP_METHOD(HandlebarsOptions, __construct)
 }
 /* }}} Handlebars\Options::__construct */
 
-static inline void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, short program)
+static void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, short program)
 {
     zval * _this_zval = getThis();
     zval * z_context = NULL;

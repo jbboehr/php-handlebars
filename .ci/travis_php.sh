@@ -14,10 +14,10 @@ export CFLAGS="-L${PREFIX}/lib ${CFLAGS}"
 export CPPFLAGS="-I${PREFIX}/include ${CPPFLAGS}"
 export PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
-if [[ "${HARDENING}" = "true" ]]; then
-	export CFLAGS="$CFLAGS -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fexceptions -fstack-protector-strong -grecord-gcc-switches"
+if [[ "${HARDENING}" != "false" ]]; then
+	export CFLAGS="$CFLAGS -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong"
 	export CFLAGS="$CFLAGS -specs=`pwd`/.ci/redhat-hardened-cc1 -specs=`pwd`/.ci/redhat-hardened-ld"
-	export CFLAGS="$CFLAGS -fasynchronous-unwind-tables -fPIC -DPIC"
+	export CFLAGS="$CFLAGS -fPIC -DPIC"
 	# this is not supported on travis: -fcf-protection
     # this is only supported on gcc >= ~8.3 (?): -fstack-clash-protection
 fi
@@ -55,14 +55,23 @@ function install_php_handlebars() (
     set -e -o pipefail
     trap "cat config.log" ERR
 
-    phpize
     if [[ "${COVERAGE}" = "true" ]]; then
-        ./configure --enable-handlebars \
-            CFLAGS="-fprofile-arcs -ftest-coverage ${CFLAGS}" \
-            LDFLAGS="--coverage ${LDFLAGS}"
-    else
-        ./configure --enable-handlebars
+        export CFLAGS="-fprofile-arcs -ftest-coverage ${CFLAGS}"
+        export LDFLAGS="--coverage ${LDFLAGS}"
     fi
+
+    local extra_configure_flags=""
+
+    if [[ "${HARDENING}" != "false" ]]; then
+        extra_configure_flags="${extra_configure_flags} --enable-handlebars-hardening"
+    else
+        extra_configure_flags="${extra_configure_flags} --disable-handlebars-hardening"
+    fi
+
+    phpize
+    ./configure --enable-handlebars \
+        --enable-compile-warnings=error \
+        ${extra_configure_flags}
     make
 )
 

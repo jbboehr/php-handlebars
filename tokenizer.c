@@ -24,7 +24,7 @@ PHP_HANDLEBARS_API zend_class_entry * HandlebarsTokenizer_ce_ptr;
 /* }}} Variables & Prototypes */
 
 /* {{{ proto mixed Handlebars\Tokenizer::lex(string tmpl) */
-static inline void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
+static void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
 {
     zend_string * tmpl = NULL;
     struct handlebars_context * ctx;

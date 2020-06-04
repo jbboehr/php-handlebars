@@ -63,6 +63,19 @@
    <file name="examples/paths.php" role="doc" />
    <file name="examples/safe-string.php" role="doc" />
    <file name="examples/userMessage.hbs" role="doc" />
+   <file name="m4/ax_add_fortify_source.m4" role="src" />
+   <file name="m4/ax_append_compile_flags.m4" role="src" />
+   <file name="m4/ax_append_flag.m4" role="src" />
+   <file name="m4/ax_append_link_flags.m4" role="src" />
+   <file name="m4/ax_cflags_warn_all.m4" role="src" />
+   <file name="m4/ax_check_compile_flag.m4" role="src" />
+   <file name="m4/ax_check_enable_debug.m4" role="src" />
+   <file name="m4/ax_check_link_flag.m4" role="src" />
+   <file name="m4/ax_compiler_flags_cflags.m4" role="src" />
+   <file name="m4/ax_compiler_flags_gir.m4" role="src" />
+   <file name="m4/ax_compiler_flags_ldflags.m4" role="src" />
+   <file name="m4/ax_compiler_flags.m4" role="src" />
+   <file name="m4/ax_require_defined.m4" role="src" />
    <file name="tests/base-impl/decorators-php74.phpt" role="test" />
    <file name="tests/base-impl/decorators.phpt" role="test" />
    <file name="tests/base-impl/fake-impl.php.inc" role="test" />

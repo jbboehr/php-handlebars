@@ -40,6 +40,7 @@ static zend_class_entry *lookup_class(const char *name)
 static inline void php_handlebars_impl_getter(INTERNAL_FUNCTION_PARAMETERS, zend_string *str)
 {
     zval * _this_zval = getThis();
+    PHP_HBS_ASSERT(_this_zval);
     zval * val = zend_read_property_ex(Z_OBJCE_P(_this_zval), _this_zval, str, 1, NULL);
     RETURN_ZVAL(val, 1, 0);
 }

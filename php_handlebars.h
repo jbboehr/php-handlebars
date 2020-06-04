@@ -108,6 +108,8 @@ PHP_HANDLEBARS_API zval * handlebars_value_to_zval(struct handlebars_value * val
         } \
     } while(0)
 
+#define PHP_HBS_ASSERT(exp) if (!(exp)) zend_error_noreturn(E_ERROR, "Invalid assertion %s in %s:%d", #exp, __FILE__, __LINE__)
+
 #define PHP_HANDLEBARS_BEGIN_ARG_INFO(c, f, n) ZEND_BEGIN_ARG_INFO_EX(arginfo_ ## c ## _ ## f, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, n)
 #define PHP_HANDLEBARS_END_ARG_INFO ZEND_END_ARG_INFO
 

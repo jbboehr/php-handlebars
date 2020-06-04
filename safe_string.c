@@ -29,6 +29,8 @@ PHP_METHOD(HandlebarsSafeString, __construct)
     zval tmp;
     zend_string * value;
 
+    PHP_HBS_ASSERT(_this_zval);
+
     ZEND_PARSE_PARAMETERS_START(1, 1)
 	    Z_PARAM_STR(value)
     ZEND_PARSE_PARAMETERS_END();
@@ -43,7 +45,11 @@ PHP_METHOD(HandlebarsSafeString, __toString)
 {
     zval * _this_zval = getThis();
     zval rv;
-    zval * value = zend_read_property_ex(Z_OBJCE_P(_this_zval), _this_zval, INTERNED_VALUE, 1, &rv);
+    zval * value;
+
+    PHP_HBS_ASSERT(_this_zval);
+
+    value = zend_read_property_ex(Z_OBJCE_P(_this_zval), _this_zval, INTERNED_VALUE, 1, &rv);
     RETURN_ZVAL(value, 1, 0);
 }
 /* }}} HandlebarsSafeString::__toString */

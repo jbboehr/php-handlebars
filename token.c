@@ -41,7 +41,7 @@ PHP_HANDLEBARS_API void php_handlebars_token_ctor(struct handlebars_token * toke
 
     object_init_ex(z_token, HandlebarsToken_ce_ptr);
 
-    zval z_const_args[2] = {{0}, {0}};
+    zval z_const_args[2] = {0};
 
     ZVAL_STRING(&z_const, "__construct");
     z_const_args[0] = name;
