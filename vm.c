@@ -153,6 +153,7 @@ static zend_object * php_handlebars_vm_obj_create(zend_class_entry * ce)
 /* }}} */
 
 /* {{{ php_handlebars_fetch_known_helpers */
+HBS_ATTR_NONNULL_ALL
 void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, struct handlebars_value * helpers)
 {
     const char ** orig = compiler->known_helpers; //handlebars_builtins_names();
@@ -194,6 +195,7 @@ void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, s
 }
 /* }}} php_handlebars_fetch_known_helpers */
 
+HBS_ATTR_NONNULL_ALL
 static void php_handlebars_vm_set_helpers(zval * _this_zval, zval * helpers)
 {
     jmp_buf buf;
@@ -222,6 +224,7 @@ PHP_METHOD(HandlebarsVM, setHelpers)
     RETURN_ZVAL(_this_zval, 1, 0);
 }
 
+HBS_ATTR_NONNULL_ALL
 static void php_handlebars_vm_set_partials(zval * _this_zval, zval * partials)
 {
     jmp_buf buf;
@@ -283,14 +286,19 @@ PHP_METHOD(HandlebarsVM, __construct)
     }
 }
 
+HBS_ATTR_NONNULL_ALL HBS_ATTR_RETURNS_NONNULL
 static inline void *make_mctx(struct php_handlebars_vm_obj *intern) {
+    void * rv;
     if( HANDLEBARS_G(pool_size) > 0 ) {
-        return talloc_pool(intern->context, HANDLEBARS_G(pool_size));
+        rv = talloc_pool(intern->context, HANDLEBARS_G(pool_size));
     } else {
-        return talloc_new(intern->context);
+        rv = talloc_new(intern->context);
     }
+    PHP_HBS_ASSERT(rv);
+    return rv;
 }
 
+HBS_ATTR_NONNULL(1, 3, 4)
 static struct handlebars_module * compile(
     struct handlebars_context *ctx,
     struct handlebars_vm *vm,
@@ -370,6 +378,7 @@ static hash_type hash_buf(unsigned char * buf, size_t len) {
     return XXH3_64bits_digest(&state);
 }
 
+HBS_ATTR_NONNULL_ALL
 static inline struct handlebars_module * verify_and_load_module(
     struct handlebars_context * ctx,
     zend_string *buf
@@ -469,6 +478,7 @@ enum input_type {
     input_type_binary = 2
 };
 
+HBS_ATTR_NONNULL_ALL
 static void render(INTERNAL_FUNCTION_PARAMETERS, enum input_type type)
 {
     zend_string * zstr_input;
