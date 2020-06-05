@@ -8,6 +8,7 @@
   phpHandlebarsSha256 ? null,
   phpHandlebarsAllTheTests ? false,
 
+  astSupport ? false,
   hardeningSupport ? true
 }:
 
@@ -28,6 +29,8 @@ buildPecl rec {
   nativeBuildInputs = [ mustache_spec handlebars_spec ];
 
   configureFlags = []
+    ++ lib.optional  astSupport "--enable-handlebars-ast"
+    ++ lib.optional  (!astSupport) "--disable-handlebars-ast"
     ++ lib.optional  hardeningSupport "--enable-handlebars-hardening"
     ++ lib.optional  (!hardeningSupport) "--disable-handlebars-hardening"
     ;
