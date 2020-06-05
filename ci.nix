@@ -30,19 +30,31 @@ let
 
     generateHandlebarsTestsForPlatform = { pkgs, path, phpAttr, phpHandlebarsSrc }:
         pkgs.recurseIntoAttrs {
-            handlebars = let
+            # std
+            std = let
                 php = pkgs.${phpAttr};
             in pkgs.callPackage ./default.nix {
                 inherit phpHandlebarsSrc;
                 php = pkgs.${phpAttr};
                 buildPecl = pkgs.callPackage "${path}/pkgs/build-support/build-pecl.nix" { inherit php; };
+                astSupport = false;
             };
-            # cross-compile for 32bit
-            handlebars32bit = let
+            # i686
+            i686 = let
                 php = pkgs.pkgsi686Linux.${phpAttr};
             in pkgs.pkgsi686Linux.callPackage ./default.nix {
                 inherit phpHandlebarsSrc;
                 buildPecl = pkgs.pkgsi686Linux.callPackage "${path}/pkgs/build-support/build-pecl.nix" { inherit php; };
+                astSupport = true;
+            };
+            # ast
+            ast = let
+                php = pkgs.${phpAttr};
+            in pkgs.callPackage ./default.nix {
+                inherit phpHandlebarsSrc;
+                php = pkgs.${phpAttr};
+                buildPecl = pkgs.callPackage "${path}/pkgs/build-support/build-pecl.nix" { inherit php; };
+                astSupport = true;
             };
         };
 in

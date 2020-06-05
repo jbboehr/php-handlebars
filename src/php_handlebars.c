@@ -32,21 +32,24 @@
 
 
 /* {{{ Prototypes */
-extern PHP_MINIT_FUNCTION(handlebars_compiler);
 extern PHP_MINIT_FUNCTION(handlebars_exceptions);
 extern PHP_MINIT_FUNCTION(handlebars_impl);
-extern PHP_MINIT_FUNCTION(handlebars_parser);
-extern PHP_MINIT_FUNCTION(handlebars_opcode);
 extern PHP_MINIT_FUNCTION(handlebars_options);
-extern PHP_MINIT_FUNCTION(handlebars_program);
 extern PHP_MINIT_FUNCTION(handlebars_registry);
 extern PHP_MINIT_FUNCTION(handlebars_safe_string);
-extern PHP_MINIT_FUNCTION(handlebars_token);
-extern PHP_MINIT_FUNCTION(handlebars_tokenizer);
 extern PHP_MINIT_FUNCTION(handlebars_utils);
 extern PHP_MINIT_FUNCTION(handlebars_value);
 extern PHP_MINIT_FUNCTION(handlebars_vm);
 extern PHP_MSHUTDOWN_FUNCTION(handlebars_options);
+
+#ifdef PHP_HANDLEBARS_ENABLE_AST
+extern PHP_MINIT_FUNCTION(handlebars_compiler);
+extern PHP_MINIT_FUNCTION(handlebars_parser);
+extern PHP_MINIT_FUNCTION(handlebars_opcode);
+extern PHP_MINIT_FUNCTION(handlebars_program);
+extern PHP_MINIT_FUNCTION(handlebars_token);
+extern PHP_MINIT_FUNCTION(handlebars_tokenizer);
+#endif
 
 ZEND_DECLARE_MODULE_GLOBALS(handlebars);
 
@@ -144,19 +147,22 @@ static PHP_MINIT_FUNCTION(handlebars)
 
     // Call other MINIT functions
     PHP_MINIT(handlebars_registry)(INIT_FUNC_ARGS_PASSTHRU); // must be before impl
-    PHP_MINIT(handlebars_impl)(INIT_FUNC_ARGS_PASSTHRU);
-    PHP_MINIT(handlebars_compiler)(INIT_FUNC_ARGS_PASSTHRU);
+    PHP_MINIT(handlebars_impl)(INIT_FUNC_ARGS_PASSTHRU); // must be before vm
     PHP_MINIT(handlebars_exceptions)(INIT_FUNC_ARGS_PASSTHRU);
-    PHP_MINIT(handlebars_opcode)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_options)(INIT_FUNC_ARGS_PASSTHRU);
-    PHP_MINIT(handlebars_parser)(INIT_FUNC_ARGS_PASSTHRU);
-    PHP_MINIT(handlebars_program)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_safe_string)(INIT_FUNC_ARGS_PASSTHRU);
-    PHP_MINIT(handlebars_token)(INIT_FUNC_ARGS_PASSTHRU);
-    PHP_MINIT(handlebars_tokenizer)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_utils)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_value)(INIT_FUNC_ARGS_PASSTHRU);
     PHP_MINIT(handlebars_vm)(INIT_FUNC_ARGS_PASSTHRU);
+
+#ifdef PHP_HANDLEBARS_ENABLE_AST
+    PHP_MINIT(handlebars_compiler)(INIT_FUNC_ARGS_PASSTHRU);
+    PHP_MINIT(handlebars_opcode)(INIT_FUNC_ARGS_PASSTHRU);
+    PHP_MINIT(handlebars_parser)(INIT_FUNC_ARGS_PASSTHRU);
+    PHP_MINIT(handlebars_program)(INIT_FUNC_ARGS_PASSTHRU);
+    PHP_MINIT(handlebars_token)(INIT_FUNC_ARGS_PASSTHRU);
+    PHP_MINIT(handlebars_tokenizer)(INIT_FUNC_ARGS_PASSTHRU);
+#endif
 
     return SUCCESS;
 }

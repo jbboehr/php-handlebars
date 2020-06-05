@@ -22,6 +22,7 @@
   phpHandlebarsSha256 ? null,
   phpHandlebarsAllTheTests ? false,
 
+  astSupport ? false,
   hardeningSupport ? true,
 
   mustache_spec ? pkgs.callPackage (import ((fetchTarball {
@@ -47,6 +48,6 @@
 
 pkgs.callPackage ./derivation.nix {
   inherit buildPecl mustache_spec handlebars_spec handlebarsc php_psr phpHandlebarsVersion phpHandlebarsSrc phpHandlebarsSha256 phpHandlebarsAllTheTests;
-  inherit hardeningSupport;
+  inherit astSupport hardeningSupport;
 }
 

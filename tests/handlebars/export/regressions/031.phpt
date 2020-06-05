@@ -5,6 +5,7 @@ Regressions - GH-1639: TypeError: Cannot read property 'apply' of undefined" whe
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
+if( !class_exists('Handlebars\Compiler') ) die('skip handlebars AST not enabled');
 ?>
 --FILE--
 <?php

@@ -2,7 +2,9 @@
 
 export LIBHANDLEBARS_VERSION=${LIBHANDLEBARS_VERSION:-master}
 #export PHP_PSR_VERSION=${PHP_PSR_VERSION:-master}
+export AST=${AST:-false}
 export COVERAGE=${COVERAGE:-true}
+export HARDENING=${HARDENING:-true}
 
 export NO_INTERACTION=1
 export REPORT_EXIT_STATUS=1
@@ -62,6 +64,12 @@ function install_php_handlebars() (
 
     local extra_configure_flags=""
 
+    if [[ "${AST}" != "false" ]]; then
+        extra_configure_flags="${extra_configure_flags} --enable-handlebars-ast"
+    else
+        extra_configure_flags="${extra_configure_flags} --disable-handlebars-ast"
+    fi
+
     if [[ "${HARDENING}" != "false" ]]; then
         extra_configure_flags="${extra_configure_flags} --enable-handlebars-hardening"
     else
@@ -112,6 +120,8 @@ function before_script() (
 function run_examples() (
     set -e -o pipefail
 
+    echo "Running examples"
+
     for i in `find examples -name "*.php" -not -name benchmarks.php`; do
         printf "\nExecuting example ${i}:\n"
         php -d extension=modules/handlebars.so $i
@@ -119,6 +129,17 @@ function run_examples() (
 
     return 0
 )
+
+function run_stubs() {
+    set -e -o pipefail
+
+    echo "Running stubs"
+
+    php handlebars.stub.php
+    php handlebars-ast.stub.php
+
+    return 0
+}
 
 function script() (
     set -e -o pipefail
@@ -133,7 +154,6 @@ function script() (
         ${extra_flags} \
         -d extension=modules/handlebars.so
 
-    echo "Running examples"
     run_examples
 
     echo "Running benchmarks"

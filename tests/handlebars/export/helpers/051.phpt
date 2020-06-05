@@ -5,6 +5,7 @@ helpers - knownHelpers - Unknown helper in knownHelpers only mode should be pass
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
+if( !class_exists('Handlebars\Compiler') ) die('skip handlebars AST not enabled');
 ?>
 --FILE--
 <?php

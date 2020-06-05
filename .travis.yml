@@ -9,26 +9,43 @@ matrix:
   fast_finish: true
   allow_failures:
   - php: 'master'
-  - php: 'master'
-    env:
-    - PHP_PSR_VERSION=v1.0.0
   - language: nix
     env:
-      - NIX_CHANNEL=unstable
-      - NIX_PHP_ATTR=php
+    - NIX_CHANNEL=unstable
+    - NIX_PHP_ATTR=php
   include:
+# basic
   - language: php
     php: '7.2'
   - language: php
     php: '7.3'
   - language: php
     php: '7.4'
+  - language: php
+    php: 'master'
+# ast
+  - language: php
+    php: '7.2'
+    env:
+    - AST=true
+  - language: php
+    php: '7.3'
+    env:
+    - AST=true
+  - language: php
+    php: '7.4'
+    env:
+    - AST=true
+  - language: php
+    php: 'master'
+    env:
+    - AST=true
+# no hardening
   - language: php
     php: '7.4'
     env:
     - HARDENING=false
-  - language: php
-    php: 'master'
+# psr
   - language: php
     php: '7.2'
     env:
@@ -45,8 +62,10 @@ matrix:
     php: 'master'
     env:
     - PHP_PSR_VERSION=v1.0.0
+# fedora
   - env:
     - DOCKER_IMAGE=fedora31
+# nix
   - language: nix
     env:
     - NIX_CHANNEL=20.03

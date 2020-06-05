@@ -5,6 +5,7 @@ Tokenizer - does not time out in a mustache with a single } followed by EOF
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
+if( !class_exists('Handlebars\Compiler') ) die('skip handlebars AST not enabled');
 ?>
 --FILE--
 <?php

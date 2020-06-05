@@ -5,6 +5,7 @@ Tokenizer - supports escaped escape characters after escaped mustaches
 --SKIPIF--
 <?php
 if( true ) die('skip this test is correct, but handlebars.js does not join two adjacent content blocks');
+if( !class_exists('Handlebars\Compiler') ) die('skip handlebars AST not enabled');
 ?>
 --FILE--
 <?php

@@ -5,6 +5,7 @@ Tokenizer - tokenizes a partial with context as "OPEN_PARTIAL ID ID CLOSE"
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
+if( !class_exists('Handlebars\Compiler') ) die('skip handlebars AST not enabled');
 ?>
 --FILE--
 <?php

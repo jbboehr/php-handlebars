@@ -5,7 +5,6 @@ Section - Alternate Delimiters - Lambdas used for sections should parse with the
 --SKIPIF--
 <?php
 if( true ) die('skip mustache lambdas with delimter changing syntax are not implemented, intentionally');
-
 if( !defined('Handlebars\Compiler::MUSTACHE_STYLE_LAMBDAS') ) die('skip configured libhandlebars version has no lambda support');
 ?>
 --FILE--

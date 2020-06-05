@@ -19,6 +19,9 @@ m4_define(AM_LDFLAGS, [LDFLAGS])
 PHP_ARG_ENABLE(handlebars, whether to enable handlebars support,
 [  --enable-handlebars     Enable handlebars support])
 
+PHP_ARG_ENABLE(handlebars-ast, whether to enable handlebars AST support,
+[  --enable-handlebars-ast Enable handlebars AST support], [no], [no])
+
 PHP_ARG_ENABLE(handlebars-psr, whether to enable handlebars PSR support,
 [  --enable-handlebars-psr Enable handlebars PSR support], [no], [no])
 
@@ -113,20 +116,26 @@ if test "$PHP_HANDLEBARS" != "no"; then
     PHP_HANDLEBARS_ADD_SOURCES([
         src/php_handlebars.c
         src/impl.c
-        src/compiler.c
         src/exceptions.c
-        src/opcode.c
         src/options.c
-        src/parser.c
-        src/program.c
         src/registry.c
         src/safe_string.c
-        src/token.c
-        src/tokenizer.c
         src/utils.c
         src/vm.c
         src/value.c
     ])
+    if test "$PHP_HANDLEBARS_AST" == "yes"; then
+        AC_DEFINE([PHP_HANDLEBARS_ENABLE_AST], [1], [Whether to enable AST support])
+        PHP_HANDLEBARS_ADD_SOURCES([
+            src/compiler.c
+            src/opcode.c
+            src/parser.c
+            src/program.c
+            src/token.c
+            src/tokenizer.c
+        ])
+    fi
+
     PHP_ADD_BUILD_DIR(src)
     PHP_ADD_INCLUDE([vendor])
     PHP_INSTALL_HEADERS([ext/handlebars], [php_handlebars.h])

@@ -27,29 +27,8 @@
 
 #include "php_handlebars.h"
 
-#ifndef Z_IS_TRUE_P
-#define Z_IS_TRUE_P(a) (Z_TYPE_P(a) == IS_TRUE)
-#endif
-
-#ifndef Z_IS_BOOL_P
-#define Z_IS_BOOL_P(a) (Z_TYPE_P(a) == IS_TRUE || Z_TYPE_P(a) == IS_FALSE)
-#endif
-
 /* {{{ Variables & Prototypes */
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsCompiler_ce_ptr;
-static zend_string *INTERNED_ALTERNATE_DECORATORS;
-static zend_string *INTERNED_COMPAT;
-static zend_string *INTERNED_DATA;
-static zend_string *INTERNED_EXPLICIT_PARTIAL_CONTEXT;
-static zend_string *INTERNED_IGNORE_STANDALONE;
-static zend_string *INTERNED_KNOWN_HELPERS;
-static zend_string *INTERNED_KNOWN_HELPERS_ONLY;
-static zend_string *INTERNED_PREVENT_INDENT;
-static zend_string *INTERNED_STRING_PARAMS;
-static zend_string *INTERNED_TRACK_IDS;
-static zend_string *INTERNED_STRICT;
-static zend_string *INTERNED_ASSUME_OBJECTS;
-static zend_string *INTERNED_MUSTACHE_STYLE_LAMBDAS;
 
 static void php_handlebars_program_to_zval(struct handlebars_program * program, zval * current);
 /* }}} Variables & Prototypes */
@@ -238,143 +217,6 @@ static void php_handlebars_program_to_zval(struct handlebars_program * program, 
 }
 /* }}} Utils */
 
-/* {{{ php_handlebars_compiler_known_helpers_from_zval */
-static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval * arr)
-{
-    HashTable * data_hash = NULL;
-    long count = 0;
-    char ** ptr;
-    char ** known_helpers;
-    zend_string * key;
-    zend_ulong index;
-    zval * entry = NULL;
-
-    if( !arr || Z_TYPE_P(arr) != IS_ARRAY ) {
-        return NULL;
-    }
-
-    data_hash = HASH_OF(arr);
-    count = zend_hash_num_elements(data_hash);
-
-    if( !count ) {
-        return NULL;
-    }
-
-    // Allocate array
-    ptr = known_helpers = talloc_array(ctx, char *, count + 1);
-
-    // Copy in known helpers
-    ZEND_HASH_FOREACH_KEY_VAL(data_hash, index, key, entry) {
-        if( Z_TYPE_P(entry) == IS_STRING ) {
-            *ptr++ = (char *) handlebars_talloc_strndup(ctx, Z_STRVAL_P(entry), Z_STRLEN_P(entry));
-        } else if( key ) {
-            *ptr++ = (char *) handlebars_talloc_strndup(ctx, ZSTR_VAL(key), ZSTR_LEN(key));
-        } else {
-            (void) index;
-        }
-    } ZEND_HASH_FOREACH_END();
-
-    // Null terminate
-    *ptr++ = NULL;
-
-    return known_helpers;
-}
-/* }}} php_handlebars_compiler_known_helpers_from_zval */
-
-/* {{{ php_handlebars_process_options_zval */
-PHP_HANDLEBARS_API void php_handlebars_process_options_zval(struct handlebars_compiler * compiler, struct handlebars_vm * vm, zval * options)
-{
-    zval * entry;
-    HashTable * ht;
-    long flags = 0;
-
-    if( !options || Z_TYPE_P(options) != IS_ARRAY ) {
-        handlebars_compiler_set_flags(compiler, flags);
-        return;
-    }
-
-    ht = Z_ARRVAL_P(options);
-    if( NULL != (entry = zend_hash_find(ht, INTERNED_ALTERNATE_DECORATORS)) ) {
-        if( Z_IS_TRUE_P(entry) ) {
-            flags |= handlebars_compiler_flag_alternate_decorators;
-        }
-    }
-    if( NULL != (entry = zend_hash_find(ht, INTERNED_COMPAT)) ) {
-        if( Z_IS_TRUE_P(entry) ) {
-            flags |= handlebars_compiler_flag_compat;
-        }
-    }
-    if( NULL != (entry = zend_hash_find(ht, INTERNED_DATA)) ) {
-        // @todo refine this
-        if( !Z_IS_BOOL_P(entry) && Z_TYPE_P(entry) != IS_NULL ) {
-            if( vm ) {
-                vm->data = handlebars_value_from_zval(HBSCTX(vm), entry);
-            }
-            flags |= handlebars_compiler_flag_use_data;
-        } else if( Z_IS_TRUE_P(entry) ) {
-            flags |= handlebars_compiler_flag_use_data;
-        }
-    }
-    if( NULL != (entry = zend_hash_find(ht, INTERNED_EXPLICIT_PARTIAL_CONTEXT)) ) {
-        if( Z_IS_TRUE_P(entry) ) {
-            flags |= handlebars_compiler_flag_explicit_partial_context;
-        }
-    }
-    if( NULL != (entry = zend_hash_find(ht, INTERNED_IGNORE_STANDALONE)) ) {
-        if( Z_IS_TRUE_P(entry) ) {
-            flags |= handlebars_compiler_flag_ignore_standalone;
-        }
-    }
-    if( NULL != (entry = zend_hash_find(ht, INTERNED_KNOWN_HELPERS)) ) {
-        compiler->known_helpers = (const char **) php_handlebars_compiler_known_helpers_from_zval(compiler, entry);
-    }
-    if( NULL != (entry = zend_hash_find(ht, INTERNED_KNOWN_HELPERS_ONLY)) ) {
-        if( Z_IS_TRUE_P(entry) ) {
-            flags |= handlebars_compiler_flag_known_helpers_only;
-        }
-    }
-    if( NULL != (entry = zend_hash_find(ht, INTERNED_PREVENT_INDENT)) ) {
-        if( Z_IS_TRUE_P(entry) ) {
-            flags |= handlebars_compiler_flag_prevent_indent;
-        }
-    }
-    if( NULL != (entry = zend_hash_find(ht, INTERNED_STRING_PARAMS)) ) {
-        if( Z_IS_TRUE_P(entry) ) {
-            flags |= handlebars_compiler_flag_string_params;
-        }
-    }
-    if( NULL != (entry = zend_hash_find(ht, INTERNED_TRACK_IDS)) ) {
-        if( Z_IS_TRUE_P(entry) ) {
-            flags |= handlebars_compiler_flag_track_ids;
-        }
-    }
-#ifdef handlebars_compiler_flag_strict
-    if( NULL != (entry = zend_hash_find(ht, INTERNED_STRICT)) ) {
-        if( Z_IS_TRUE_P(entry) ) {
-            flags |= handlebars_compiler_flag_strict;
-        }
-    }
-#endif
-#ifdef handlebars_compiler_flag_assume_objects
-    if( NULL != (entry = zend_hash_find(ht, INTERNED_ASSUME_OBJECTS)) ) {
-        if( Z_IS_TRUE_P(entry) ) {
-            flags |= handlebars_compiler_flag_assume_objects;
-        }
-    }
-#endif
-#ifdef handlebars_compiler_flag_mustache_style_lambdas
-    if( NULL != (entry = zend_hash_find(ht, INTERNED_MUSTACHE_STYLE_LAMBDAS)) ) {
-        if( Z_IS_TRUE_P(entry) ) {
-            flags |= handlebars_compiler_flag_mustache_style_lambdas;
-        }
-    }
-#endif
-
-    handlebars_compiler_set_flags(compiler, flags);
-
-}
-/* }}} php_handlebars_process_options_zval */
-
 /* {{{ proto mixed Handlebars\Compiler::compile(string tmpl[, long flags[, array knownHelpers]]) */
 static void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short print)
 {
@@ -489,20 +331,6 @@ static zend_function_entry HandlebarsCompiler_methods[] = {
 PHP_MINIT_FUNCTION(handlebars_compiler)
 {
     zend_class_entry ce;
-
-    INTERNED_ALTERNATE_DECORATORS = zend_new_interned_string(zend_string_init(ZEND_STRL("alternateDecorators"), 1));
-    INTERNED_COMPAT = zend_new_interned_string(zend_string_init(ZEND_STRL("compat"), 1));
-    INTERNED_DATA = zend_new_interned_string(zend_string_init(ZEND_STRL("data"), 1));
-    INTERNED_EXPLICIT_PARTIAL_CONTEXT = zend_new_interned_string(zend_string_init(ZEND_STRL("explicitPartialContext"), 1));
-    INTERNED_IGNORE_STANDALONE = zend_new_interned_string(zend_string_init(ZEND_STRL("ignoreStandalone"), 1));
-    INTERNED_KNOWN_HELPERS = zend_new_interned_string(zend_string_init(ZEND_STRL("knownHelpers"), 1));
-    INTERNED_KNOWN_HELPERS_ONLY = zend_new_interned_string(zend_string_init(ZEND_STRL("knownHelpersOnly"), 1));
-    INTERNED_PREVENT_INDENT = zend_new_interned_string(zend_string_init(ZEND_STRL("preventIndent"), 1));
-    INTERNED_STRING_PARAMS = zend_new_interned_string(zend_string_init(ZEND_STRL("stringParams"), 1));
-    INTERNED_TRACK_IDS = zend_new_interned_string(zend_string_init(ZEND_STRL("trackIds"), 1));
-    INTERNED_STRICT = zend_new_interned_string(zend_string_init(ZEND_STRL("strict"), 1));
-    INTERNED_ASSUME_OBJECTS = zend_new_interned_string(zend_string_init(ZEND_STRL("assumeObjects"), 1));
-    INTERNED_MUSTACHE_STYLE_LAMBDAS = zend_new_interned_string(zend_string_init(ZEND_STRL("mustacheStyleLambdas"), 1));
 
     INIT_CLASS_ENTRY(ce, "Handlebars\\Compiler", HandlebarsCompiler_methods);
     HandlebarsCompiler_ce_ptr = zend_register_internal_class(&ce);

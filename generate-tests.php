@@ -11,6 +11,7 @@ if( !extension_loaded('psr') ) {
 }
 if( !extension_loaded('handlebars') ) {
     require 'handlebars.stub.php';
+    require 'handlebars-ast.stub.php';
 }
 
 $startTime = microtime(true);
@@ -234,6 +235,13 @@ function hbs_generate_test_head(array &$test) {
     if (!empty($test['number'])) {
         $testName .= ' - ' . $test['number'];
     }
+    $extraSkip = '';
+
+    if( $test['suiteType'] == 'export' || $test['suiteName'] == 'parser' || $test['suiteName'] == 'tokenizer' ) {
+        $extraSkip .= <<<EOF
+if( !class_exists('Handlebars\\Compiler') ) die('skip handlebars AST not enabled');
+EOF;
+    }
 
     switch( $test['description'] . ' - ' . $test['it'] ) {
     	case 'Standalone Indentation - Each line of the partial should be indented before rendering.':
@@ -316,10 +324,8 @@ function hbs_generate_test_head(array &$test) {
         }
     }
 
-    $extraSkip = null;
     if ($test['suiteType'] === 'mustache' && $test['suiteName'] === 'lambdas') {
-        $extraSkip = <<<EOF
-
+        $extraSkip .= <<<EOF
 if( !defined('Handlebars\\Compiler::MUSTACHE_STYLE_LAMBDAS') ) die('skip configured libhandlebars version has no lambda support');
 EOF;
     }

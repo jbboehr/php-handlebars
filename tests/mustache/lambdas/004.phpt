@@ -5,7 +5,6 @@ Interpolation - Multiple Calls - Interpolated lambdas should not be cached.
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
-
 if( !defined('Handlebars\Compiler::MUSTACHE_STYLE_LAMBDAS') ) die('skip configured libhandlebars version has no lambda support');
 ?>
 --FILE--

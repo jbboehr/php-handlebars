@@ -4,6 +4,7 @@ Handlebars\Opcode reflection (PHP 7)
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
 if( PHP_VERSION_ID >= 80000 ) die('skip ');
+if( !class_exists('Handlebars\\Opcode') ) die('skip handlebars AST not enabled');
 ?>
 --FILE--
 <?php
