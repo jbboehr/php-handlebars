@@ -5,6 +5,7 @@ partials - inline partials - should define inline partials for partial call
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
+if( !class_exists('Handlebars\Compiler') ) die('skip handlebars AST not enabled');
 ?>
 --FILE--
 <?php

@@ -5,6 +5,7 @@ helpers - helperMissing - if a context is not found, custom helperMissing is use
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
+if( !class_exists('Handlebars\Compiler') ) die('skip handlebars AST not enabled');
 ?>
 --FILE--
 <?php

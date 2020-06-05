@@ -5,6 +5,7 @@ blocks - compat mode - block with missed recursive lookup
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
+if( !class_exists('Handlebars\Compiler') ) die('skip handlebars AST not enabled');
 ?>
 --FILE--
 <?php

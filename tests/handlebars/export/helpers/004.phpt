@@ -5,6 +5,7 @@ helpers - raw block parsing (with identity helper-function) - helper for nested 
 --SKIPIF--
 <?php
 if( true ) die('skip skip for now');
+if( !class_exists('Handlebars\Compiler') ) die('skip handlebars AST not enabled');
 ?>
 --FILE--
 <?php

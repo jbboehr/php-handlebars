@@ -5,6 +5,7 @@ string params mode - information about the types is passed along
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
+if( !class_exists('Handlebars\Compiler') ) die('skip handlebars AST not enabled');
 ?>
 --FILE--
 <?php

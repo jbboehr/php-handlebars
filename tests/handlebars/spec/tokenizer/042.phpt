@@ -5,6 +5,7 @@ Tokenizer - tokenizes mustaches with params as "OPEN ID ID ID CLOSE"
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
+if( !class_exists('Handlebars\Compiler') ) die('skip handlebars AST not enabled');
 ?>
 --FILE--
 <?php

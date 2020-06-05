@@ -5,6 +5,7 @@ Tokenizer - tokenizes inverse sections with ID as "OPEN_INVERSE ID CLOSE"
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
+if( !class_exists('Handlebars\Compiler') ) die('skip handlebars AST not enabled');
 ?>
 --FILE--
 <?php
