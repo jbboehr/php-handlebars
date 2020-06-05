@@ -11,7 +11,8 @@ matrix:
   - php: 'master'
   - language: nix
     env:
-      - NIX_CHANNEL=unstable
+    - NIX_CHANNEL=unstable
+    - NIX_PHP_ATTR=php
   include:
 # basic
   - language: php
