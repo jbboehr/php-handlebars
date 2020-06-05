@@ -111,22 +111,24 @@ if test "$PHP_HANDLEBARS" != "no"; then
 
     # extension
     PHP_HANDLEBARS_ADD_SOURCES([
-        php_handlebars.c
-        impl.c
-        compiler.c
-        exceptions.c
-        opcode.c
-        options.c
-        parser.c
-        program.c
-        registry.c
-        safe_string.c
-        token.c
-        tokenizer.c
-        utils.c
-        vm.c
-        value.c
+        src/php_handlebars.c
+        src/impl.c
+        src/compiler.c
+        src/exceptions.c
+        src/opcode.c
+        src/options.c
+        src/parser.c
+        src/program.c
+        src/registry.c
+        src/safe_string.c
+        src/token.c
+        src/tokenizer.c
+        src/utils.c
+        src/vm.c
+        src/value.c
     ])
+    PHP_ADD_BUILD_DIR(src)
+    PHP_ADD_INCLUDE([vendor])
     PHP_INSTALL_HEADERS([ext/handlebars], [php_handlebars.h])
     PHP_NEW_EXTENSION(handlebars, $PHP_HANDLEBARS_SOURCES, $ext_shared)
     if test "$PHP_HANDLEBARS_PSR" != "no"; then

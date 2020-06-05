@@ -31,24 +31,24 @@
    <file name="LICENSE.md" role="doc" />
    <file name="README.md" role="doc" />
    <file name="config.m4" role="src" />
-   <file name="compiler.c" role="src" />
-   <file name="exceptions.c" role="src" />
-   <file name="impl.c" role="src" />
-   <file name="opcode.c" role="src" />
-   <file name="options.c" role="src" />
-   <file name="parser.c" role="src" />
-   <file name="php_handlebars.c" role="src" />
    <file name="php_handlebars.h" role="src" />
-   <file name="program.c" role="src" />
-   <file name="registry.c" role="src" />
-   <file name="safe_string.c" role="src" />
-   <file name="token.c" role="src" />
-   <file name="tokenizer.c" role="src" />
-   <file name="utils.c" role="src" />
-   <file name="value.c" role="src" />
-   <file name="vm.c" role="src" />
-   <file name="xxh3.h" role="src" />
-   <file name="xxhash.h" role="src" />
+   <file name="src/compiler.c" role="src" />
+   <file name="src/exceptions.c" role="src" />
+   <file name="src/impl.c" role="src" />
+   <file name="src/opcode.c" role="src" />
+   <file name="src/options.c" role="src" />
+   <file name="src/parser.c" role="src" />
+   <file name="src/php_handlebars.c" role="src" />
+   <file name="src/program.c" role="src" />
+   <file name="src/registry.c" role="src" />
+   <file name="src/safe_string.c" role="src" />
+   <file name="src/token.c" role="src" />
+   <file name="src/tokenizer.c" role="src" />
+   <file name="src/utils.c" role="src" />
+   <file name="src/value.c" role="src" />
+   <file name="src/vm.c" role="src" />
+   <file name="vendor/xxh3.h" role="src" />
+   <file name="vendor/xxhash.h" role="src" />
    <file name="examples/benchmarks.php" role="doc" />
    <file name="examples/benchmarks.sh" role="doc" />
    <file name="examples/block-expressions.php" role="doc" />

@@ -4,8 +4,9 @@
 .gitmodules         export-ignore
 .travis.yml         export-ignore
 spec                export-ignore
-m4/*                linguist-generated=true linguist-vendored=true
+m4/**               linguist-generated=true linguist-vendored=true
+vendor/**           linguist-generated=true linguist-vendored=true
 xxh3.h              linguist-generated=true linguist-vendored=true
 xxhash.h            linguist-generated=true linguist-vendored=true
-tests/handlebars    linguist-generated=true
-tests/mustache      linguist-generated=true
+tests/handlebars/** linguist-generated=true
+tests/mustache/**   linguist-generated=true
