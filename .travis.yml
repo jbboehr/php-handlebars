@@ -1,18 +1,10 @@
-sudo: false
 
-dist: xenial
-
-services:
-- docker
+dist: bionic
 
 matrix:
   fast_finish: true
   allow_failures:
   - php: 'master'
-  - language: nix
-    env:
-    - NIX_CHANNEL=unstable
-    - NIX_PHP_ATTR=php
   include:
 # basic
   - language: php
@@ -23,71 +15,41 @@ matrix:
     php: '7.4'
   - language: php
     php: 'master'
-# ast
-  - language: php
-    php: '7.2'
-    env:
-    - AST=true
-  - language: php
-    php: '7.3'
-    env:
-    - AST=true
-  - language: php
-    php: '7.4'
-    env:
-    - AST=true
-  - language: php
-    php: 'master'
-    env:
-    - AST=true
 # no hardening
   - language: php
     php: '7.4'
     env:
     - HARDENING=false
-# psr
+# ast + psr
   - language: php
     php: '7.2'
     env:
+    - AST=true
     - PHP_PSR_VERSION=v1.0.0
   - language: php
     php: '7.3'
     env:
+    - AST=true
     - PHP_PSR_VERSION=v1.0.0
   - language: php
     php: '7.4'
     env:
+    - AST=true
     - PHP_PSR_VERSION=v1.0.0
   - language: php
     php: 'master'
     env:
+    - AST=true
     - PHP_PSR_VERSION=v1.0.0
 # fedora
-  - env:
+  - services:
+    - docker
+    env:
     - DOCKER_IMAGE=fedora31
-# nix
-  - language: nix
-    env:
-    - NIX_CHANNEL=20.03
-    - NIX_PHP_ATTR=php72
-  - language: nix
-    env:
-    - NIX_CHANNEL=20.03
-    - NIX_PHP_ATTR=php73
-  - language: nix
-    env:
-    - NIX_CHANNEL=20.03
-    - NIX_PHP_ATTR=php74
-  - language: nix
-    env:
-    - NIX_CHANNEL=unstable
-    - NIX_PHP_ATTR=php
 
 env:
   global:
   - LIBHANDLEBARS_VERSION=354923fc39c1a2502dceb15af27f91ff7cf570b3
-
-cache: ccache
 
 branches:
     only:

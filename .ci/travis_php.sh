@@ -64,7 +64,7 @@ function install_php_handlebars() (
 
     local extra_configure_flags=""
 
-    if [[ "${AST}" != "false" ]]; then
+    if [[ "${AST}" == "true" ]]; then
         extra_configure_flags="${extra_configure_flags} --enable-handlebars-ast"
     else
         extra_configure_flags="${extra_configure_flags} --disable-handlebars-ast"
@@ -147,6 +147,11 @@ function script() (
     extra_flags=""
     if [[ ! -z "${PHP_PSR_VERSION}" ]]; then
         extra_flags="-d extension=third-party/php-psr/modules/psr.so"
+    fi
+
+    # we can save a fair bit of time by removing these tests if AST is not enabled
+    if [[ "${AST}" != "true" ]]; then
+        rm -rf tests/handlebars/export tests/handlebars/spec/parser tests/handlebars/spec/tokenizer
     fi
 
     echo "Running main test suite"
