@@ -4,7 +4,7 @@ partials - partial blocks - should be able to access the @data frame from a part
 partials - partial blocks - should be able to access the @data frame from a partial-block
 --SKIPIF--
 <?php
-if( true ) die('skip partial blocks are not supported by the VM');
+if( !extension_loaded('handlebars') ) die('skip ');
 ?>
 --FILE--
 <?php

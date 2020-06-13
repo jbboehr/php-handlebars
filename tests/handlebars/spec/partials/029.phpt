@@ -4,7 +4,7 @@ partials - partial blocks - should propagate block parameters to default block
 partials - partial blocks - should propagate block parameters to default block
 --SKIPIF--
 <?php
-if( true ) die('skip partial blocks are not supported by the VM');
+if( !extension_loaded('handlebars') ) die('skip ');
 ?>
 --FILE--
 <?php

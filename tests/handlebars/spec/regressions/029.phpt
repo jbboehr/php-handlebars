@@ -4,7 +4,7 @@ Regressions - GH-1186: Support block params for existing programs
 Regressions - GH-1186: Support block params for existing programs
 --SKIPIF--
 <?php
-if( true ) die('skip partial blocks are not supported by the VM');
+if( true ) die('skip decorators are not supported by the VM');
 ?>
 --FILE--
 <?php

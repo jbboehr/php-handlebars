@@ -15,4 +15,4 @@ try {
     echo $e->getMessage();
 }
 --EXPECT--
-Unable to call value of type 1 on line 0, column 0
+Unable to call value of type: true on line 0, column 0

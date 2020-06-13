@@ -4,7 +4,7 @@ partials - partial blocks - should render nested partial blocks at different nes
 partials - partial blocks - should render nested partial blocks at different nesting levels
 --SKIPIF--
 <?php
-if( true ) die('skip partial blocks are not supported by the VM');
+if( !extension_loaded('handlebars') ) die('skip ');
 ?>
 --FILE--
 <?php

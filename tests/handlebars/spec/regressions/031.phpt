@@ -4,7 +4,7 @@ Regressions - GH-1341: 4.0.7 release breaks {{#if @partial-block}} usage
 Regressions - GH-1341: 4.0.7 release breaks {{#if @partial-block}} usage
 --SKIPIF--
 <?php
-if( true ) die('skip partial blocks are not supported by the VM');
+if( !extension_loaded('handlebars') ) die('skip ');
 ?>
 --FILE--
 <?php

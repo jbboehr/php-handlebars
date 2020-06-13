@@ -630,7 +630,8 @@ PHP_HANDLEBARS_API zval * handlebars_value_to_zval(struct handlebars_value * val
             break;
         }
 
-        case HANDLEBARS_VALUE_TYPE_PTR: // LCOV_EXCL_START
+        case HANDLEBARS_VALUE_TYPE_CLOSURE: // LCOV_EXCL_START
+        case HANDLEBARS_VALUE_TYPE_PTR:
         case HANDLEBARS_VALUE_TYPE_HELPER:
         default:
             assert(0);

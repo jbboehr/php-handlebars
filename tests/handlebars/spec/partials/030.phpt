@@ -4,7 +4,7 @@ partials - partial blocks - should not use partial block if partial exists
 partials - partial blocks - should not use partial block if partial exists
 --SKIPIF--
 <?php
-if( true ) die('skip partial blocks are not supported by the VM');
+if( !extension_loaded('handlebars') ) die('skip ');
 ?>
 --FILE--
 <?php

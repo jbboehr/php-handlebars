@@ -281,9 +281,6 @@ EOF;
         } else if( $test['suiteName'] == 'track-ids' ) {
             $skip = 'true';
             $reason = 'track ids are not supported by the VM';
-        } else if( $test['description'] == 'partials - partial blocks' ) {
-            $skip = 'true';
-            $reason = 'partial blocks are not supported by the VM';
         } else if( $test['description'] == 'partials - inline partials' ) {
             $skip = 'true';
             $reason = 'inline partials are not supported by the VM';
@@ -304,9 +301,8 @@ EOF;
                 $reason = 'inline partials are not supported by the VM';
                 break;
             case 'Regressions - GH-1186: Support block params for existing programs':
-            case 'Regressions - GH-1341: 4.0.7 release breaks {{#if @partial-block}} usage':
                 $skip = 'true';
-                $reason = 'partial blocks are not supported by the VM';
+                $reason = 'decorators are not supported by the VM';
                 break;
             case 'Regressions - GH-1135 : Context handling within each iteration':
                 $skip = 'true';

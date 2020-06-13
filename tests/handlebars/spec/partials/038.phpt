@@ -4,7 +4,7 @@ partials - partial blocks - should render block from partial with block params
 partials - partial blocks - should render block from partial with block params
 --SKIPIF--
 <?php
-if( true ) die('skip partial blocks are not supported by the VM');
+if( !extension_loaded('handlebars') ) die('skip ');
 ?>
 --FILE--
 <?php

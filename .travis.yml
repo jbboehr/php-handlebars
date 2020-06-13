@@ -49,7 +49,7 @@ matrix:
 
 env:
   global:
-  - LIBHANDLEBARS_VERSION=6c50d111287cf669edc48dab6b265b68ad01a4bf
+  - LIBHANDLEBARS_VERSION=f0a8e777bd2a127d20ce42b18b6e5fc3c428de41
 
 branches:
     only:

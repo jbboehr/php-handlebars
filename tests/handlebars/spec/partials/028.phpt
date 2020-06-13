@@ -4,7 +4,7 @@ partials - partial blocks - should execute default block with proper context
 partials - partial blocks - should execute default block with proper context
 --SKIPIF--
 <?php
-if( true ) die('skip partial blocks are not supported by the VM');
+if( !extension_loaded('handlebars') ) die('skip ');
 ?>
 --FILE--
 <?php

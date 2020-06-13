@@ -4,7 +4,7 @@ partials - partial blocks - should be able to render the partial-block twice
 partials - partial blocks - should be able to render the partial-block twice
 --SKIPIF--
 <?php
-if( true ) die('skip partial blocks are not supported by the VM');
+if( !extension_loaded('handlebars') ) die('skip ');
 ?>
 --FILE--
 <?php
