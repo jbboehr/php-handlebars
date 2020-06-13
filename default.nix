@@ -14,17 +14,6 @@
       sha256 = "sha256:186pvp1y5fid8mm8c7ycjzwzhv7i6s3hh33rbi05ggrs7r3as3yy";
   }) { inherit (pkgs) lib; }).gitignoreSource,
 
-  phpHandlebarsVersion ? "v0.9.1",
-  phpHandlebarsSrc ? pkgs.lib.cleanSourceWith {
-    filter = (path: type: (builtins.all (x: x != baseNameOf path) [".idea" ".git" "ci.nix" ".travis.sh" ".travis.yml"]));
-    src = gitignoreSource ./.;
-  },
-  phpHandlebarsSha256 ? null,
-  phpHandlebarsAllTheTests ? false,
-
-  astSupport ? false,
-  hardeningSupport ? true,
-
   mustache_spec ? pkgs.callPackage (import ((fetchTarball {
     url = https://github.com/jbboehr/mustache-spec/archive/5b85c1b58309e241a6f7c09fa57bd1c7b16fa9be.tar.gz;
     sha256 = "1h9zsnj4h8qdnzji5l9f9zmdy1nyxnf8by9869plyn7qlk71gdyv";
@@ -36,18 +25,39 @@
   }))) {},
 
   handlebarsc ? pkgs.callPackage (import (fetchTarball {
-    url = https://github.com/jbboehr/handlebars.c/archive/354923fc39c1a2502dceb15af27f91ff7cf570b3.tar.gz;
-    sha256 = "1qb1l5cb7gkj13r3km6d3pwjv79zm4jlglj4axn2zgjjyisfr93x";
-  })) { inherit mustache_spec handlebars_spec; },
+    url = "https://github.com/jbboehr/handlebars.c/archive/6c50d111287cf669edc48dab6b265b68ad01a4bf.tar.gz";
+    sha256 = "0m2b97hfp4dhj2ycdmaiy2q69xvah5j0fyx2vq3yqzhif9aj561i";
+  })) {
+    inherit mustache_spec handlebars_spec;
+    inherit debugSupport devSupport hardeningSupport staticSupport valgrindSupport WerrorSupport;
+    sharedSupport = !staticSupport;
+  },
 
   php_psr ? pkgs.callPackage (import (fetchTarball {
     url = https://github.com/jbboehr/php-psr/archive/v1.0.0.tar.gz;
     sha256 = "12237b392rz224r4d8p6pwnldpl2bfrvpcim5947avjd49sn8ss4";
-  })) { inherit buildPecl; }
+  })) { inherit buildPecl; },
+
+  phpHandlebarsVersion ? "v0.9.1",
+  phpHandlebarsSha256 ? null,
+  phpHandlebarsSrc ? pkgs.lib.cleanSourceWith {
+    filter = (path: type: (builtins.all (x: x != baseNameOf path) [".idea" ".git" "ci.nix" ".travis.sh" ".travis.yml"]));
+    src = gitignoreSource ./.;
+  },
+
+  astSupport ? false,
+  checkSupport ? true,
+  debugSupport ? false,
+  devSupport ? false,
+  hardeningSupport ? true,
+  psrSupport ? true,
+  WerrorSupport ? (debugSupport || devSupport),
+  valgrindSupport ? (debugSupport || devSupport),
+  staticSupport ? false
 }:
 
 pkgs.callPackage ./derivation.nix {
-  inherit buildPecl mustache_spec handlebars_spec handlebarsc php_psr phpHandlebarsVersion phpHandlebarsSrc phpHandlebarsSha256 phpHandlebarsAllTheTests;
-  inherit astSupport hardeningSupport;
+  inherit buildPecl handlebarsc php_psr phpHandlebarsVersion phpHandlebarsSrc phpHandlebarsSha256;
+  inherit handlebars_spec mustache_spec;
+  inherit astSupport checkSupport debugSupport devSupport hardeningSupport psrSupport valgrindSupport WerrorSupport;
 }
-

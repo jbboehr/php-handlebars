@@ -76,9 +76,7 @@ if test "$PHP_HANDLEBARS" != "no"; then
         -Wno-redundant-decls -Wno-error=redundant-decls \
         -Wno-jump-misses-init -Wno-error=jump-misses-init \
         -Wno-clobbered -Wno-error=clobbered \
-        -Wno-switch-enum -Wno-error=switch-enum \
     ])
-    # @TODO we can remove -Wno-switch-enum -Wno-error=switch-enum in handlebars.c dev-1.x
     CFLAGS="$WARN_CFLAGS $CFLAGS"
     LDFLAGS="$WARN_LDFLAGS $LDFLAGS"
 
@@ -105,7 +103,8 @@ if test "$PHP_HANDLEBARS" != "no"; then
         LIBHANDLEBARS_CFLAGS=`$PKG_CONFIG handlebars --cflags`
         LIBHANDLEBARS_LIBS=`$PKG_CONFIG handlebars --libs`
         LIBHANDLEBARS_VERSION=`$PKG_CONFIG handlebars --modversion`
-        AC_MSG_RESULT(version $LIBHANDLEBARS_VERSION found using pkg-config)
+        LIBHANDLEBARS_PATH=`$PKG_CONFIG handlebars --libs-only-L | tail -c+3`
+        AC_MSG_RESULT([version $LIBHANDLEBARS_VERSION found using pkg-config ($LIBHANDLEBARS_PATH)])
         PHP_EVAL_LIBLINE($LIBHANDLEBARS_LIBS, HANDLEBARS_SHARED_LIBADD)
         PHP_EVAL_INCLINE($LIBHANDLEBARS_CFLAGS)
     else
@@ -137,7 +136,6 @@ if test "$PHP_HANDLEBARS" != "no"; then
     fi
 
     PHP_ADD_BUILD_DIR(src)
-    PHP_ADD_INCLUDE([vendor])
     PHP_INSTALL_HEADERS([ext/handlebars], [php_handlebars.h])
     PHP_NEW_EXTENSION(handlebars, $PHP_HANDLEBARS_SOURCES, $ext_shared)
     if test "$PHP_HANDLEBARS_PSR" != "no"; then

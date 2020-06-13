@@ -8,6 +8,12 @@
 
 #include "php_handlebars.h"
 
+#define HANDLEBARS_AST_PRIVATE
+#define HANDLEBARS_AST_LIST_PRIVATE
+
+#include "handlebars_ast.h"
+#include "handlebars_ast_list.h"
+#include "handlebars_parser.h"
 #include "handlebars_string.h"
 #include "handlebars_token.h"
 
@@ -31,10 +37,11 @@ PHP_HANDLEBARS_API void php_handlebars_token_ctor(struct handlebars_token * toke
     zval name = {0};
     zval text = {0};
 
-    ZVAL_STRING(&name, (char *) handlebars_token_readable_type(token->token));
+    ZVAL_STRING(&name, (char *) handlebars_token_readable_type(handlebars_token_get_type(token)));
 
-    if( token->string ) {
-        ZVAL_STRINGL(&text, token->string->val, token->string->len);
+    struct handlebars_string * token_text = handlebars_token_get_text(token);
+    if( token_text ) {
+        HBS_ZVAL_STR(&text, token_text);
     } else {
         ZVAL_STRINGL(&text, "", 0);
     }

@@ -9,12 +9,16 @@
 #include "Zend/zend_exceptions.h"
 #include "main/php.h"
 
+#define HANDLEBARS_AST_PRIVATE
+#define HANDLEBARS_AST_LIST_PRIVATE
+
 #include "handlebars.h"
+#include "handlebars_memory.h"
 #include "handlebars_ast.h"
 #include "handlebars_ast_list.h"
 #include "handlebars_ast_printer.h"
 #include "handlebars_compiler.h"
-#include "handlebars_memory.h"
+#include "handlebars_parser.h"
 #include "handlebars_string.h"
 
 #define BOOLEAN HBS_BOOLEAN
@@ -123,10 +127,10 @@ static zend_always_inline void php_handlebars_ast_node_add_path_params_hash(stru
 static zend_always_inline void php_handlebars_ast_node_add_literal(struct handlebars_ast_node_literal * literal, zval * current)
 {
     if( literal->value ) {
-        add_assoc_stringl_ex(current, ZEND_STRL("value"), literal->value->val, literal->value->len);
+        add_assoc_stringl_ex(current, ZEND_STRL("value"), hbs_str_val(literal->value), hbs_str_len(literal->value));
     }
     if( literal->original ) {
-    	add_assoc_stringl_ex(current, ZEND_STRL("original"), literal->original->val, literal->original->len);
+    	add_assoc_stringl_ex(current, ZEND_STRL("original"), hbs_str_val(literal->original), hbs_str_len(literal->original));
     }
 }
 
@@ -182,13 +186,11 @@ static void php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node, z
             add_assoc_long_ex(current, ZEND_STRL("chained"), node->node.program.chained);
             if( node->node.program.block_param1 ) {
             	add_assoc_stringl_ex(current, ZEND_STRL("block_param1"),
-                                             node->node.program.block_param1->val,
-                                             node->node.program.block_param1->len);
+                                             HBS_STR_STRL(node->node.program.block_param1));
             }
             if( node->node.program.block_param2 ) {
             	add_assoc_stringl_ex(current, ZEND_STRL("block_param2"),
-                                             node->node.program.block_param2->val,
-                                             node->node.program.block_param2->len);
+                                             HBS_STR_STRL(node->node.program.block_param2));
             }
             break;
         }
@@ -240,9 +242,7 @@ static void php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node, z
         }
         case HANDLEBARS_AST_NODE_HASH_PAIR: {
             if( node->node.hash_pair.key ) {
-            	add_assoc_stringl_ex(current, ZEND_STRL("key"),
-                                             node->node.hash_pair.key->val,
-                                             node->node.hash_pair.key->len);
+            	add_assoc_stringl_ex(current, ZEND_STRL("key"), HBS_STR_STRL(node->node.hash_pair.key));
             }
             add_assoc_handlebars_ast_node_ex(current, "value", node->node.hash_pair.value);
             break;
@@ -250,9 +250,7 @@ static void php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node, z
         case HANDLEBARS_AST_NODE_PATH: {
             add_assoc_handlebars_ast_list_ex(current, "parts", node->node.path.parts);
             if( node->node.path.original ) {
-            	add_assoc_stringl_ex(current, ZEND_STRL("original"),
-                                             node->node.path.original->val,
-                                             node->node.path.original->len);
+            	add_assoc_stringl_ex(current, ZEND_STRL("original"), HBS_STR_STRL(node->node.path.original));
             }
             add_assoc_long_ex(current, ZEND_STRL("depth"), node->node.path.depth);
             add_assoc_long_ex(current, ZEND_STRL("data"), node->node.path.data);
@@ -281,27 +279,19 @@ static void php_handlebars_ast_node_to_zval(struct handlebars_ast_node * node, z
         }
         case HANDLEBARS_AST_NODE_COMMENT: {
             if( node->node.comment.value ) {
-            	add_assoc_stringl_ex(current, ZEND_STRL("value"),
-                                            node->node.comment.value->val,
-                                            node->node.comment.value->len);
+            	add_assoc_stringl_ex(current, ZEND_STRL("value"), HBS_STR_STRL(node->node.comment.value));
             }
             break;
         }
         case HANDLEBARS_AST_NODE_PATH_SEGMENT: {
             if( node->node.path_segment.separator ) {
-            	add_assoc_stringl_ex(current, ZEND_STRL("separator"),
-                                             node->node.path_segment.separator->val,
-                                             node->node.path_segment.separator->len);
+            	add_assoc_stringl_ex(current, ZEND_STRL("separator"), HBS_STR_STRL(node->node.path_segment.separator));
             }
             if( node->node.path_segment.part ) {
-            	add_assoc_stringl_ex(current, ZEND_STRL("part"),
-                                             node->node.path_segment.part->val,
-                                             node->node.path_segment.part->len);
+            	add_assoc_stringl_ex(current, ZEND_STRL("part"), HBS_STR_STRL(node->node.path_segment.part));
             }
             if( node->node.path_segment.original ) {
-            	add_assoc_stringl_ex(current, ZEND_STRL("original"),
-                                             node->node.path_segment.original->val,
-                                             node->node.path_segment.original->len);
+            	add_assoc_stringl_ex(current, ZEND_STRL("original"), HBS_STR_STRL(node->node.path_segment.original));
             }
             break;
         }
@@ -327,6 +317,8 @@ static void php_handlebars_parse(INTERNAL_FUNCTION_PARAMETERS, short print)
     struct handlebars_parser * parser;
     struct handlebars_string * output;
     jmp_buf buf;
+    struct handlebars_string * tmpl_str;
+    struct handlebars_ast_node * ast;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
 	    Z_PARAM_STR(tmpl)
@@ -340,17 +332,17 @@ static void php_handlebars_parse(INTERNAL_FUNCTION_PARAMETERS, short print)
     parser = handlebars_parser_ctor(ctx);
 
     // Parse
-    parser->tmpl = handlebars_string_ctor(HBSCTX(parser), ZSTR_VAL(tmpl), ZSTR_LEN(tmpl));
+    tmpl_str = handlebars_string_ctor(HBSCTX(parser), ZSTR_VAL(tmpl), ZSTR_LEN(tmpl));
     php_handlebars_try(HandlebarsCompileException_ce_ptr, parser, &buf);
-    handlebars_parse(parser);
+    ast = handlebars_parse_ex(parser, tmpl_str, 0);
 
     // Print or convert to zval
     php_handlebars_try(HandlebarsRuntimeException_ce_ptr, parser, &buf);
     if( print ) {
-        output = handlebars_ast_print(HBSCTX(parser), parser->program);
-        RETVAL_STRINGL(output->val, output->len);
+        output = handlebars_ast_print(HBSCTX(parser), ast);
+        HBS_RETVAL_STR(output);
     } else {
-        php_handlebars_ast_node_to_zval(parser->program, return_value);
+        php_handlebars_ast_node_to_zval(ast, return_value);
     }
 
 done:

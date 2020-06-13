@@ -82,9 +82,9 @@ PHP_HANDLEBARS_API zend_bool php_handlebars_is_int_array(zval * arr);
 
 PHP_HANDLEBARS_API void php_handlebars_options_ctor(struct handlebars_options * options, zval * z_options);
 PHP_HANDLEBARS_API void php_handlebars_token_ctor(struct handlebars_token * token, zval * z_token);
-PHP_HANDLEBARS_API void php_handlebars_process_options_zval(struct handlebars_compiler * compiler, struct handlebars_vm * vm, zval * options);
+PHP_HANDLEBARS_API unsigned long php_handlebars_process_options_zval(struct handlebars_compiler * compiler, struct handlebars_vm * vm, zval * options);
 
-PHP_HANDLEBARS_API struct handlebars_value * handlebars_value_from_zval(struct handlebars_context * context, zval * val);
+PHP_HANDLEBARS_API struct handlebars_value * handlebars_value_from_zval(struct handlebars_context * context, zval * val, struct handlebars_value * rv);
 PHP_HANDLEBARS_API zval * handlebars_value_to_zval(struct handlebars_value * value, zval * val);
 
 #define php_handlebars_throw(ce, ctx) \
@@ -120,6 +120,9 @@ PHP_HANDLEBARS_API zval * handlebars_value_to_zval(struct handlebars_value * val
 #define PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_OBJ_INFO(c, f, n, cn, an) ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_ ## c ## _ ## f, ZEND_RETURN_VALUE, n, IS_OBJECT, #cn, an)
 #define PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_TYPE_INFO(c, f, n, t, an) ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_ ## c ## _ ## f, ZEND_RETURN_VALUE, n, t, NULL, an)
 #endif
+
+#define HBS_ZVAL_STR(z, h) ZVAL_STRINGL(z, hbs_str_val(h), hbs_str_len(h))
+#define HBS_RETVAL_STR(h) RETVAL_STRINGL(hbs_str_val(h), hbs_str_len(h))
 
 PHP_HANDLEBARS_BEGIN_ARG_WITH_RETURN_OBJ_INFO(HandlebarsImpl, getLogger, 0, Psr\\Logger\\LoggerInterface, 1)
 PHP_HANDLEBARS_END_ARG_INFO()

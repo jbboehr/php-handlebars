@@ -16,15 +16,19 @@
 #include "ext/standard/basic_functions.h"
 #include "ext/standard/php_filestat.h"
 
+#define HANDLEBARS_HELPERS_PRIVATE
+
 #include "handlebars.h"
-#include "handlebars_private.h"
 #include "handlebars_memory.h"
 
 #include "handlebars_cache.h"
 #include "handlebars_compiler.h"
+#include "handlebars_delimiters.h"
 #include "handlebars_helpers.h"
+#include "handlebars_map.h"
 #include "handlebars_opcodes.h"
 #include "handlebars_opcode_serializer.h"
+#include "handlebars_parser.h"
 #include "handlebars_string.h"
 #include "handlebars_value.h"
 #include "handlebars_vm.h"
@@ -34,13 +38,6 @@
 #include "handlebars.lex.h"
 
 #include "php_handlebars.h"
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wswitch-default"
-#define XXH_PRIVATE_API
-#define XXH_INLINE_ALL
-#include "xxhash.h"
-#pragma GCC diagnostic pop
 
 
 
@@ -106,7 +103,7 @@ static void php_handlebars_log(
         struct handlebars_value * argv[],
         struct handlebars_options * options
 ) {
-    zval * z_vm = (zval *) options->vm->log_ctx;
+    zval * z_vm = (zval *) handlebars_vm_get_log_ctx(options->vm);
     zval * logger = zend_read_property_ex(HandlebarsBaseImpl_ce_ptr, z_vm, HANDLEBARS_INTERNED_STR_LOGGER, 1, NULL);
     char * message;
     size_t message_len;
@@ -115,21 +112,27 @@ static void php_handlebars_log(
     // Generate message
     message = handlebars_talloc_strdup(HANDLEBARS_G(root), "");
     for (i = 0; i < argc; i++) {
-        char *tmp = handlebars_value_dump(argv[i], 0);
+        char *tmp = handlebars_value_dump(argv[i], HANDLEBARS_G(root), 0);
         message = handlebars_talloc_asprintf_append_buffer(message, "%s ", tmp);
         handlebars_talloc_free(tmp);
     }
     message_len = talloc_array_length(message) - 1;
 
     if( logger && Z_TYPE_P(logger) == IS_OBJECT ) {
-        // @todo Look up log level
-        struct handlebars_value * level = options->hash ? handlebars_value_map_str_find(options->hash, HBS_STRL("level")) : NULL;
-        const char * level_str = level && level->type == HANDLEBARS_VALUE_TYPE_STRING ? level->v.string->val : "info";
-
+        HANDLEBARS_VALUE_DECL(level);
         zval z_fn = {0};
         zval z_ret = {0};
         zval z_args[2] = {0};
-        ZVAL_STRING(&z_fn, level_str);
+
+        if (options->hash) {
+            (void) handlebars_value_map_str_find(options->hash, HBS_STRL("level"), level);
+        }
+        if (level && handlebars_value_get_type(level) == HANDLEBARS_VALUE_TYPE_STRING) {
+            ZVAL_STRINGL(&z_fn, handlebars_value_get_strval(level), handlebars_value_get_strlen(level));
+        } else {
+            ZVAL_STRINGL(&z_fn, "info", sizeof("info") - 1);
+        }
+
         ZVAL_STRINGL(&z_args[0], message, message_len);
         array_init(&z_args[1]);
         call_user_function(&Z_OBJCE_P(logger)->function_table, logger, &z_fn, &z_ret, 2, z_args);
@@ -137,6 +140,8 @@ static void php_handlebars_log(
         zval_ptr_dtor(&z_args[0]);
         zval_ptr_dtor(&z_fn);
         zval_ptr_dtor(&z_ret);
+
+        HANDLEBARS_VALUE_UNDECL(level);
     } else {
         _php_error_log_ex(4, message, message_len, NULL, NULL);
     }
@@ -149,10 +154,10 @@ static void php_handlebars_log(
 static inline void php_handlebars_vm_obj_create_common(struct php_handlebars_vm_obj *obj)
 {
     obj->context = handlebars_context_ctor_ex(HANDLEBARS_G(root));
-    obj->helpers = handlebars_value_ctor(obj->context);
-    handlebars_value_map_init(obj->helpers);
-    obj->partials = handlebars_value_ctor(obj->context);
-    handlebars_value_map_init(obj->partials);
+    obj->helpers = handlebars_talloc_zero_size(obj->context, HANDLEBARS_VALUE_SIZE);
+    handlebars_value_map(obj->helpers, handlebars_map_ctor(obj->context, 0));
+    obj->partials = handlebars_talloc_zero_size(obj->context, HANDLEBARS_VALUE_SIZE);
+    handlebars_value_map(obj->partials, handlebars_map_ctor(obj->context, 0));
 }
 static zend_object * php_handlebars_vm_obj_create(zend_class_entry * ce)
 {
@@ -220,7 +225,8 @@ static char ** php_handlebars_compiler_known_helpers_from_zval(void * ctx, zval 
 #define Z_IS_BOOL_P(a) (Z_TYPE_P(a) == IS_TRUE || Z_TYPE_P(a) == IS_FALSE)
 #endif
 
-PHP_HANDLEBARS_API void php_handlebars_process_options_zval(struct handlebars_compiler * compiler, struct handlebars_vm * vm, zval * options)
+PHP_HANDLEBARS_API
+unsigned long php_handlebars_process_options_zval(struct handlebars_compiler * compiler, struct handlebars_vm * vm, zval * options)
 {
     zval * entry;
     HashTable * ht;
@@ -228,7 +234,7 @@ PHP_HANDLEBARS_API void php_handlebars_process_options_zval(struct handlebars_co
 
     if( !options || Z_TYPE_P(options) != IS_ARRAY ) {
         handlebars_compiler_set_flags(compiler, flags);
-        return;
+        return flags;
     }
 
     ht = Z_ARRVAL_P(options);
@@ -246,7 +252,10 @@ PHP_HANDLEBARS_API void php_handlebars_process_options_zval(struct handlebars_co
         // @todo refine this
         if( !Z_IS_BOOL_P(entry) && Z_TYPE_P(entry) != IS_NULL ) {
             if( vm ) {
-                vm->data = handlebars_value_from_zval(HBSCTX(vm), entry);
+                HANDLEBARS_VALUE_DECL(tmp);
+                handlebars_value_from_zval(HBSCTX(vm), entry, tmp);
+                handlebars_vm_set_data(vm, tmp);
+                HANDLEBARS_VALUE_UNDECL(tmp);
             }
             flags |= handlebars_compiler_flag_use_data;
         } else if( Z_IS_TRUE_P(entry) ) {
@@ -264,7 +273,7 @@ PHP_HANDLEBARS_API void php_handlebars_process_options_zval(struct handlebars_co
         }
     }
     if( NULL != (entry = zend_hash_find(ht, INTERNED_KNOWN_HELPERS)) ) {
-        compiler->known_helpers = (const char **) php_handlebars_compiler_known_helpers_from_zval(compiler, entry);
+        handlebars_compiler_set_known_helpers(compiler, (const char **) php_handlebars_compiler_known_helpers_from_zval(compiler, entry));
     }
     if( NULL != (entry = zend_hash_find(ht, INTERNED_KNOWN_HELPERS_ONLY)) ) {
         if( Z_IS_TRUE_P(entry) ) {
@@ -286,30 +295,28 @@ PHP_HANDLEBARS_API void php_handlebars_process_options_zval(struct handlebars_co
             flags |= handlebars_compiler_flag_track_ids;
         }
     }
-#ifdef handlebars_compiler_flag_strict
     if( NULL != (entry = zend_hash_find(ht, INTERNED_STRICT)) ) {
         if( Z_IS_TRUE_P(entry) ) {
             flags |= handlebars_compiler_flag_strict;
         }
     }
-#endif
-#ifdef handlebars_compiler_flag_assume_objects
     if( NULL != (entry = zend_hash_find(ht, INTERNED_ASSUME_OBJECTS)) ) {
         if( Z_IS_TRUE_P(entry) ) {
             flags |= handlebars_compiler_flag_assume_objects;
         }
     }
-#endif
-#ifdef handlebars_compiler_flag_mustache_style_lambdas
     if( NULL != (entry = zend_hash_find(ht, INTERNED_MUSTACHE_STYLE_LAMBDAS)) ) {
         if( Z_IS_TRUE_P(entry) ) {
             flags |= handlebars_compiler_flag_mustache_style_lambdas;
         }
     }
-#endif
 
     handlebars_compiler_set_flags(compiler, flags);
+    if (vm) {
+        handlebars_vm_set_flags(vm, flags);
+    }
 
+    return flags;
 }
 /* }}} php_handlebars_process_options_zval */
 
@@ -317,12 +324,11 @@ PHP_HANDLEBARS_API void php_handlebars_process_options_zval(struct handlebars_co
 HBS_ATTR_NONNULL_ALL
 void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, struct handlebars_value * helpers)
 {
-    const char ** orig = compiler->known_helpers; //handlebars_builtins_names();
+    const char ** orig = handlebars_compiler_get_known_helpers(compiler);
     long num = 0;
     long idx = 0;
     char ** known_helpers;
     const char ** ptr2;
-    struct handlebars_value_iterator it;
 
     // Count the number of builtins
     for( ptr2 = orig ; *ptr2 ; ++ptr2 ) {
@@ -332,10 +338,10 @@ void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, s
     // Count the number of helpers
     // this can be wrong?
     // num += handlebars_value_count(helpers);
-    handlebars_value_iterator_init(&it, helpers);
-    for( ; it.current != NULL; it.next(&it) ) {
+    HANDLEBARS_VALUE_FOREACH(helpers, child) {
         num++;
-    }
+        (void) child;
+    } HANDLEBARS_VALUE_FOREACH_END();
 
     // Alloc the array
     known_helpers = handlebars_talloc_array(compiler, char *, num + 1);
@@ -346,13 +352,13 @@ void php_handlebars_fetch_known_helpers(struct handlebars_compiler * compiler, s
     }
 
     // Copy in the helpers
-    handlebars_value_iterator_init(&it, helpers);
-    for( ; it.current != NULL; it.next(&it) ) {
-        known_helpers[idx++] = handlebars_talloc_strndup(known_helpers, it.key->val, it.key->len);
-    }
+    HANDLEBARS_VALUE_FOREACH_KV(helpers, key, child) {
+        known_helpers[idx++] = handlebars_talloc_strndup(known_helpers, HBS_STR_STRL(key));
+        (void) child;
+    } HANDLEBARS_VALUE_FOREACH_END();
 
     known_helpers[idx++] = 0;
-    compiler->known_helpers = (const char **) known_helpers;
+    handlebars_compiler_set_known_helpers(compiler, (const char **) known_helpers);
 }
 /* }}} php_handlebars_fetch_known_helpers */
 
@@ -366,11 +372,12 @@ static void php_handlebars_vm_set_helpers(zval * _this_zval, zval * helpers)
     if( intern->helpers ) {
         handlebars_value_dtor(intern->helpers);
     }
-    intern->helpers = handlebars_value_from_zval(HBSCTX(context), helpers);
+    intern->helpers = handlebars_value_from_zval(HBSCTX(context), helpers, intern->helpers);
     zend_update_property_ex(Z_OBJCE_P(_this_zval), _this_zval, HANDLEBARS_INTERNED_STR_HELPERS, helpers);
 done:
     context->e->jmp = NULL;
 }
+
 PHP_METHOD(HandlebarsVM, setHelpers)
 {
     zval * _this_zval = getThis();
@@ -395,7 +402,7 @@ static void php_handlebars_vm_set_partials(zval * _this_zval, zval * partials)
     if( intern->partials ) {
         handlebars_value_dtor(intern->partials);
     }
-    intern->partials = handlebars_value_from_zval(HBSCTX(context), partials);
+    intern->partials = handlebars_value_from_zval(HBSCTX(context), partials, intern->partials);
     zend_update_property_ex(Z_OBJCE_P(_this_zval), _this_zval, HANDLEBARS_INTERNED_STR_PARTIALS, partials);
 done:
     context->e->jmp = NULL;
@@ -459,58 +466,59 @@ static inline void *make_mctx(struct php_handlebars_vm_obj *intern) {
     return rv;
 }
 
-HBS_ATTR_NONNULL(1, 3, 4)
+HBS_ATTR_NONNULL(1, 3, 5)
 static struct handlebars_module * compile(
-    struct handlebars_context *ctx,
-    struct handlebars_vm *vm,
-    struct handlebars_string *tmpl,
+    struct handlebars_context * ctx,
+    struct handlebars_vm * vm,
+    struct handlebars_string * tmpl,
+    struct handlebars_value * helpers,
     zval *z_options
 ) {
     jmp_buf buf;
     struct handlebars_parser * parser;
     struct handlebars_compiler * compiler;
     struct handlebars_module * module = NULL;
+    struct handlebars_ast_node * ast;
+    struct handlebars_program * program;
+    unsigned long flags;
 
     php_handlebars_try(HandlebarsRuntimeException_ce_ptr, ctx, &buf);
     parser = handlebars_parser_ctor(ctx);
     compiler = handlebars_compiler_ctor(ctx);
 
     // Set compiler options
-    php_handlebars_process_options_zval(compiler, vm, z_options);
-    if( vm && vm->helpers ) {
-       php_handlebars_fetch_known_helpers(compiler, vm->helpers);
+    flags = php_handlebars_process_options_zval(compiler, vm, z_options);
+    if( vm && helpers ) {
+       php_handlebars_fetch_known_helpers(compiler, helpers);
     }
 
     // Preprocess template
-#if defined(HANDLEBARS_VERSION_INT) && HANDLEBARS_VERSION_INT >= 604
-    if( compiler->flags & handlebars_compiler_flag_compat ) {
-        parser->tmpl = handlebars_preprocess_delimiters(HBSCTX(ctx), tmpl, NULL, NULL);
-    } else {
-        parser->tmpl = tmpl;
+    handlebars_string_addref(tmpl);
+    if( flags & handlebars_compiler_flag_compat ) {
+        tmpl = handlebars_preprocess_delimiters(HBSCTX(ctx), tmpl, NULL, NULL);
     }
-#else
-    parser->tmpl = tmpl;
-#endif
 
     // Parse
     php_handlebars_try(HandlebarsCompileException_ce_ptr, parser, &buf);
-    handlebars_parse(parser);
+    ast = handlebars_parse_ex(parser, tmpl, handlebars_compiler_get_flags(compiler));
 
     // Compile
     php_handlebars_try(HandlebarsCompileException_ce_ptr, compiler, &buf);
-    handlebars_compiler_compile(compiler, parser->program);
+    program = handlebars_compiler_compile_ex(compiler, ast);
 
-    module = handlebars_program_serialize(HBSCTX(ctx), compiler->program);
-    module->flags = compiler->flags; // @todo is this correct?
+    module = handlebars_program_serialize(HBSCTX(ctx), program);
+    // module->flags = handlebars_compiler_get_flags(compiler); // @todo is this correct?
+
+    handlebars_string_delref(tmpl);
 
 done:
     return module;
 }
 
 #define HASH_LEN 8
-typedef XXH64_hash_t hash_type;
+typedef uint64_t hash_type;
 
-static inline void hash_pack(hash_type val, char *out) {
+static void hash_pack(hash_type val, char *out) {
     out[0] = (int)((val >> 56) & 0xFF);
     out[1] = (int)((val >> 48) & 0xFF) ;
     out[2] = (int)((val >> 40) & 0XFF);
@@ -532,13 +540,6 @@ static void hash_bin2hex(const unsigned char *in, char *out) {
 	out[j] = '\0';
 }
 
-static hash_type hash_buf(unsigned char * buf, size_t len) {
-    XXH3_state_t state;
-    XXH3_64bits_reset(&state);
-    XXH3_64bits_update(&state, buf, len);
-    return XXH3_64bits_digest(&state);
-}
-
 HBS_ATTR_NONNULL_ALL
 static inline struct handlebars_module * verify_and_load_module(
     struct handlebars_context * ctx,
@@ -552,7 +553,7 @@ static inline struct handlebars_module * verify_and_load_module(
     size_t size = ZSTR_LEN(buf) - HASH_LEN;
     struct handlebars_module *UNSAFE_module = (struct handlebars_module *) (ZSTR_VAL(buf) + HASH_LEN);
 
-    hash_type hash = hash_buf((unsigned char *) UNSAFE_module, size);
+    hash_type hash = handlebars_hash_xxh3((const char *) UNSAFE_module, size);
     char hash_arr[HASH_LEN];
     hash_pack(hash, hash_arr);
 
@@ -566,22 +567,22 @@ static inline struct handlebars_module * verify_and_load_module(
             actual_hex,
             expected_hex);
         return NULL;
-    } else if (UNSAFE_module->size != size) {
+    } else if (handlebars_module_get_size(UNSAFE_module) != size) {
         zend_throw_exception_ex(HandlebarsInvalidBinaryStringException_ce_ptr, 0,
             "Failed to validate precompiled template: template data segment was %zu bytes, expected %zu",
             size,
-            UNSAFE_module->size);
+            handlebars_module_get_size(UNSAFE_module));
         return NULL;
-    } else if (UNSAFE_module->version != handlebars_version()) {
+    } else if (handlebars_module_get_version(UNSAFE_module) != handlebars_version()) {
         zend_throw_exception_ex(HandlebarsInvalidBinaryStringException_ce_ptr, 0,
             "Failed to validate precompiled template: template was compiled with handlebars %d, current version is %d",
-            UNSAFE_module->version,
+            handlebars_module_get_version(UNSAFE_module),
             handlebars_version());
         return NULL;
     }
 
-    struct handlebars_module * module = handlebars_talloc_zero(ctx, struct handlebars_module);
-    module = handlebars_talloc_realloc_size(ctx, module, size);
+    struct handlebars_module * module = handlebars_talloc_zero_size(ctx, size);
+    talloc_set_type(module, struct handlebars_module);
     memcpy(module, ZSTR_VAL(buf) + HASH_LEN, size);
 
     handlebars_module_patch_pointers(module);
@@ -609,21 +610,20 @@ PHP_METHOD(HandlebarsVM, compile)
 
     struct handlebars_string * tmpl = handlebars_string_ctor(HBSCTX(ctx), ZSTR_VAL(zstr_tmpl), ZSTR_LEN(zstr_tmpl));
 
-    struct handlebars_module * module = compile(ctx, NULL, tmpl, z_options);
+    struct handlebars_module * module = compile(ctx, NULL, tmpl, NULL, z_options);
     if (!module) {
         goto done;
     }
 
-#if HANDLEBARS_VERSION_INT >= 701
     handlebars_module_normalize_pointers(module, (void *) 1);
-#endif
 
-    hash_type hash = hash_buf((unsigned char *) module, module->size);
+    size_t module_size = handlebars_module_get_size(module);
+    hash_type hash = handlebars_hash_xxh3((const char *) module, module_size);
 
-    size_t len = HASH_LEN + module->size;
+    size_t len = HASH_LEN + module_size;
 	zend_string *res = zend_string_alloc(len, 0);
     hash_pack(hash, ZSTR_VAL(res));
-	memcpy(ZSTR_VAL(res) + HASH_LEN, module, module->size);
+	memcpy(ZSTR_VAL(res) + HASH_LEN, module, module_size);
 	ZSTR_VAL(res)[len] = '\0';
 
     RETVAL_STR(res);
@@ -646,12 +646,12 @@ static void render(INTERNAL_FUNCTION_PARAMETERS, enum input_type type)
     zval * z_context = NULL;
     zval * z_options = NULL;
     struct handlebars_module * module = NULL;
-    struct handlebars_value * context;
     jmp_buf buf;
     bool from_cache = false;
-    struct handlebars_string * cache_id;
-    struct handlebars_string * input;
+    struct handlebars_string * cache_id = NULL;
+    struct handlebars_string * input = NULL;
     zval * tmp = NULL;
+    HANDLEBARS_VALUE_DECL(context);
 
     zval *_this_zval = getThis();
     PHP_HBS_ASSERT(_this_zval);
@@ -673,29 +673,29 @@ static void render(INTERNAL_FUNCTION_PARAMETERS, enum input_type type)
         ZVAL_DEREF(z_context);
     }
 
-    vm->cache = cache;
+    handlebars_vm_set_cache(vm, cache);
     if( intern->helpers ) {
-        vm->helpers = intern->helpers;
-        vm->helpers->ctx = ctx;
+        handlebars_vm_set_helpers(vm, intern->helpers);
     }
     if( intern->partials ) {
-        vm->partials = intern->partials;
-        vm->partials->ctx = ctx;
+        handlebars_vm_set_partials(vm, intern->partials);
     }
-    vm->log_func = &php_handlebars_log;
-    vm->log_ctx = _this_zval;
+    handlebars_vm_set_logger(vm, &php_handlebars_log, _this_zval);
 
-    input = handlebars_string_ctor(HBSCTX(vm), ZSTR_VAL(zstr_input), ZSTR_LEN(zstr_input));
+    input = handlebars_string_ctor(HANDLEBARS_G(context), ZSTR_VAL(zstr_input), ZSTR_LEN(zstr_input));
+    handlebars_string_addref(input);
 
     // Check cache id
     if( NULL != z_options
             && NULL != (tmp = zend_hash_find(Z_ARRVAL_P(z_options), INTERNED_CACHE_ID))
             && Z_TYPE_P(tmp) == IS_STRING ) {
-        cache_id = handlebars_string_ctor(HBSCTX(ctx), Z_STRVAL_P(tmp), Z_STRLEN_P(tmp));
+        cache_id = handlebars_string_ctor(HANDLEBARS_G(context), Z_STRVAL_P(tmp), Z_STRLEN_P(tmp));
+        handlebars_string_addref(cache_id);
     } else if (type == input_type_binary) {
         cache_id = NULL;
     } else {
         cache_id = input;
+        handlebars_string_addref(cache_id);
     }
 
     // Lookup cache entry
@@ -705,8 +705,8 @@ static void render(INTERNAL_FUNCTION_PARAMETERS, enum input_type type)
             zval zstat;
             ZVAL_LONG(&zstat, 0);
             php_stat(ZSTR_VAL(zstr_input), ZSTR_LEN(zstr_input), FS_MTIME, &zstat);
-            if( Z_LVAL(zstat) > module->ts ) { // possibly not portable
-                cache->release(cache, cache_id, module);
+            if( Z_LVAL(zstat) > handlebars_module_get_ts(module) ) { // possibly not portable
+                handlebars_cache_release(cache, cache_id, module);
                 from_cache = false;
                 module = NULL;
             }
@@ -727,7 +727,7 @@ static void render(INTERNAL_FUNCTION_PARAMETERS, enum input_type type)
             case input_type_filename: {
                 php_stream *stream;
 
-                stream = php_stream_open_wrapper_ex(ZSTR_VAL(input), "rb", REPORT_ERRORS, NULL, NULL);
+                stream = php_stream_open_wrapper_ex(hbs_str_val(input), "rb", REPORT_ERRORS, NULL, NULL);
                 if( !stream ) {
                     zend_throw_exception(HandlebarsRuntimeException_ce_ptr, "Failed to read input template file", 0);
                     goto done;
@@ -758,7 +758,7 @@ static void render(INTERNAL_FUNCTION_PARAMETERS, enum input_type type)
             default: assert(0); break; // LCOV_EXCL_LINE
         }
 
-        module = compile(ctx, vm, tmpl, z_options);
+        module = compile(ctx, vm, tmpl, intern->helpers, z_options);
         if (!module) {
             goto done;
         }
@@ -774,29 +774,27 @@ skip_compile:
     // Make context
     php_handlebars_try(HandlebarsRuntimeException_ce_ptr, vm, &buf);
     if( z_context ) {
-        context = handlebars_value_from_zval(HBSCTX(vm), z_context);
-    } else {
-        context = handlebars_value_ctor(HBSCTX(vm));
+        handlebars_value_from_zval(HBSCTX(vm), z_context, context);
     }
 
     // Execute
-    vm->flags = module->flags;
-    handlebars_vm_execute(vm, module, context);
+    struct handlebars_string * vm_buffer = handlebars_vm_execute(vm, module, context);
 
-    if( vm->buffer && !EG(exception) ) {
-        RETVAL_STRINGL(vm->buffer->val, vm->buffer->len);
+    if( vm_buffer && !EG(exception) ) {
+        HBS_RETVAL_STR(vm_buffer);
     }
 
 done:
-    if( intern->helpers ) {
-        intern->helpers->ctx = NULL;
-    }
-    if( intern->partials ) {
-        intern->partials->ctx = NULL;
-    }
     if( from_cache ) {
-        cache->release(cache, cache_id, module);
+        handlebars_cache_release(cache, cache_id, module);
     }
+    if (input) {
+        handlebars_string_delref(input);
+    }
+    if (cache_id) {
+        handlebars_string_delref(cache_id);
+    }
+    HANDLEBARS_VALUE_UNDECL(context);
     handlebars_vm_dtor(vm);
     handlebars_talloc_free(mctx);
 }

@@ -46,9 +46,7 @@ PHP_METHOD(HandlebarsSafeString, __toString)
     zval * _this_zval = getThis();
     zval rv;
     zval * value;
-
     PHP_HBS_ASSERT(_this_zval);
-
     value = zend_read_property_ex(Z_OBJCE_P(_this_zval), _this_zval, INTERNED_VALUE, 1, &rv);
     RETURN_ZVAL(value, 1, 0);
 }

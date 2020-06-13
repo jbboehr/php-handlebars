@@ -47,8 +47,6 @@
    <file name="src/utils.c" role="src" />
    <file name="src/value.c" role="src" />
    <file name="src/vm.c" role="src" />
-   <file name="vendor/xxh3.h" role="src" />
-   <file name="vendor/xxhash.h" role="src" />
    <file name="examples/benchmarks.php" role="doc" />
    <file name="examples/benchmarks.sh" role="doc" />
    <file name="examples/block-expressions.php" role="doc" />

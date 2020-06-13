@@ -15,7 +15,6 @@
 #include "handlebars_memory.h"
 
 #include "handlebars_string.h"
-#include "handlebars_utils.h"
 
 #include "php_handlebars.h"
 
@@ -203,10 +202,14 @@ PHP_METHOD(HandlebarsUtils, indent)
         Z_PARAM_STR(indent)
     ZEND_PARSE_PARAMETERS_END();
 
-    struct handlebars_string * tmp = handlebars_string_indent(HANDLEBARS_G(context), ZSTR_VAL(str), ZSTR_LEN(str), ZSTR_VAL(indent), ZSTR_LEN(indent));
-    RETVAL_STRINGL(tmp->val, tmp->len);
-    handlebars_talloc_free(tmp);
-
+    struct handlebars_string * input = handlebars_string_ctor(HANDLEBARS_G(context), ZSTR_VAL(str), ZSTR_LEN(str));
+    struct handlebars_string * indent_str = handlebars_string_ctor(HANDLEBARS_G(context), ZSTR_VAL(indent), ZSTR_LEN(indent));
+    struct handlebars_string * tmp = handlebars_string_indent(HANDLEBARS_G(context), input, indent_str);
+    HBS_RETVAL_STR(tmp);
+    handlebars_string_delref(tmp);
+    handlebars_string_delref(indent_str);
+    // indent calls delref on input
+    // handlebars_string_delref(input);
 }
 /* }}} Handlebars\Utils::indent */
 
@@ -444,7 +447,6 @@ static zend_always_inline void php_handlebars_escape_expression_compat(zval * va
     zval tmp;
     zval rv;
 
-    // @todo this should probably support inheritance
     if( Z_TYPE_P(val) == IS_OBJECT && instanceof_function(Z_OBJCE_P(val), HandlebarsSafeString_ce_ptr) ) {
         zval * value = zend_read_property_ex(Z_OBJCE_P(val), val, INTERNED_VALUE, 1, &rv);
         RETURN_ZVAL(value, 1, 0);

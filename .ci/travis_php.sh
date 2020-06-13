@@ -16,6 +16,8 @@ export CFLAGS="-L${PREFIX}/lib ${CFLAGS}"
 export CPPFLAGS="-I${PREFIX}/include ${CPPFLAGS}"
 export PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
+mkdir -p ${PREFIX}/bin ${PREFIX}/lib/pkgconfig ${PREFIX}/include
+
 if [[ "${HARDENING}" != "false" ]]; then
 	export CFLAGS="$CFLAGS -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong"
 	export CFLAGS="$CFLAGS -specs=`pwd`/.ci/redhat-hardened-cc1 -specs=`pwd`/.ci/redhat-hardened-ld"
@@ -26,7 +28,6 @@ fi
 
 function install_libhandlebars() (
     set -e -o pipefail
-    trap "cat config.log" ERR
 
     local dir=third-party/handlebars-c
     rm -rf ${dir}
@@ -35,27 +36,29 @@ function install_libhandlebars() (
     git checkout ${LIBHANDLEBARS_VERSION}
     git submodule update --init --recursive
     ./bootstrap
-    ./configure --prefix=${PREFIX}
+    trap "cat config.log" ERR
+    ./configure --prefix=${PREFIX} --enable-compile-warnings=yes --disable-Werror
+    trap - ERR
     touch src/handlebars_scanners.c
     make all install
 )
 
 function install_php_psr() (
     set -e -o pipefail
-    trap "cat config.log" ERR
 
     local dir=third-party/php-psr
     rm -rf ${dir}
     git clone -b ${PHP_PSR_VERSION} https://github.com/jbboehr/php-psr.git ${dir}
     cd ${dir}
     phpize
+    trap "cat config.log" ERR
     ./configure --prefix=${PREFIX}
+    trap - ERR
     make
 )
 
 function install_php_handlebars() (
     set -e -o pipefail
-    trap "cat config.log" ERR
 
     if [[ "${COVERAGE}" = "true" ]]; then
         export CFLAGS="-fprofile-arcs -ftest-coverage ${CFLAGS}"
@@ -77,9 +80,11 @@ function install_php_handlebars() (
     fi
 
     phpize
+    trap "cat config.log" ERR
     ./configure --enable-handlebars \
         --enable-compile-warnings=error \
         ${extra_configure_flags}
+    trap - ERR
     make
 )
 

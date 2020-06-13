@@ -21,13 +21,7 @@
 #include "php_handlebars.h"
 
 #include "handlebars_cache.h"
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wswitch-default"
-#define XXH_PRIVATE_API
-#define XXH_INLINE_ALL
-#include "xxhash.h"
-#pragma GCC diagnostic pop
+#include "handlebars_string.h"
 
 
 
@@ -58,7 +52,8 @@ PHP_HANDLEBARS_API zend_bool handlebars_has_psr = 0;
 
 /* {{{ php.ini directive registration */
 PHP_INI_BEGIN()
-    STD_PHP_INI_ENTRY("handlebars.pool_size", "128k", PHP_INI_ALL, OnUpdateLong, pool_size, zend_handlebars_globals, handlebars_globals)
+    // @TODO FIXME (pool not working so set to zero)
+    STD_PHP_INI_ENTRY("handlebars.pool_size", "0", PHP_INI_ALL, OnUpdateLong, pool_size, zend_handlebars_globals, handlebars_globals)
     STD_PHP_INI_BOOLEAN("handlebars.cache.enable", "1", PHP_INI_SYSTEM, OnUpdateBool, cache_enable, zend_handlebars_globals, handlebars_globals)
     STD_PHP_INI_BOOLEAN("handlebars.cache.enable_cli", "0", PHP_INI_SYSTEM, OnUpdateBool, cache_enable_cli, zend_handlebars_globals, handlebars_globals)
     STD_PHP_INI_ENTRY("handlebars.cache.backend", "mmap", PHP_INI_SYSTEM, OnUpdateString, cache_backend, zend_handlebars_globals, handlebars_globals)
@@ -125,17 +120,22 @@ static PHP_MINIT_FUNCTION(handlebars)
         const char * backend = HANDLEBARS_G(cache_backend);
         if( strcmp(backend, "simple") == 0 ) {
             HANDLEBARS_G(cache) = handlebars_cache_simple_ctor(HANDLEBARS_G(context));
+#ifdef HANDLEBARS_HAVE_LMDB
         } else if( strcmp(backend, "lmdb") == 0 ) {
             HANDLEBARS_G(cache) = handlebars_cache_lmdb_ctor(HANDLEBARS_G(context), HANDLEBARS_G(cache_save_path));
-        } else { // mmap
+#endif
+#ifdef HANDLEBARS_HAVE_PTHREAD
+        } else if( strcmp(backend, "mmap") == 0 ) {
             backend = "mmap";
             HANDLEBARS_G(cache) = handlebars_cache_mmap_ctor(HANDLEBARS_G(context), HANDLEBARS_G(cache_max_size), HANDLEBARS_G(cache_max_entries));
+#endif
         }
-        if( strcmp(backend, "mmap") != 0 ) {
-            HANDLEBARS_G(cache)->max_entries = (size_t) HANDLEBARS_G(cache_max_entries);
-            HANDLEBARS_G(cache)->max_size = (size_t) HANDLEBARS_G(cache_max_size);
-        }
-        HANDLEBARS_G(cache)->max_age = (double) HANDLEBARS_G(cache_max_age);
+            // @TODO FIXME
+        // if( strcmp(backend, "mmap") != 0 ) {
+        //     HANDLEBARS_G(cache)->max_entries = (size_t) HANDLEBARS_G(cache_max_entries);
+        //     HANDLEBARS_G(cache)->max_size = (size_t) HANDLEBARS_G(cache_max_size);
+        // }
+        // HANDLEBARS_G(cache)->max_age = (double) HANDLEBARS_G(cache_max_age);
         REGISTER_STRING_CONSTANT("Handlebars\\CACHE_BACKEND", (char *) backend, flags);
     } else {
 #ifdef REGISTER_NULL_CONSTANT
@@ -195,9 +195,7 @@ static PHP_MINFO_FUNCTION(handlebars)
     php_info_print_table_row(2, "libhandlebars Version (compile-time)", HANDLEBARS_VERSION_STRING);
     php_info_print_table_row(2, "libhandlebars Handlebars Spec Version", handlebars_spec_version_string());
     php_info_print_table_row(2, "libhandlebars Mustache Spec Version", handlebars_mustache_spec_version_string());
-
-    snprintf(buf, sizeof(buf), "%d.%d.%d", XXH_VERSION_MAJOR, XXH_VERSION_MINOR, XXH_VERSION_RELEASE);
-    php_info_print_table_row(2, "xxhash version",  buf);
+    php_info_print_table_row(2, "xxhash version",  HANDLEBARS_XXHASH_VERSION);
 
     snprintf(buf, sizeof(buf), "%zu", talloc_total_size(HANDLEBARS_G(root)));
     php_info_print_table_row(2, "Local memory usage", buf);
@@ -266,7 +264,7 @@ static PHP_GINIT_FUNCTION(handlebars)
 	ZEND_TSRMLS_CACHE_UPDATE();
 #endif
 	memset(handlebars_globals, 0, sizeof(zend_handlebars_globals));
-    handlebars_globals->pool_size = 128 * 1024;
+    handlebars_globals->pool_size = 0; // @TODO FIXME 128 * 1024;
     handlebars_globals->cache_enable = 1;
     handlebars_globals->cache_backend = "mmap";
     handlebars_globals->cache_save_path = "/tmp/php-handlebars-cache";

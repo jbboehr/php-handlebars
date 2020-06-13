@@ -10,6 +10,7 @@
 #include "handlebars.h"
 #include "handlebars_memory.h"
 
+#include "handlebars_parser.h"
 #include "handlebars_string.h"
 #include "handlebars_token.h"
 
@@ -31,6 +32,7 @@ static void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
     struct handlebars_parser * parser;
     struct handlebars_token ** tokens;
     struct handlebars_string * output;
+    struct handlebars_string * tmpl_str;
     jmp_buf buf;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
@@ -45,9 +47,9 @@ static void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
     parser = handlebars_parser_ctor(ctx);
 
     // Lex
-    parser->tmpl = handlebars_string_ctor(HBSCTX(parser), ZSTR_VAL(tmpl), ZSTR_LEN(tmpl));
+    tmpl_str = handlebars_string_ctor(HBSCTX(parser), ZSTR_VAL(tmpl), ZSTR_LEN(tmpl));
     php_handlebars_try(HandlebarsCompileException_ce_ptr, parser, &buf);
-    tokens = handlebars_lex(parser);
+    tokens = handlebars_lex_ex(parser, tmpl_str);
 
     // Print or convert to zval
     php_handlebars_try(HandlebarsRuntimeException_ce_ptr, parser, &buf);
@@ -57,7 +59,7 @@ static void php_handlebars_lex(INTERNAL_FUNCTION_PARAMETERS, short print)
             output = handlebars_token_print_append(HBSCTX(parser), output, *tokens, 0);
         }
         output = handlebars_string_rtrim(output, HBS_STRL("\r\n "));
-        RETVAL_STRINGL(output->val, output->len);
+        HBS_RETVAL_STR(output);
     } else {
         array_init(return_value);
         for( ; *tokens; tokens++ ) {

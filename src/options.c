@@ -13,7 +13,13 @@
 
 #include "php_handlebars.h"
 
+#define HANDLEBARS_HELPERS_PRIVATE
+
+#include "handlebars.h"
+#include "handlebars_memory.h"
+#include "handlebars_types.h"
 #include "handlebars_helpers.h"
+#include "handlebars_string.h"
 #include "handlebars_value.h"
 #include "handlebars_vm.h"
 
@@ -32,8 +38,13 @@ static zend_string *INTERNED_BLOCK_PARAMS;
 void php_handlebars_name_lookup(zval * value, zval * field, zval * return_value);
 /* }}} Variables & Prototypes */
 
+struct options_obj_dtor_ctx {
+    struct php_handlebars_options_obj * obj;
+};
+
 struct php_handlebars_options_obj {
     struct handlebars_options options;
+    struct options_obj_dtor_ctx * dtor_ctx;
     const zend_object_handlers * std_hnd;
     zend_object std;
 };
@@ -94,12 +105,26 @@ static inline struct php_handlebars_options_obj * php_handlebars_options_fetch_o
 /* {{{ php_handlebars_options_obj_free */
 static inline void php_handlebars_options_obj_free_common(struct php_handlebars_options_obj * intern)
 {
-    // Note: these can be freed by talloc without being released by options_deinit during an exception
-    /*
-    handlebars_value_try_delref(intern->options.scope);
-    handlebars_value_try_delref(intern->options.hash);
-    handlebars_value_try_delref(intern->options.data);
-    */
+    if (intern->options.hash) {
+        handlebars_value_dtor(intern->options.hash);
+        intern->options.hash = NULL;
+    }
+    if (intern->options.data) {
+        handlebars_value_dtor(intern->options.data);
+        intern->options.data = NULL;
+    }
+    if (intern->options.scope) {
+        handlebars_value_dtor(intern->options.scope);
+        intern->options.scope = NULL;
+    }
+    if (intern->options.name) {
+        handlebars_string_delref(intern->options.name);
+        intern->options.name = NULL;
+    }
+    if (intern->dtor_ctx) {
+        talloc_free(intern->dtor_ctx);
+        intern->dtor_ctx = NULL;
+    }
 }
 static void php_handlebars_options_obj_free(zend_object * object)
 {
@@ -128,6 +153,13 @@ static zend_object * php_handlebars_options_obj_create(zend_class_entry * ce)
 /* }}} */
 
 /* {{{ php_handlebars_options_ctor */
+int options_dtor_ctx_dtor(struct options_obj_dtor_ctx * dtor_ctx)
+{
+    memset(&dtor_ctx->obj->options, 0, sizeof(struct handlebars_options));
+    dtor_ctx->obj->dtor_ctx = NULL;
+    return 0;
+}
+
 PHP_HANDLEBARS_API void php_handlebars_options_ctor(
         struct handlebars_options * options,
         zval * z_options
@@ -138,9 +170,32 @@ PHP_HANDLEBARS_API void php_handlebars_options_ctor(
 
     intern = Z_HBS_OPTIONS_P(z_options);
     intern->options = *options;
-    handlebars_value_try_addref(intern->options.scope);
-    handlebars_value_try_addref(intern->options.hash);
-    handlebars_value_try_addref(intern->options.data);
+
+    // We can't store references to these because they are stack allocated
+    char * mem = handlebars_talloc_zero_size(options->vm, sizeof(struct options_obj_dtor_ctx) + HANDLEBARS_VALUE_SIZE * 3);
+    intern->dtor_ctx = (void *) mem;
+    intern->dtor_ctx->obj = intern;
+    talloc_set_destructor(intern->dtor_ctx, options_dtor_ctx_dtor);
+    mem += sizeof(struct options_obj_dtor_ctx);
+
+    if (intern->options.name) {
+        intern->options.name = handlebars_string_copy_ctor(HBSCTX(options->vm), intern->options.name);
+    }
+    if (intern->options.scope) {
+        intern->options.scope = (void *) mem;
+        mem += HANDLEBARS_VALUE_SIZE;
+        handlebars_value_value(intern->options.scope, options->scope);
+    }
+    if (intern->options.data) {
+        intern->options.data = (void *) mem;
+        mem += HANDLEBARS_VALUE_SIZE;
+        handlebars_value_value(intern->options.data, options->data);
+    }
+    if (intern->options.hash) {
+        intern->options.hash = (void *) mem;
+        mem += HANDLEBARS_VALUE_SIZE;
+        handlebars_value_value(intern->options.hash, options->hash);
+    }
 }
 /* }}} */
 
@@ -151,7 +206,7 @@ static zval * hbs_read_name(READ_PROPERTY_ARGS)
     struct php_handlebars_options_obj * intern = php_handlebars_options_fetch_object(object);
     if( intern->options.name ) {
         zval tmp = {0};
-        ZVAL_STRINGL(&tmp, intern->options.name->val, intern->options.name->len);
+        HBS_ZVAL_STR(&tmp, intern->options.name);
         object->handlers->write_property(object, member, &tmp, NULL);
         intern->options.name = NULL;
     }
@@ -159,7 +214,7 @@ static zval * hbs_read_name(READ_PROPERTY_ARGS)
     struct php_handlebars_options_obj * intern = Z_HBS_OPTIONS_P(object);
     if( intern->options.name ) {
         zval tmp;
-        ZVAL_STRINGL(&tmp, intern->options.name->val, intern->options.name->len);
+        HBS_ZVAL_STR(&tmp, intern->options.name);
         zend_update_property_ex(Z_OBJCE_P(object), object, INTERNED_NAME, &tmp);
         intern->options.name = NULL;
     }
@@ -215,6 +270,7 @@ static zval * hbs_read_scope(READ_PROPERTY_ARGS)
         handlebars_value_to_zval(intern->options.scope, &z_scope);
         object->handlers->write_property(object, member, &z_scope, NULL);
         zval_ptr_dtor(&z_scope);
+        handlebars_value_dtor(intern->options.scope);
         intern->options.scope = NULL;
     }
 #else
@@ -224,6 +280,7 @@ static zval * hbs_read_scope(READ_PROPERTY_ARGS)
         handlebars_value_to_zval(intern->options.scope, &z_scope);
         zend_update_property_ex(Z_OBJCE_P(object), object, INTERNED_SCOPE, &z_scope);
         zval_ptr_dtor(&z_scope);
+        handlebars_value_dtor(intern->options.scope);
         intern->options.scope = NULL;
     }
 #endif
@@ -238,6 +295,7 @@ static zval * hbs_read_hash(READ_PROPERTY_ARGS)
         handlebars_value_to_zval(intern->options.hash, &z_hash);
         object->handlers->write_property(object, member, &z_hash, NULL);
         zval_ptr_dtor(&z_hash);
+        handlebars_value_dtor(intern->options.hash);
         intern->options.hash = NULL;
     }
 #else
@@ -247,6 +305,7 @@ static zval * hbs_read_hash(READ_PROPERTY_ARGS)
         handlebars_value_to_zval(intern->options.hash, &z_hash);
         zend_update_property_ex(Z_OBJCE_P(object), object, INTERNED_HASH, &z_hash);
         zval_ptr_dtor(&z_hash);
+        handlebars_value_dtor(intern->options.hash);
         intern->options.hash = NULL;
     }
 #endif
@@ -261,6 +320,7 @@ static zval * hbs_read_data(READ_PROPERTY_ARGS)
         handlebars_value_to_zval(intern->options.data, &z_data);
         object->handlers->write_property(object, member, &z_data, NULL);
         zval_ptr_dtor(&z_data);
+        handlebars_value_dtor(intern->options.data);
         intern->options.data = NULL;
     }
 #else
@@ -270,6 +330,7 @@ static zval * hbs_read_data(READ_PROPERTY_ARGS)
         handlebars_value_to_zval(intern->options.data, &z_data);
         zend_update_property_ex(Z_OBJCE_P(object), object, INTERNED_DATA, &z_data);
         zval_ptr_dtor(&z_data);
+        handlebars_value_dtor(intern->options.data);
         intern->options.data = NULL;
     }
 #endif
@@ -356,11 +417,9 @@ static void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, short prog
     struct php_handlebars_options_obj * intern;
     struct handlebars_vm * vm;
     long programGuid;
-    struct handlebars_value * context;
-    struct handlebars_value * data = NULL;
-    struct handlebars_value * block_params = NULL;
     jmp_buf buf;
     jmp_buf * prev;
+    struct handlebars_string * ret;
 
     ZEND_PARSE_PARAMETERS_START(0, 2)
         Z_PARAM_OPTIONAL
@@ -417,20 +476,24 @@ static void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, short prog
         return;
     }
 
+    HANDLEBARS_VALUE_DECL(context);
+    HANDLEBARS_VALUE_DECL(data_rv);
+    HANDLEBARS_VALUE_DECL(block_params_rv);
+    struct handlebars_value * data = NULL;
+    struct handlebars_value * block_params = NULL;
+
     // Context
     if( z_context ) {
-        context = handlebars_value_from_zval(HBSCTX(vm), z_context);
-    } else {
-        context = handlebars_value_ctor(HBSCTX(vm));
+        handlebars_value_from_zval(HBSCTX(vm), z_context, context);
     }
 
     // Options
     if( z_options && Z_TYPE_P(z_options) == IS_ARRAY ) {
         if( NULL != (z_entry = zend_hash_find(Z_ARRVAL_P(z_options), INTERNED_DATA)) ) {
-            data = handlebars_value_from_zval(HBSCTX(vm), z_entry);
+            data = handlebars_value_from_zval(HBSCTX(vm), z_entry, data_rv);
         }
         if( NULL != (z_entry = zend_hash_find(Z_ARRVAL_P(z_options), INTERNED_BLOCK_PARAMS)) ) {
-            block_params = handlebars_value_from_zval(HBSCTX(vm), z_entry);
+            block_params = handlebars_value_from_zval(HBSCTX(vm), z_entry, block_params_rv);
         }
         // @todo block params?
     }
@@ -440,9 +503,13 @@ static void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, short prog
     php_handlebars_try(HandlebarsRuntimeException_ce_ptr, vm, &buf);
 
     // Execute
-    struct handlebars_string * ret = handlebars_vm_execute_program_ex(vm, programGuid, context, data, block_params);
-    RETVAL_STRINGL(ret->val, ret->len);
-    talloc_free(ret);
+    ret = handlebars_vm_execute_program_ex(vm, programGuid, context, data, block_params);
+    HBS_RETVAL_STR(ret);
+    handlebars_string_delref(ret);
+
+    HANDLEBARS_VALUE_UNDECL(block_params_rv);
+    HANDLEBARS_VALUE_UNDECL(data_rv);
+    HANDLEBARS_VALUE_UNDECL(context);
 
 done:
     HBSCTX(vm)->e->jmp = prev;

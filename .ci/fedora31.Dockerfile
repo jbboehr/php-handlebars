@@ -10,7 +10,7 @@ RUN git clone https://github.com/jbboehr/handlebars.c . && \
     git checkout $LIBHANDLEBARS_VERSION && \
     git submodule update --init && \
     ./bootstrap && \
-    ./configure --prefix=/usr/local && \
+    ./configure --prefix=/usr/local CFLAGS="$CFLAGS -g -O2" && \
     make && \
     make test && \
     make install && \

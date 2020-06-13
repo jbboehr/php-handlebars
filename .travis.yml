@@ -49,13 +49,14 @@ matrix:
 
 env:
   global:
-  - LIBHANDLEBARS_VERSION=354923fc39c1a2502dceb15af27f91ff7cf570b3
+  - LIBHANDLEBARS_VERSION=6c50d111287cf669edc48dab6b265b68ad01a4bf
 
 branches:
     only:
     - master
     - develop
     - travis
+    - dev-1.x
 
 addons:
   apt:

@@ -12,13 +12,19 @@
 #include "Zend/zend_types.h"
 #include "main/php.h"
 
+#define HANDLEBARS_OPCODES_PRIVATE
+#define HANDLEBARS_COMPILER_PRIVATE
+
 #include "handlebars.h"
-#include "handlebars_compiler.h"
-#include "handlebars_helpers.h"
 #include "handlebars_memory.h"
+#include "handlebars_compiler.h"
+#include "handlebars_delimiters.h"
+#include "handlebars_helpers.h"
+#include "handlebars_parser.h"
 #include "handlebars_opcode_printer.h"
 #include "handlebars_opcodes.h"
 #include "handlebars_string.h"
+#include "handlebars_value.h"
 #include "handlebars_vm.h"
 
 #define BOOLEAN HBS_BOOLEAN
@@ -222,13 +228,16 @@ static void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short print)
 {
     zend_string * tmpl = NULL;
     zval * options = NULL;
-    TALLOC_CTX * mctx = NULL;
+    TALLOC_CTX * volatile mctx = NULL;
     struct handlebars_context * ctx;
     struct handlebars_parser * parser;
     struct handlebars_compiler * compiler;
     struct handlebars_string * tmpl_str;
+    struct handlebars_ast_node * ast;
+    struct handlebars_program * program;
     zend_long pool_size = HANDLEBARS_G(pool_size);
     jmp_buf buf;
+    unsigned long flags;
 
     ZEND_PARSE_PARAMETERS_START(1, 3)
 	    Z_PARAM_STR(tmpl)
@@ -255,40 +264,31 @@ static void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short print)
     compiler = handlebars_compiler_ctor(ctx);
 
     // Set compiler flags
-    if( options ) {
-        if( Z_TYPE_P(options) == IS_LONG ) {
-            handlebars_compiler_set_flags(compiler, Z_LVAL_P(options));
-        } else {
-            php_handlebars_process_options_zval(compiler, NULL, options);
-        }
-    }
+    flags = php_handlebars_process_options_zval(compiler, NULL, options);
 
     // Preprocess template
     tmpl_str = handlebars_string_ctor(HBSCTX(parser), ZSTR_VAL(tmpl), ZSTR_LEN(tmpl));
-#if defined(HANDLEBARS_VERSION_INT) && HANDLEBARS_VERSION_INT >= 604
     php_handlebars_try(HandlebarsCompileException_ce_ptr, parser, &buf);
-    if( compiler->flags & handlebars_compiler_flag_compat ) {
+    if( flags & handlebars_compiler_flag_compat ) {
         tmpl_str = handlebars_preprocess_delimiters(HBSCTX(ctx), tmpl_str, NULL, NULL);
     }
-#endif
-    parser->tmpl = tmpl_str;
 
     // Parse
     php_handlebars_try(HandlebarsCompileException_ce_ptr, parser, &buf);
-    handlebars_parse(parser);
+    ast = handlebars_parse_ex(parser, tmpl_str, flags);
 
     // Compile
     php_handlebars_try(HandlebarsCompileException_ce_ptr, compiler, &buf);
 
-    handlebars_compiler_compile(compiler, parser->program);
+    program = handlebars_compiler_compile_ex(compiler, ast);
 
     // Print or convert to zval
     if( print ) {
-        struct handlebars_string * tmp = handlebars_program_print(ctx, compiler->program, 0);
-        RETVAL_STRINGL(tmp->val, tmp->len);
+        struct handlebars_string * tmp = handlebars_program_print(ctx, program, 0);
+        HBS_RETVAL_STR(tmp);
         handlebars_talloc_free(tmp);
     } else {
-        php_handlebars_program_to_zval(compiler->program, return_value);
+        php_handlebars_program_to_zval(program, return_value);
     }
 
 done:
@@ -345,15 +345,9 @@ PHP_MINIT_FUNCTION(handlebars_compiler)
     zend_declare_class_constant_long(HandlebarsCompiler_ce_ptr, ZEND_STRL("EXPLICIT_PARTIAL_CONTEXT"), handlebars_compiler_flag_explicit_partial_context);
     zend_declare_class_constant_long(HandlebarsCompiler_ce_ptr, ZEND_STRL("IGNORE_STANDALONE"), handlebars_compiler_flag_ignore_standalone);
     zend_declare_class_constant_long(HandlebarsCompiler_ce_ptr, ZEND_STRL("ALTERNATE_DECORATORS"), handlebars_compiler_flag_alternate_decorators);
-#ifdef handlebars_compiler_flag_strict
     zend_declare_class_constant_long(HandlebarsCompiler_ce_ptr, ZEND_STRL("STRICT"), handlebars_compiler_flag_strict);
-#endif
-#ifdef handlebars_compiler_flag_assume_objects
     zend_declare_class_constant_long(HandlebarsCompiler_ce_ptr, ZEND_STRL("ASSUME_OBJECTS"), handlebars_compiler_flag_assume_objects);
-#endif
-#ifdef handlebars_compiler_flag_mustache_style_lambdas
     zend_declare_class_constant_long(HandlebarsCompiler_ce_ptr, ZEND_STRL("MUSTACHE_STYLE_LAMBDAS"), handlebars_compiler_flag_mustache_style_lambdas);
-#endif
     zend_declare_class_constant_long(HandlebarsCompiler_ce_ptr, ZEND_STRL("COMPAT"), handlebars_compiler_flag_compat);
     zend_declare_class_constant_long(HandlebarsCompiler_ce_ptr, ZEND_STRL("ALL"), handlebars_compiler_flag_all);
 
