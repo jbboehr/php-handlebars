@@ -425,7 +425,8 @@ long handlebars_std_zval_count(struct handlebars_value * value)
 
 }
 
-struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * value, HANDLEBARS_HELPER_ARGS)
+HANDLEBARS_FUNCTION_ATTRS
+struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * value, HANDLEBARS_FUNCTION_ARGS)
 {
     //struct handlebars_zval * obj = talloc_get_type(value->v.usr, struct handlebars_zval);
     struct handlebars_zval * obj = (struct handlebars_zval *) handlebars_value_get_user(value);
@@ -509,12 +510,12 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
 
     int i;
     for( i = 0; i < argc; i++ ) {
-        handlebars_value_to_zval(argv[i], &z_args[i]);
+        handlebars_value_to_zval(HANDLEBARS_ARG_AT(i), &z_args[i]);
     }
 
     if (send_options) {
         zval z_options;
-        php_handlebars_options_ctor(options, &z_options);
+        php_handlebars_options_ctor(vm, options, &z_options);
         z_args[n_args - 1] = z_options;
     }
 
@@ -543,16 +544,16 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
 
     if( Z_TYPE_P(z_ret) == IS_OBJECT && instanceof_function(Z_OBJCE_P(z_ret), HandlebarsSafeString_ce_ptr) ) {
         convert_to_string(z_ret);
-        rv = handlebars_value_from_zval(HBSCTX(options->vm), z_ret, rv);
+        rv = handlebars_value_from_zval(HBSCTX(vm), z_ret, rv);
         handlebars_value_set_flag(rv, HANDLEBARS_VALUE_FLAG_SAFE_STRING);
     } else {
-        rv = handlebars_value_from_zval(HBSCTX(options->vm), z_ret, rv);
+        rv = handlebars_value_from_zval(HBSCTX(vm), z_ret, rv);
     }
 
     zval_ptr_dtor(z_ret);
 
     if( EG(exception) ) {
-        handlebars_throw(HBSCTX(options->vm), HANDELBARS_EXTERNAL_ERROR, "external error");
+        handlebars_throw(HBSCTX(vm), HANDELBARS_EXTERNAL_ERROR, "external error");
     }
 
     return rv;

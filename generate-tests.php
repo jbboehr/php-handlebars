@@ -248,11 +248,6 @@ EOF;
             $skip = 'true';
             $reason = 'skip for now';
             break;
-
-        case 'Section - Alternate Delimiters - Lambdas used for sections should parse with the current delimiters.':
-            $skip = 'true';
-            $reason = 'mustache lambdas with delimter changing syntax are not implemented, intentionally';
-            break;
     }
 
     if( $test['suiteType'] == 'export' ) {

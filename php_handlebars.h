@@ -80,7 +80,7 @@ PHP_HANDLEBARS_API extern zend_bool handlebars_has_psr;
 PHP_HANDLEBARS_API zend_bool php_handlebars_is_callable(zval * var);
 PHP_HANDLEBARS_API zend_bool php_handlebars_is_int_array(zval * arr);
 
-PHP_HANDLEBARS_API void php_handlebars_options_ctor(struct handlebars_options * options, zval * z_options);
+PHP_HANDLEBARS_API void php_handlebars_options_ctor(struct handlebars_vm * vm, struct handlebars_options * options, zval * z_options);
 PHP_HANDLEBARS_API void php_handlebars_token_ctor(struct handlebars_token * token, zval * z_token);
 PHP_HANDLEBARS_API unsigned long php_handlebars_process_options_zval(struct handlebars_compiler * compiler, struct handlebars_vm * vm, zval * options);
 

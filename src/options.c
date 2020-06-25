@@ -44,6 +44,7 @@ struct options_obj_dtor_ctx {
 
 struct php_handlebars_options_obj {
     struct handlebars_options options;
+    struct handlebars_vm * vm;
     struct options_obj_dtor_ctx * dtor_ctx;
     const zend_object_handlers * std_hnd;
     zend_object std;
@@ -156,13 +157,15 @@ static zend_object * php_handlebars_options_obj_create(zend_class_entry * ce)
 int options_dtor_ctx_dtor(struct options_obj_dtor_ctx * dtor_ctx)
 {
     memset(&dtor_ctx->obj->options, 0, sizeof(struct handlebars_options));
+    dtor_ctx->obj->vm = NULL;
     dtor_ctx->obj->dtor_ctx = NULL;
     return 0;
 }
 
 PHP_HANDLEBARS_API void php_handlebars_options_ctor(
-        struct handlebars_options * options,
-        zval * z_options
+    struct handlebars_vm * vm,
+    struct handlebars_options * options,
+    zval * z_options
 ) {
     struct php_handlebars_options_obj * intern;
 
@@ -170,16 +173,17 @@ PHP_HANDLEBARS_API void php_handlebars_options_ctor(
 
     intern = Z_HBS_OPTIONS_P(z_options);
     intern->options = *options;
+    intern->vm = vm;
 
     // We can't store references to these because they are stack allocated
-    char * mem = handlebars_talloc_zero_size(options->vm, sizeof(struct options_obj_dtor_ctx) + HANDLEBARS_VALUE_SIZE * 3);
+    char * mem = handlebars_talloc_zero_size(vm, sizeof(struct options_obj_dtor_ctx) + HANDLEBARS_VALUE_SIZE * 3);
     intern->dtor_ctx = (void *) mem;
     intern->dtor_ctx->obj = intern;
     talloc_set_destructor(intern->dtor_ctx, options_dtor_ctx_dtor);
     mem += sizeof(struct options_obj_dtor_ctx);
 
     if (intern->options.name) {
-        intern->options.name = handlebars_string_copy_ctor(HBSCTX(options->vm), intern->options.name);
+        intern->options.name = handlebars_string_copy_ctor(HBSCTX(vm), intern->options.name);
     }
     if (intern->options.scope) {
         intern->options.scope = (void *) mem;
@@ -428,7 +432,7 @@ static void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, short prog
     ZEND_PARSE_PARAMETERS_END();
 
     intern = Z_HBS_OPTIONS_P(_this_zval);
-    vm = intern->options.vm;
+    vm = intern->vm;
 
     if( !vm ) {
         // This was probably constructed in user land

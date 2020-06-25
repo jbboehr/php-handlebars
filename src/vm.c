@@ -98,12 +98,9 @@ static void php_handlebars_vm_obj_free(zend_object * object)
 /* }}} */
 
 /* php_handlebars_log */
-static void php_handlebars_log(
-        int argc,
-        struct handlebars_value * argv[],
-        struct handlebars_options * options
-) {
-    zval * z_vm = (zval *) handlebars_vm_get_log_ctx(options->vm);
+HANDLEBARS_FUNCTION_ATTRS
+static struct handlebars_value * php_handlebars_log(HANDLEBARS_FUNCTION_ARGS) {
+    zval * z_vm = (zval *) handlebars_vm_get_log_ctx(vm);
     zval * logger = zend_read_property_ex(HandlebarsBaseImpl_ce_ptr, z_vm, HANDLEBARS_INTERNED_STR_LOGGER, 1, NULL);
     char * message;
     size_t message_len;
@@ -112,7 +109,7 @@ static void php_handlebars_log(
     // Generate message
     message = handlebars_talloc_strdup(HANDLEBARS_G(root), "");
     for (i = 0; i < argc; i++) {
-        char *tmp = handlebars_value_dump(argv[i], HANDLEBARS_G(root), 0);
+        char *tmp = handlebars_value_dump(HANDLEBARS_ARG_AT(i), HANDLEBARS_G(root), 0);
         message = handlebars_talloc_asprintf_append_buffer(message, "%s ", tmp);
         handlebars_talloc_free(tmp);
     }
@@ -147,6 +144,8 @@ static void php_handlebars_log(
     }
 
     handlebars_talloc_free(message);
+
+    return rv;
 }
 /* */
 
