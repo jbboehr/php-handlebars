@@ -21,7 +21,10 @@ try {
 var_dump(Utils::expression('string'));
 var_dump(Utils::expression(new MyString));
 try {
-    var_dump(Utils::expression((object) array('a' => 'b')));
+    // casting array to object is broken on ppc64le
+    $obj = new stdClass;
+    $obj->a = 'b';
+    var_dump(Utils::expression($obj));
 } catch( \Exception $e ) {
     var_dump(get_class($e));
 }

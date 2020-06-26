@@ -6,7 +6,10 @@ Handlebars\Utils::appendContextPath()
 <?php
 use Handlebars\Utils;
 var_dump(Utils::appendContextPath(array('contextPath' => 'foo'), 'bar'));
-var_dump(Utils::appendContextPath((object) array('contextPath' => 'foo'), 'bar'));
+// casting array to object is broken on ppc64le
+$obj = new stdClass;
+$obj->contextPath = 'foo';
+var_dump(Utils::appendContextPath($obj, 'bar'));
 var_dump(Utils::appendContextPath('foo', 'bar'));
 var_dump(Utils::appendContextPath(array(), 'bar'));
 var_dump(Utils::appendContextPath(null, 'bar'));

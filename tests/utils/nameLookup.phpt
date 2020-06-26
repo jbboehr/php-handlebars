@@ -24,14 +24,23 @@ class HandlebarsLookupArrayAccessFixture implements ArrayAccess {
 error_reporting(E_ALL);
 
 var_dump(Utils::nameLookup(array('foo' => 'bar1'), 'foo'));
-var_dump(Utils::nameLookup((object) array('foo' => 'bar2'), 'foo'));
+// casting array to object is broken on ppc64le
+$obj = new stdClass;
+$obj->foo = 'bar2';
+var_dump(Utils::nameLookup($obj, 'foo'));
 var_dump(Utils::nameLookup(new \ArrayObject(array('foo' => 'bar3')), 'foo'));
 var_dump(Utils::nameLookup(new HandlebarsLookupArrayAccessFixture(array('foo' => 'bar4')), 'foo'));
 var_dump(Utils::nameLookup(null, 'foo'));
-var_dump((array) Utils::nameLookup((object) array('foo' => (object) array('bar' => 'baz')), 'foo'));
+// casting array to object is broken on ppc64le
+$obj2 = new stdClass;
+$obj2->bar = 'baz';
+$obj3 = new stdClass;
+$obj3->foo = $obj2;
+var_dump((array) Utils::nameLookup($obj3, 'foo'));
 var_dump(Utils::nameLookup(array(404 => 'bar5'), 404));
 // Make sure it doesn't cause a notice
-var_dump(Utils::nameLookup((object) array(), 'missing'));
+// casting array to object is broken on ppc64le
+var_dump(Utils::nameLookup(new stdClass, 'missing'));
 var_dump(Utils::nameLookup(new ArrayObject(), 'missing'));
 var_dump(Utils::nameLookup(new HandlebarsLookupArrayAccessFixture(), 'missing'));
 --EXPECT--

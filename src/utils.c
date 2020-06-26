@@ -31,7 +31,7 @@ PHP_METHOD(HandlebarsUtils, appendContextPath)
     zend_string * id = NULL;
     zval * entry = NULL;
     zend_string * tmp = NULL;
-    char * out;
+    zval rv = {0};
 
     ZEND_PARSE_PARAMETERS_START(2, 2)
 	    Z_PARAM_ZVAL(context_path)
@@ -40,28 +40,32 @@ PHP_METHOD(HandlebarsUtils, appendContextPath)
 
     switch( Z_TYPE_P(context_path) ) {
         case IS_ARRAY:
-        	if( (entry = zend_hash_find(HASH_OF(context_path), INTERNED_CONTEXT_PATH)) ) {
-                if( Z_TYPE_P(entry) == IS_STRING ) {
-                    tmp = Z_STR_P(entry);
-                }
-        	}
+        	entry = zend_hash_find(HASH_OF(context_path), INTERNED_CONTEXT_PATH);
             break;
         case IS_OBJECT:
-            entry = zend_read_property_ex(Z_OBJCE_P(context_path), context_path, INTERNED_CONTEXT_PATH, 1, NULL);
-            if( entry && Z_TYPE_P(entry) == IS_STRING ) {
-                tmp = Z_STR_P(entry);
-            }
+            entry = zend_read_property_ex(Z_OBJCE_P(context_path), context_path, INTERNED_CONTEXT_PATH, 1, &rv);
             break;
         case IS_STRING:
-            tmp = Z_STR_P(context_path);
+            entry = context_path;
             break;
         default: assert(0); break;
     }
 
-    if( tmp != NULL && ZSTR_LEN(tmp) > 0 ) {
-        spprintf(&out, 0, "%.*s.%.*s", (int) ZSTR_LEN(tmp), ZSTR_VAL(tmp), (int) ZSTR_LEN(id), ZSTR_VAL(id));
-        RETVAL_STRING(out);
-        efree(out);
+    if (entry && Z_TYPE_P(entry) == IS_STRING) {
+        tmp = Z_STR_P(entry);
+    }
+
+    if (tmp != NULL && ZSTR_LEN(tmp) > 0) {
+        struct handlebars_string * tmp_str = handlebars_string_asprintf(
+            HANDLEBARS_G(context),
+            "%.*s.%.*s",
+            (int) ZSTR_LEN(tmp),
+            ZSTR_VAL(tmp),
+            (int) ZSTR_LEN(id),
+            ZSTR_VAL(id)
+        );
+        HBS_RETVAL_STR(tmp_str);
+        handlebars_string_delref(tmp_str);
     } else {
     	RETVAL_STR(id);
     }
@@ -117,6 +121,7 @@ void php_handlebars_name_lookup(zval * value, zval * field, zval * return_value)
     zval * entry = NULL;
     zval result;
     zval *retval = NULL;
+    zval rv = {0};
 
     ZVAL_UNDEF(&result);
 
@@ -163,7 +168,7 @@ void php_handlebars_name_lookup(zval * value, zval * field, zval * return_value)
                     RETVAL_ZVAL(&result, 0, 0);
                 }
             } else {
-                entry = zend_read_property_ex(Z_OBJCE_P(value), value, Z_STR_P(field), 1, NULL);
+                entry = zend_read_property_ex(Z_OBJCE_P(value), value, Z_STR_P(field), 1, &rv);
             }
             break;
         default: assert(0); break;

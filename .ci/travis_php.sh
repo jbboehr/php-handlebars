@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
 export LIBHANDLEBARS_VERSION=${LIBHANDLEBARS_VERSION:-master}
-#export PHP_PSR_VERSION=${PHP_PSR_VERSION:-master}
+export PHP_PSR_VERSION=${PHP_PSR_VERSION:-master}
 export AST=${AST:-false}
+export PSR=${AST:-false}
 export COVERAGE=${COVERAGE:-true}
 export HARDENING=${HARDENING:-true}
 
@@ -150,7 +151,7 @@ function script() (
     set -e -o pipefail
 
     extra_flags=""
-    if [[ ! -z "${PHP_PSR_VERSION}" ]]; then
+    if [ "$PSR" = "true" ]; then
         extra_flags="-d extension=third-party/php-psr/modules/psr.so"
     fi
 

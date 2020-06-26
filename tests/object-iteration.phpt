@@ -11,11 +11,12 @@ var_dump($vm->render('{{#each a}}{{@key}}={{.}},{{/each}}', [
     'a' => new stdClass(),
 ]));
 
+// casting array to object is broken on ppc64le
+$obj = new stdClass;
+$obj->b = 'c';
+$obj->d = 'e';
 var_dump($vm->render('{{#each a}}{{@key}}={{.}},{{/each}}', [
-    'a' => (object) [
-        'b' => 'c',
-        'd' => 'e',
-    ],
+    'a' => $obj,
 ]));
 
 var_dump($vm->render('{{#each a}}{{@key}}={{.}},{{/each}}', [
