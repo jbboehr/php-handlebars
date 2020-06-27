@@ -1,7 +1,11 @@
 --TEST--
 Test cache stat
 --SKIPIF--
-<?php if( !extension_loaded('handlebars') || substr(PHP_OS, 0, 3) === "WIN" ) die('skip '); ?>
+<?php
+if( !extension_loaded('handlebars') ) die('skip ');
+if( substr(PHP_OS, 0, 3) === "WIN" ) die('skip not supported on windows');
+if( Handlebars\CACHE_BACKEND != "mmap" ) die('skip mmap backend is probably disabled');
+?>
 --INI--
 handlebars.cache.enable=1
 handlebars.cache.enable_cli=1

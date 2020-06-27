@@ -6,7 +6,7 @@ if( PHP_HANDLEBARS != "no" ) {
 	if (CHECK_LIB("handlebars_static.lib;handlebars_a.lib;handlebars.lib", "handlebars", PHP_LIBHANDLEBARS + "\\lib") &&
 	    CHECK_LIB("talloc_static.lib;talloc_a.lib;talloc.lib", "handlebars", PHP_LIBHANDLEBARS + "\\lib") &&
 		CHECK_HEADER_ADD_INCLUDE("handlebars_config.h", "CFLAGS_HANDLEBARS", PHP_LIBHANDLEBARS + "\\include" + ";" + PHP_PHP_BUILD + "\\include")) {
-		EXTENSION('handlebars', "compiler.c registry.c exceptions.c safe_string.c impl.c token.c opcode.c tokenizer.c options.c utils.c parser.c value.c php_handlebars.c vm.c program.c", PHP_HANDLEBARS_SHARED, "/D YY_NO_UNISTD_H /I \"" + PHP_LIBHANDLEBARS + "\\include" + "\"");
+		EXTENSION('handlebars', "compiler.c registry.c exceptions.c safe_string.c impl.c token.c opcode.c tokenizer.c options.c utils.c parser.c value.c php_handlebars.c vm.c program.c", PHP_HANDLEBARS_SHARED, "/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1 /D YY_NO_UNISTD_H /I \"" + PHP_LIBHANDLEBARS + "\\include" + "\"");
 		AC_DEFINE('HAVE_HANDLEBARS', 1);
 	} else {
 		WARNING("handlebars not enabled; libraries and headers not found");

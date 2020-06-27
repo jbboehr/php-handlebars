@@ -36,6 +36,10 @@ extern zend_module_entry handlebars_module_entry;
 #define HANDLEBARS_G(v) (handlebars_globals.v)
 #endif
 
+#if defined(ZTS) && defined(COMPILE_DL_HANDLEBARS)
+ZEND_TSRMLS_CACHE_EXTERN();
+#endif
+
 PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsImpl_ce_ptr;
 PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsBaseImpl_ce_ptr;
 PHP_HANDLEBARS_API extern zend_class_entry * HandlebarsCompiler_ce_ptr;

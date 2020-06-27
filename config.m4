@@ -137,7 +137,7 @@ if test "$PHP_HANDLEBARS" != "no"; then
 
     PHP_ADD_BUILD_DIR(src)
     PHP_INSTALL_HEADERS([ext/handlebars], [php_handlebars.h])
-    PHP_NEW_EXTENSION(handlebars, $PHP_HANDLEBARS_SOURCES, $ext_shared)
+    PHP_NEW_EXTENSION(handlebars, $PHP_HANDLEBARS_SOURCES, $ext_shared, -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1)
     if test "$PHP_HANDLEBARS_PSR" != "no"; then
         PHP_ADD_EXTENSION_DEP(handlebars, psr, true)
     fi

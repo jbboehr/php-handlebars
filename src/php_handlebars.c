@@ -23,6 +23,8 @@
 #include "handlebars_cache.h"
 #include "handlebars_string.h"
 
+#pragma GCC diagnostic warning "-Wshadow"
+
 
 
 /* {{{ Prototypes */
@@ -73,12 +75,23 @@ ZEND_END_ARG_INFO()
 /* {{{ proto void handlebars_cache_reset(void) */
 PHP_FUNCTION(handlebars_cache_reset)
 {
-    if( HANDLEBARS_G(cache_enable) ) {
+    if (HANDLEBARS_G(cache_enable) && HANDLEBARS_G(cache)) {
         handlebars_cache_reset(HANDLEBARS_G(cache));
         RETURN_TRUE;
     } else {
         RETURN_FALSE;
     }
+}
+/* }}} */
+
+/* {{{ PHP_MINIT_FUNCTION */
+static PHP_RINIT_FUNCTION(handlebars)
+{
+#if defined(COMPILE_DL_HANDLEBARS) && defined(ZTS)
+    ZEND_TSRMLS_CACHE_UPDATE();
+#endif
+
+    return SUCCESS;
 }
 /* }}} */
 
@@ -116,8 +129,9 @@ static PHP_MINIT_FUNCTION(handlebars)
         HANDLEBARS_G(cache_enable) = 0;
     }
 
-    if( HANDLEBARS_G(cache_enable) ) {
-        const char * backend = HANDLEBARS_G(cache_backend);
+    const char * backend = NULL;
+    if (HANDLEBARS_G(cache_enable)) {
+        backend = HANDLEBARS_G(cache_backend);
         if( strcmp(backend, "simple") == 0 ) {
             HANDLEBARS_G(cache) = handlebars_cache_simple_ctor(HANDLEBARS_G(context));
 #ifdef HANDLEBARS_HAVE_LMDB
@@ -126,16 +140,20 @@ static PHP_MINIT_FUNCTION(handlebars)
 #endif
 #ifdef HANDLEBARS_HAVE_PTHREAD
         } else if( strcmp(backend, "mmap") == 0 ) {
-            backend = "mmap";
             HANDLEBARS_G(cache) = handlebars_cache_mmap_ctor(HANDLEBARS_G(context), HANDLEBARS_G(cache_max_size), HANDLEBARS_G(cache_max_entries));
 #endif
+        } else {
+            backend = NULL;
         }
-            // @TODO FIXME
+        // @TODO FIXME
         // if( strcmp(backend, "mmap") != 0 ) {
         //     HANDLEBARS_G(cache)->max_entries = (size_t) HANDLEBARS_G(cache_max_entries);
         //     HANDLEBARS_G(cache)->max_size = (size_t) HANDLEBARS_G(cache_max_size);
         // }
         // HANDLEBARS_G(cache)->max_age = (double) HANDLEBARS_G(cache_max_age);
+    }
+
+    if (backend) {
         REGISTER_STRING_CONSTANT("Handlebars\\CACHE_BACKEND", (char *) backend, flags);
     } else {
 #ifdef REGISTER_NULL_CONSTANT
@@ -258,9 +276,9 @@ static PHP_MINFO_FUNCTION(handlebars)
 /* }}} */
 
 /* {{{ PHP_GINIT_FUNCTION */
-static PHP_GINIT_FUNCTION(handlebars)
+PHP_GINIT_FUNCTION(handlebars)
 {
-#if defined(COMPILE_DL_HANDLEBARS) && defined(ZTS) && ZTS
+#if defined(COMPILE_DL_HANDLEBARS) && defined(ZTS)
 	ZEND_TSRMLS_CACHE_UPDATE();
 #endif
 	memset(handlebars_globals, 0, sizeof(zend_handlebars_globals));
@@ -298,7 +316,7 @@ zend_module_entry handlebars_module_entry = {
     handlebars_functions,               /* Functions */
     PHP_MINIT(handlebars),              /* MINIT */
     PHP_MSHUTDOWN(handlebars),          /* MSHUTDOWN */
-    NULL,                               /* RINIT */
+    PHP_RINIT(handlebars),              /* RINIT */
     NULL,          						/* RSHUTDOWN */
     PHP_MINFO(handlebars),              /* MINFO */
     PHP_HANDLEBARS_VERSION,             /* Version */
@@ -309,7 +327,7 @@ zend_module_entry handlebars_module_entry = {
     STANDARD_MODULE_PROPERTIES_EX
 };
 #ifdef COMPILE_DL_HANDLEBARS
-#if defined(ZTS) && ZTS
+#if defined(ZTS)
     ZEND_TSRMLS_CACHE_DEFINE()
 #endif
     ZEND_GET_MODULE(handlebars)      // Common for all PHP extensions which are build as shared modules
