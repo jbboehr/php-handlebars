@@ -84,6 +84,7 @@ static void handlebars_std_zval_dtor(struct handlebars_user * user)
     //zval_ptr_dtor(&intern);
 }
 
+HBS_ATTR_NORETURN
 static void handlebars_std_zval_convert(struct handlebars_value * value, bool recurse)
 {
     // handlebars_throw(value->ctx, HANDLEBARS_ERROR, "handlebars_std_zval_convert is not implemented");
@@ -442,7 +443,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
 
     // Check if is callable object (closure or __invoke)
     if( !intern || Z_TYPE_P(intern) != IS_OBJECT ) {
-        return NULL;
+        return rv;
     }
 
     if( obj->callable == -1 ) {
@@ -450,7 +451,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     }
 
     if( !obj->callable ) {
-        return NULL;
+        return rv;
     }
 
     // If the argument is a closure: we will omit passing the options

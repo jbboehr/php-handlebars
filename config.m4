@@ -76,6 +76,7 @@ if test "$PHP_HANDLEBARS" != "no"; then
         -Wno-redundant-decls -Wno-error=redundant-decls \
         -Wno-jump-misses-init -Wno-error=jump-misses-init \
         -Wno-clobbered -Wno-error=clobbered \
+        -Wno-shadow -Wno-error=shadow \
     ])
     CFLAGS="$WARN_CFLAGS $CFLAGS"
     LDFLAGS="$WARN_LDFLAGS $LDFLAGS"

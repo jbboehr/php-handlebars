@@ -18,6 +18,14 @@
 
 #include "php_handlebars.h"
 
+#if PHP_MAJOR_VERSION >= 8
+#define php7to8_escape_html_entities_ex(a, b, c, d, e, f) php_escape_html_entities_ex(a, b, c, d, e, f, 0)
+#else
+#define php7to8_escape_html_entities_ex(a, b, c, d, e, f) php_escape_html_entities_ex(a, b, c, d, e, f)
+#endif
+
+
+
 /* {{{ Variables & Prototypes */
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsUtils_ce_ptr;
 static zend_string *INTERNED_CONTEXT_PATH;
@@ -364,7 +372,7 @@ static zend_always_inline void php_handlebars_escape_expression(zval * val, zval
     }
 
     convert_to_string(val);
-    replaced = php_escape_html_entities_ex((unsigned char *) Z_STRVAL_P(val), Z_STRLEN_P(val), 0, (int) ENT_QUOTES, (char *) "UTF-8", 1);
+    replaced = php7to8_escape_html_entities_ex((unsigned char *) Z_STRVAL_P(val), Z_STRLEN_P(val), 0, (int) ENT_QUOTES, (char *) "UTF-8", 1);
     RETURN_STR(replaced);
 }
 
@@ -462,7 +470,7 @@ static zend_always_inline void php_handlebars_escape_expression_compat(zval * va
         return;
     }
 
-    replaced = php_escape_html_entities_ex((unsigned char *) Z_STRVAL(tmp), Z_STRLEN(tmp), 0, (int) ENT_COMPAT, (char *) "UTF-8", 1);
+    replaced = php7to8_escape_html_entities_ex((unsigned char *) Z_STRVAL(tmp), Z_STRLEN(tmp), 0, (int) ENT_COMPAT, (char *) "UTF-8", 1);
     zval_dtor(&tmp);
 
     replaced2 = php_handlebars_escape_expression_replace_helper(replaced->val);

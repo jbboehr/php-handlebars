@@ -226,7 +226,7 @@ static PHP_MINFO_FUNCTION(handlebars)
 #pragma GCC diagnostic ignored "-Wdiscarded-qualifiers"
 
         php_info_print_table_start();
-        php_info_print_table_colspan_header(2, "Cache");
+        php_info_print_table_colspan_header(2, (char *) "Cache");
 
         php_info_print_table_row(2, "Backend", stat.name);
 
