@@ -22,6 +22,7 @@ coverage.info
 .dirstamp
 gmon*
 .idea
+*.img
 install-sh
 *.la
 .libs
@@ -43,6 +44,7 @@ nbproject
 *.out
 .php-version
 .*project
+*.qcow2
 run-tests.php
 .settings
 specs

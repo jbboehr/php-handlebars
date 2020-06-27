@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
 
-export LIBHANDLEBARS_VERSION=${LIBHANDLEBARS_VERSION:-master}
-export PHP_PSR_VERSION=${PHP_PSR_VERSION:-master}
+export DEFAULT_LIBHANDLEBARS_VERSION=`jq -r '.LIBHANDLEBARS_VERSION' .ci/vars.json`
+export LIBHANDLEBARS_VERSION=${LIBHANDLEBARS_VERSION:-$DEFAULT_LIBHANDLEBARS_VERSION}
+
+export DEFAULT_PHP_PSR_VERSION=`jq -r '.PHP_PSR_VERSION' .ci/vars.json`
+export PHP_PSR_VERSION=${PHP_PSR_VERSION:-$DEFAULT_PHP_PSR_VERSION}
+
 export AST=${AST:-false}
-export PSR=${AST:-false}
+export PSR=${PSR:-false}
 export COVERAGE=${COVERAGE:-true}
 export HARDENING=${HARDENING:-true}
 
 export NO_INTERACTION=1
 export REPORT_EXIT_STATUS=1
-export TEST_PHP_EXECUTABLE=`which php`
+export TEST_PHP_EXECUTABLE=${TEST_PHP_EXECUTABLE:-`which php`}
 
 export PREFIX="${HOME}/build"
 export PATH="${PREFIX}/bin:${PATH}"
