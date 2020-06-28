@@ -1,11 +1,12 @@
 # when using nix-shell, run "configurePhase" otherwise you'll have missing headers
 # to use a specific version of php, run `nix-shell --arg php '(import <nixpkgs> {}).php73'`
-
+# or clang: nix-shell --arg stdenv '(import <nixpkgs> {}).clangStdenv'
 {
   pkgs ? import <nixpkgs> {},
+  stdenv ? pkgs.stdenv,
   php ? pkgs.php,
   buildPecl ? pkgs.callPackage <nixpkgs/pkgs/build-support/build-pecl.nix> {
-    inherit php;
+    inherit php stdenv;
   },
   gitignoreSource ? (import (pkgs.fetchFromGitHub {
       owner = "hercules-ci";
@@ -28,20 +29,22 @@
     url = "https://github.com/jbboehr/handlebars.c/archive/8fe6213e3a15dec63e824d90e124949fffb07b91.tar.gz";
     sha256 = "1h3b851b2333kj34wcgn7162iwghisa2jabryq0avl2alkf7ppfv";
   })) {
+    inherit stdenv;
     inherit mustache_spec handlebars_spec;
-    inherit debugSupport devSupport hardeningSupport staticSupport valgrindSupport WerrorSupport;
-    sharedSupport = !staticSupport;
+    inherit debugSupport devSupport hardeningSupport ltoSupport valgrindSupport WerrorSupport;
+    sharedSupport = (!staticSupport && !ltoSupport);
+    staticSupport = (ltoSupport || staticSupport);
   },
 
   php_psr ? pkgs.callPackage (import (fetchTarball {
-    url = https://github.com/jbboehr/php-psr/archive/v1.0.0.tar.gz;
-    sha256 = "12237b392rz224r4d8p6pwnldpl2bfrvpcim5947avjd49sn8ss4";
+    url = https://github.com/jbboehr/php-psr/archive/7d35501d6c39f2ada1a728ccb8c1a299bd682087.tar.gz;
+    sha256 = "1b5qll9j9x8k8s69wfndpg59di0pi1qvi1h6p5kg3fqasvy5zw28";
   })) { inherit buildPecl; },
 
   phpHandlebarsVersion ? "v0.9.1",
   phpHandlebarsSha256 ? null,
   phpHandlebarsSrc ? pkgs.lib.cleanSourceWith {
-    filter = (path: type: (builtins.all (x: x != baseNameOf path) [".idea" ".git" "ci.nix" ".travis.sh" ".travis.yml"]));
+    filter = (path: type: (builtins.all (x: x != baseNameOf path) [".idea" ".git" "ci.nix" ".travis.sh" ".travis.yml" ".ci"]));
     src = gitignoreSource ./.;
   },
 
@@ -49,6 +52,7 @@
   checkSupport ? true,
   debugSupport ? false,
   devSupport ? false,
+  ltoSupport ? false,
   hardeningSupport ? true,
   psrSupport ? true,
   WerrorSupport ? (debugSupport || devSupport),
@@ -57,7 +61,7 @@
 }:
 
 pkgs.callPackage ./derivation.nix {
-  inherit buildPecl handlebarsc php_psr phpHandlebarsVersion phpHandlebarsSrc phpHandlebarsSha256;
+  inherit stdenv buildPecl handlebarsc php_psr phpHandlebarsVersion phpHandlebarsSrc phpHandlebarsSha256;
   inherit handlebars_spec mustache_spec;
   inherit astSupport checkSupport debugSupport devSupport hardeningSupport psrSupport valgrindSupport WerrorSupport;
 }

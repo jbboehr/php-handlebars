@@ -222,8 +222,10 @@ static PHP_MINFO_FUNCTION(handlebars)
     if( HANDLEBARS_G(cache) ) {
         struct handlebars_cache_stat stat = handlebars_cache_stat(HANDLEBARS_G(cache));
 
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdiscarded-qualifiers"
+#endif
 
         php_info_print_table_start();
         php_info_print_table_colspan_header(2, (char *) "Cache");
@@ -266,7 +268,9 @@ static PHP_MINFO_FUNCTION(handlebars)
         snprintf(buf, sizeof(buf), "%zu", stat.collisions);
         php_info_print_table_row(2, "Collisions", buf);
 
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic pop
+#endif
 
         php_info_print_table_end();
     }

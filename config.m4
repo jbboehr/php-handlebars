@@ -77,6 +77,9 @@ if test "$PHP_HANDLEBARS" != "no"; then
         -Wno-jump-misses-init -Wno-error=jump-misses-init \
         -Wno-clobbered -Wno-error=clobbered \
         -Wno-shadow -Wno-error=shadow \
+        -Wno-double-promotion -Wno-error=double-promotion \
+        -Wno-cast-align -Wno-error=cast-align \
+        -Wno-missing-braces -Wno-error=missing-braces \
     ])
     CFLAGS="$WARN_CFLAGS $CFLAGS"
     LDFLAGS="$WARN_LDFLAGS $LDFLAGS"
@@ -113,6 +116,14 @@ if test "$PHP_HANDLEBARS" != "no"; then
     fi
 
     # extension
+    AS_IF([test "$CLANG" = "yes"], [
+        AH_BOTTOM([
+#ifdef __clang__
+#include "main/php_config.h"
+#/**/undef/**/ HAVE_ASM_GOTO
+#endif
+        ])
+    ])
     PHP_HANDLEBARS_ADD_SOURCES([
         src/php_handlebars.c
         src/impl.c
