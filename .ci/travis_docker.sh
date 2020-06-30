@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+set -o errexit -o pipefail
+
+source .ci/fold.sh
+
 export LIBHANDLEBARS_VERSION=${LIBHANDLEBARS_VERSION:-master}
 export DOCKER_TAG=php-handlebars:${DOCKER_IMAGE}
 
@@ -7,25 +11,36 @@ function before_install() (
     return 0
 )
 
-function install() {
-    set -e -o pipefail
+function docker_build() (
+    set -o errexit -o pipefail -o xtrace
 
     docker build \
         --build-arg LIBHANDLEBARS_VERSION="${LIBHANDLEBARS_VERSION}" \
         -f .ci/${DOCKER_IMAGE}.Dockerfile \
         -t ${DOCKER_TAG} \
         .
-    return 0
+)
+
+function install() {
+    set -o errexit -o pipefail
+
+    cifold "docker build" docker_build
 }
 
 function before_script() {
     return 0
 }
 
+function docker_run() (
+    set -o errexit -o pipefail -o xtrace
+
+    docker run ${DOCKER_TAG}
+)
+
 function script() (
     set -e -o pipefail
 
-    docker run ${DOCKER_TAG}
+    cifold "docker build" docker_build
 )
 
 function after_success() (
@@ -45,3 +60,7 @@ function run_all() (
     script
     after_success
 )
+
+if [ "$1" == "run-all-now" ]; then
+    run_all
+fi

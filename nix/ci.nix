@@ -4,7 +4,7 @@ let
             # std
             std = let
                 php = pkgs.${phpAttr};
-            in pkgs.callPackage ./default.nix {
+            in pkgs.callPackage ../default.nix {
                 inherit php;
                 buildPecl = pkgs.callPackage "${path}/pkgs/build-support/build-pecl.nix" { inherit php; };
                 astSupport = false;
@@ -12,7 +12,7 @@ let
             # i686
             i686 = let
                 php = pkgs.pkgsi686Linux.${phpAttr};
-            in pkgs.pkgsi686Linux.callPackage ./default.nix {
+            in pkgs.pkgsi686Linux.callPackage ../default.nix {
                 inherit php;
                 buildPecl = pkgs.pkgsi686Linux.callPackage "${path}/pkgs/build-support/build-pecl.nix" { inherit php; };
                 astSupport = true;
@@ -20,7 +20,7 @@ let
             # ast
             ast = let
                 php = pkgs.${phpAttr};
-            in pkgs.callPackage ./default.nix {
+            in pkgs.callPackage ../default.nix {
                 inherit php;
                 buildPecl = pkgs.callPackage "${path}/pkgs/build-support/build-pecl.nix" { inherit php; };
                 astSupport = true;
@@ -29,7 +29,7 @@ let
             clang = let
                 php = pkgs.${phpAttr};
                 stdenv = pkgs.clangStdenv;
-            in pkgs.callPackage ./default.nix {
+            in pkgs.callPackage ../default.nix {
                 inherit stdenv php;
                 buildPecl = pkgs.callPackage "${path}/pkgs/build-support/build-pecl.nix" { inherit php stdenv; };
                 astSupport = true;

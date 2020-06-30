@@ -39,7 +39,7 @@
   php_psr ? pkgs.callPackage (import (fetchTarball {
     url = https://github.com/jbboehr/php-psr/archive/7d35501d6c39f2ada1a728ccb8c1a299bd682087.tar.gz;
     sha256 = "1b5qll9j9x8k8s69wfndpg59di0pi1qvi1h6p5kg3fqasvy5zw28";
-  })) { inherit buildPecl; },
+  })) { inherit buildPecl stdenv; },
 
   phpHandlebarsVersion ? "v0.9.1",
   phpHandlebarsSha256 ? null,
@@ -60,7 +60,7 @@
   staticSupport ? false
 }:
 
-pkgs.callPackage ./derivation.nix {
+pkgs.callPackage ./nix/derivation.nix {
   inherit stdenv buildPecl handlebarsc php_psr phpHandlebarsVersion phpHandlebarsSrc phpHandlebarsSha256;
   inherit handlebars_spec mustache_spec;
   inherit astSupport checkSupport debugSupport devSupport hardeningSupport psrSupport valgrindSupport WerrorSupport;

@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+set -o errexit -o pipefail
+
+source .ci/fold.sh
+
+export PS4=' \e[33m$(date +"%H:%M:%S"): $BASH_SOURCE@$LINENO ${FUNCNAME[0]} -> \e[0m'
+
 export DEFAULT_LIBHANDLEBARS_VERSION=`jq -r '.LIBHANDLEBARS_VERSION' .ci/vars.json`
 export LIBHANDLEBARS_VERSION=${LIBHANDLEBARS_VERSION:-$DEFAULT_LIBHANDLEBARS_VERSION}
 
@@ -32,7 +38,7 @@ if [[ "${HARDENING}" != "false" ]]; then
 fi
 
 function install_libhandlebars() (
-    set -e -o pipefail
+    set -o errexit -o pipefail -o xtrace
 
     local dir=third-party/handlebars-c
     rm -rf ${dir}
@@ -42,14 +48,14 @@ function install_libhandlebars() (
     git submodule update --init --recursive
     ./bootstrap
     trap "cat config.log" ERR
-    ./configure --prefix=${PREFIX} --enable-compile-warnings=yes --disable-Werror
+    ./configure --prefix=${PREFIX} --enable-compile-warnings=yes --disable-Werror CFLAGS="${CFLAGS}"
     trap - ERR
     touch src/handlebars_scanners.c
     make all install
 )
 
 function install_php_psr() (
-    set -e -o pipefail
+    set -o errexit -o pipefail -o xtrace
 
     local dir=third-party/php-psr
     rm -rf ${dir}
@@ -57,13 +63,13 @@ function install_php_psr() (
     cd ${dir}
     phpize
     trap "cat config.log" ERR
-    ./configure --prefix=${PREFIX}
+    ./configure --prefix=${PREFIX} CFLAGS="${CFLAGS}"
     trap - ERR
     make
 )
 
 function install_php_handlebars() (
-    set -e -o pipefail
+    set -o errexit -o pipefail -o xtrace
 
     if [[ "${COVERAGE}" = "true" ]]; then
         export CFLAGS="-fprofile-arcs -ftest-coverage ${CFLAGS}"
@@ -88,49 +94,69 @@ function install_php_handlebars() (
     trap "cat config.log" ERR
     ./configure --enable-handlebars \
         --enable-compile-warnings=error \
-        ${extra_configure_flags}
+        ${extra_configure_flags} \
+        CFLAGS="${CFLAGS}"
     trap - ERR
     make
 )
 
-function before_install() (
-    set -e -o pipefail
+function update_submodules() (
+    set -o errexit -o pipefail -o xtrace
 
     git submodule update --init --recursive
+)
+
+function install_coveralls_lcov() (
+    set -o errexit -o pipefail -o xtrace
+
+    gem install coveralls-lcov
+)
+
+function before_install() (
+    set -o errexit -o pipefail
+
+    cifold "update submodules" update_submodules
 
     # Don't install this unless we're actually on travis
     if [[ "${COVERAGE}" = "true" ]] && [[ "${TRAVIS}" = "true" ]]; then
-        gem install coveralls-lcov
+        cifold "install coveralls-lcov" install_coveralls_lcov
     fi
 )
 
 function install() (
-    set -e -o pipefail
+    set -o errexit -o pipefail
 
-    install_libhandlebars
+    cifold "install handlebars.c from source" install_libhandlebars
     if [[ ! -z "${PHP_PSR_VERSION}" ]]; then
-        install_php_psr
+        cifold "install php-psr from source" install_php_psr
     fi
-    install_php_handlebars
+    cifold "main build step" install_php_handlebars
+)
+
+function generate_handlebars_tests() (
+    set -o errexit -o pipefail -o xtrace
+
+    php generate-tests.php
+)
+
+function initialize_coverage() (
+    set -o errexit -o pipefail -o xtrace
+
+    lcov --directory . --zerocounters
+    lcov --directory . --capture --compat-libtool --initial --output-file coverage.info
 )
 
 function before_script() (
-    set -e -o pipefail
+    set -o errexit -o pipefail
 
-    echo "Generating unit tests from spec"
-    php generate-tests.php
-
+    cifold "generate tests from spec" generate_handlebars_tests
     if [[ "${COVERAGE}" = "true" ]]; then
-        echo "Initializing coverage"
-        lcov --directory . --zerocounters
-        lcov --directory . --capture --compat-libtool --initial --output-file coverage.info
+        cifold "initialize coverage" initialize_coverage
     fi
 )
 
 function run_examples() (
-    set -e -o pipefail
-
-    echo "Running examples"
+    set -o errexit -o pipefail -o xtrace
 
     for i in `find examples -name "*.php" -not -name benchmarks.php`; do
         printf "\nExecuting example ${i}:\n"
@@ -141,9 +167,7 @@ function run_examples() (
 )
 
 function run_stubs() {
-    set -e -o pipefail
-
-    echo "Running stubs"
+    set -o errexit -o pipefail -o xtrace
 
     php handlebars.stub.php
     php handlebars-ast.stub.php
@@ -151,50 +175,57 @@ function run_stubs() {
     return 0
 }
 
-function script() (
-    set -e -o pipefail
-
-    extra_flags=""
-    if [ "$PSR" = "true" ]; then
-        extra_flags="-d extension=third-party/php-psr/modules/psr.so"
-    fi
+function test_php_handlebars() (
+    set -o errexit -o pipefail -o xtrace
 
     # we can save a fair bit of time by removing these tests if AST is not enabled
     if [[ "${AST}" != "true" ]]; then
         rm -rf tests/handlebars/export tests/handlebars/spec/parser tests/handlebars/spec/tokenizer
     fi
 
-    echo "Running main test suite"
+    local extra_flags=""
+    if [ "$PSR" = "true" ]; then
+        extra_flags="-d extension=third-party/php-psr/modules/psr.so"
+    fi
+
     php run-tests.php -n \
         ${extra_flags} \
         -d extension=modules/handlebars.so
+)
 
-    run_examples
+function script() (
+    set -o errexit -o pipefail -o xtrace
 
-    echo "Running benchmarks"
-    ./examples/benchmarks.sh
+    cifold "main test suite" test_php_handlebars
+    cifold "stubs" run_stubs
+    cifold "examples" run_examples
+    cifold "benchmarks" ./examples/benchmarks.sh
+)
+
+function upload_coverage() (
+    set -o errexit -o pipefail -o xtrace
+
+    lcov --no-checksum --directory . --capture --compat-libtool --output-file coverage.info
+    lcov --remove coverage.info "/usr*" \
+        --remove coverage.info "*/.phpenv/*" \
+        --remove coverage.info "*/xxh*.h" \
+        --remove coverage.info "/home/travis/build/include/*" \
+        --compat-libtool \
+        --output-file coverage.info
+
+    coveralls-lcov coverage.info
 )
 
 function after_success() (
-    set -e -o pipefail
+    set -o errexit -o pipefail
 
     if [[ "${COVERAGE}" = "true" ]]; then
-        echo "Processing coverage"
-        lcov --no-checksum --directory . --capture --compat-libtool --output-file coverage.info
-        lcov --remove coverage.info "/usr*" \
-            --remove coverage.info "*/.phpenv/*" \
-            --remove coverage.info "*/xxh*.h" \
-            --remove coverage.info "/home/travis/build/include/*" \
-            --compat-libtool \
-            --output-file coverage.info
-
-        echo "Uploading coverage"
-        coveralls-lcov coverage.info
+        cifold "upload coverage" upload_coverage
     fi
 )
 
 function after_failure() (
-    set -e -o pipefail
+    # set -o errexit -o pipefail
 
     for i in `find tests -name "*.out" 2>/dev/null`; do
         echo "-- START ${i}";
@@ -209,7 +240,7 @@ function after_failure() (
 )
 
 function run_all() (
-    set -e
+    set -o errexit -o pipefail
     trap after_failure ERR
     before_install
     install
@@ -217,3 +248,7 @@ function run_all() (
     script
     after_success
 )
+
+if [ "$1" == "run-all-now" ]; then
+    run_all
+fi
