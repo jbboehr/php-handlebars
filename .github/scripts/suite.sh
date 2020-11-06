@@ -2,14 +2,14 @@
 
 set -o errexit -o pipefail
 
-source .ci/fold.sh
+source .github/scripts/fold.sh
 
 export PS4=' \e[33m$(date +"%H:%M:%S"): $BASH_SOURCE@$LINENO ${FUNCNAME[0]} -> \e[0m'
 
-export DEFAULT_LIBHANDLEBARS_VERSION=`jq -r '.LIBHANDLEBARS_VERSION' .ci/vars.json`
+export DEFAULT_LIBHANDLEBARS_VERSION=`jq -r '.LIBHANDLEBARS_VERSION' .github/scripts/vars.json`
 export LIBHANDLEBARS_VERSION=${LIBHANDLEBARS_VERSION:-$DEFAULT_LIBHANDLEBARS_VERSION}
 
-export DEFAULT_PHP_PSR_VERSION=`jq -r '.PHP_PSR_VERSION' .ci/vars.json`
+export DEFAULT_PHP_PSR_VERSION=`jq -r '.PHP_PSR_VERSION' .github/scripts/vars.json`
 export PHP_PSR_VERSION=${PHP_PSR_VERSION:-$DEFAULT_PHP_PSR_VERSION}
 
 export AST=${AST:-false}
@@ -31,7 +31,7 @@ mkdir -p ${PREFIX}/bin ${PREFIX}/lib/pkgconfig ${PREFIX}/include
 
 if [[ "${HARDENING}" != "false" ]]; then
 	export CFLAGS="$CFLAGS -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong"
-	export CFLAGS="$CFLAGS -specs=`pwd`/.ci/redhat-hardened-cc1 -specs=`pwd`/.ci/redhat-hardened-ld"
+	export CFLAGS="$CFLAGS -specs=`pwd`/.github/scripts/redhat-hardened-cc1 -specs=`pwd`/.github/scripts/redhat-hardened-ld"
 	export CFLAGS="$CFLAGS -fPIC -DPIC"
 	# this is not supported on travis: -fcf-protection
     # this is only supported on gcc >= ~8.3 (?): -fstack-clash-protection
@@ -106,21 +106,10 @@ function update_submodules() (
     git submodule update --init --recursive
 )
 
-function install_coveralls_lcov() (
-    set -o errexit -o pipefail -o xtrace
-
-    gem install coveralls-lcov
-)
-
 function before_install() (
     set -o errexit -o pipefail
 
     cifold "update submodules" update_submodules
-
-    # Don't install this unless we're actually on travis
-    if [[ "${COVERAGE}" = "true" ]] && [[ "${TRAVIS}" = "true" ]]; then
-        cifold "install coveralls-lcov" install_coveralls_lcov
-    fi
 )
 
 function install() (
@@ -212,8 +201,6 @@ function upload_coverage() (
         --remove coverage.info "/home/travis/build/include/*" \
         --compat-libtool \
         --output-file coverage.info
-
-    coveralls-lcov coverage.info
 )
 
 function after_success() (
