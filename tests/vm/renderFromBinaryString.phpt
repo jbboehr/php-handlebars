@@ -3,6 +3,7 @@ Handlebars\VM::renderFromBinaryString()
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
+if( !function_exists('pcntl_fork') )  die('skip pcntl_fork not available');
 ?>
 --FILE--
 <?php

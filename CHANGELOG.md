@@ -7,12 +7,19 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ## [Unreleased]
 
 ### Changed
-- Target handlebars.c v0.7.2
 - Target handlebars.js v4.7.6
 
 ### Fixed
 - Objects can now be iterated with `#each`
 - `known_helpers` is now passed properly to the compiler in `render`
+
+## [0.9.2] - 2020-12-06
+
+### Changed
+- Target handlebars.c v0.7.3
+
+### Fixed
+- Fixes for PHP 8
 
 ## [0.9.1] - 2020-04-18
 
@@ -112,7 +119,8 @@ access to the Options object for other helpers. See `tests/helper-with-options.p
 - New handlebars VM
 
 
-[Unreleased]: https://github.com/jbboehr/php-handlebars/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/jbboehr/php-handlebars/compare/v0.9.2...HEAD
+[0.9.2]: https://github.com/jbboehr/php-handlebars/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/jbboehr/php-handlebars/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/jbboehr/php-handlebars/compare/v0.8.3...v0.9.0
 [0.8.3]: https://github.com/jbboehr/php-handlebars/compare/v0.8.2...v0.8.3

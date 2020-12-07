@@ -18,13 +18,7 @@
 
 #include "php_handlebars.h"
 
-#if PHP_MAJOR_VERSION >= 8
-#define php7to8_escape_html_entities_ex(a, b, c, d, e, f) php_escape_html_entities_ex(a, b, c, d, e, f, 0)
-#else
-#define php7to8_escape_html_entities_ex(a, b, c, d, e, f) php_escape_html_entities_ex(a, b, c, d, e, f)
-#endif
-
-
+#include "php7to8.h"
 
 /* {{{ Variables & Prototypes */
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsUtils_ce_ptr;
@@ -51,7 +45,7 @@ PHP_METHOD(HandlebarsUtils, appendContextPath)
         	entry = zend_hash_find(HASH_OF(context_path), INTERNED_CONTEXT_PATH);
             break;
         case IS_OBJECT:
-            entry = zend_read_property_ex(Z_OBJCE_P(context_path), context_path, INTERNED_CONTEXT_PATH, 1, &rv);
+            entry = zend_read_property_ex(Z_OBJCE_P(context_path), PHP7TO8_Z_OBJ_P(context_path), INTERNED_CONTEXT_PATH, 1, &rv);
             break;
         case IS_STRING:
             entry = context_path;
@@ -176,7 +170,7 @@ void php_handlebars_name_lookup(zval * value, zval * field, zval * return_value)
                     RETVAL_ZVAL(&result, 0, 0);
                 }
             } else {
-                entry = zend_read_property_ex(Z_OBJCE_P(value), value, Z_STR_P(field), 1, &rv);
+                entry = zend_read_property_ex(Z_OBJCE_P(value), PHP7TO8_Z_OBJ_P(value), Z_STR_P(field), 1, &rv);
             }
             break;
         default: assert(0); break;
@@ -367,7 +361,7 @@ static zend_always_inline void php_handlebars_escape_expression(zval * val, zval
     zval rv;
 
     if( Z_TYPE_P(val) == IS_OBJECT && instanceof_function(Z_OBJCE_P(val), HandlebarsSafeString_ce_ptr) ) {
-        zval * value = zend_read_property_ex(Z_OBJCE_P(val), val, INTERNED_VALUE, 1, &rv);
+        zval * value = zend_read_property_ex(Z_OBJCE_P(val), PHP7TO8_Z_OBJ_P(val), INTERNED_VALUE, 1, &rv);
         RETURN_ZVAL(value, 1, 0);
     }
 
@@ -461,7 +455,7 @@ static zend_always_inline void php_handlebars_escape_expression_compat(zval * va
     zval rv;
 
     if( Z_TYPE_P(val) == IS_OBJECT && instanceof_function(Z_OBJCE_P(val), HandlebarsSafeString_ce_ptr) ) {
-        zval * value = zend_read_property_ex(Z_OBJCE_P(val), val, INTERNED_VALUE, 1, &rv);
+        zval * value = zend_read_property_ex(Z_OBJCE_P(val), PHP7TO8_Z_OBJ_P(val), INTERNED_VALUE, 1, &rv);
         RETURN_ZVAL(value, 1, 0);
     }
 

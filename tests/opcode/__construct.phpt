@@ -32,5 +32,5 @@ array(2) {
   [1]=>
   int(2)
 }
-Handlebars\Opcode::__construct(): Argument #1 ($opcode) must be of type string, object given
-Handlebars\Opcode::__construct(): Argument #2 ($args) must be of type array, object given
+Handlebars\Opcode::__construct(): Argument #1 ($opcode) must be of type string, stdClass given
+Handlebars\Opcode::__construct(): Argument #2 ($args) must be of type array, stdClass given

@@ -5,9 +5,10 @@
   pkgs ? import <nixpkgs> {},
   stdenv ? pkgs.stdenv,
   php ? pkgs.php,
-  buildPecl ? pkgs.callPackage <nixpkgs/pkgs/build-support/build-pecl.nix> {
-    inherit php stdenv;
+  buildPecl ? if builtins.hasAttr "buildPecl" php then php.buildPecl else pkgs.callPackage <nixpkgs/pkgs/build-support/build-pecl.nix> {
+    inherit php;
   },
+
   gitignoreSource ? (import (pkgs.fetchFromGitHub {
       owner = "hercules-ci";
       repo = "gitignore";
@@ -26,8 +27,8 @@
   }))) {},
 
   handlebarsc ? pkgs.callPackage (import (fetchTarball {
-    url = "https://github.com/jbboehr/handlebars.c/archive/8fe6213e3a15dec63e824d90e124949fffb07b91.tar.gz";
-    sha256 = "1h3b851b2333kj34wcgn7162iwghisa2jabryq0avl2alkf7ppfv";
+    url = "https://github.com/jbboehr/handlebars.c/archive/7acdab048657196d42b4b663bc493775b4134aaf.tar.gz";
+    sha256 = "04fzlx84x0ljcbpw5v4y46wkx44p6rbkl6adnq0pmh5yg3cqylpv";
   })) {
     inherit stdenv;
     inherit mustache_spec handlebars_spec;
@@ -37,11 +38,11 @@
   },
 
   php_psr ? pkgs.callPackage (import (fetchTarball {
-    url = https://github.com/jbboehr/php-psr/archive/7d35501d6c39f2ada1a728ccb8c1a299bd682087.tar.gz;
-    sha256 = "1b5qll9j9x8k8s69wfndpg59di0pi1qvi1h6p5kg3fqasvy5zw28";
+    url = https://github.com/jbboehr/php-psr/archive/bafe9804c621cccdfc5cce3151563dd09caf73f4.tar.gz;
+    sha256 = "1iarlg3qa4fk0s69wglahiazvi2kg58r5firngyxbcbsf5alk783";
   })) { inherit buildPecl stdenv; },
 
-  phpHandlebarsVersion ? "v0.9.1",
+  phpHandlebarsVersion ? "v0.9.2",
   phpHandlebarsSha256 ? null,
   phpHandlebarsSrc ? pkgs.lib.cleanSourceWith {
     filter = (path: type: (builtins.all (x: x != baseNameOf path) [".idea" ".git" "ci.nix" ".travis.sh" ".travis.yml" ".ci"]));

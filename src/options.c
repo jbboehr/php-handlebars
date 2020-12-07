@@ -23,6 +23,8 @@
 #include "handlebars_value.h"
 #include "handlebars_vm.h"
 
+#include "php7to8.h"
+
 /* {{{ Variables & Prototypes */
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsOptions_ce_ptr;
 static zend_object_handlers HandlebarsOptions_obj_handlers;
@@ -145,7 +147,8 @@ static zend_object * php_handlebars_options_obj_create(zend_class_entry * ce)
     object_properties_init(&obj->std, ce);
     obj->std.handlers = &HandlebarsOptions_obj_handlers;
 
-    obj->std_hnd = zend_get_std_object_handlers();
+    // @TODO FIXME
+    obj->std_hnd = (void *) zend_get_std_object_handlers();
     obj->options.program = -1;
     obj->options.inverse = -1;
 
@@ -392,8 +395,8 @@ PHP_METHOD(HandlebarsOptions, __construct)
 
     zval tmp;
     ZVAL_NULL(&tmp);
-    zend_update_property_ex(Z_OBJCE_P(_this_zval), _this_zval, INTERNED_FN, &tmp);
-    zend_update_property_ex(Z_OBJCE_P(_this_zval), _this_zval, INTERNED_INVERSE, &tmp);
+    zend_update_property_ex(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), INTERNED_FN, &tmp);
+    zend_update_property_ex(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), INTERNED_INVERSE, &tmp);
 
     if( props && Z_TYPE_P(props) == IS_ARRAY ) {
         HashTable * ht = Z_ARRVAL_P(props);
@@ -403,7 +406,7 @@ PHP_METHOD(HandlebarsOptions, __construct)
 
         ZEND_HASH_FOREACH_KEY_VAL(ht, index, key, entry) {
             if( key ) {
-                zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZSTR_VAL(key), ZSTR_LEN(key), entry);
+                zend_update_property(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), ZSTR_VAL(key), ZSTR_LEN(key), entry);
             } else {
                 (void) index;
             }
@@ -439,9 +442,9 @@ static void php_handlebars_options_call(INTERNAL_FUNCTION_PARAMETERS, short prog
         zval * z_fn;
         if( program ) {
             //z_fn = zend_hash_str_find(Z_ARRVAL_P(z_options), ZEND_STRL("data"))
-            z_fn = zend_read_property_ex(Z_OBJCE_P(_this_zval), _this_zval, INTERNED_FN, 0, NULL);
+            z_fn = zend_read_property_ex(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), INTERNED_FN, 0, NULL);
         } else {
-            z_fn = zend_read_property_ex(Z_OBJCE_P(_this_zval), _this_zval, INTERNED_INVERSE, 0, NULL);
+            z_fn = zend_read_property_ex(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), INTERNED_INVERSE, 0, NULL);
         }
 
         if( z_fn && Z_TYPE_P(z_fn) == IS_OBJECT ) {
@@ -539,7 +542,7 @@ PHP_METHOD(HandlebarsOptions, offsetExists)
         Z_PARAM_STR(offset)
     ZEND_PARSE_PARAMETERS_END();
 
-    prop = zend_read_property_ex(Z_OBJCE_P(_this_zval), _this_zval, offset, 1, NULL);
+    prop = zend_read_property_ex(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), offset, 1, NULL);
     RETURN_BOOL(prop != NULL);
 }
 
@@ -553,7 +556,7 @@ PHP_METHOD(HandlebarsOptions, offsetGet)
         Z_PARAM_STR(offset)
     ZEND_PARSE_PARAMETERS_END();
 
-    prop = zend_read_property_ex(Z_OBJCE_P(_this_zval), _this_zval, offset, 1, NULL);
+    prop = zend_read_property_ex(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), offset, 1, NULL);
     RETURN_ZVAL(prop, 1, 0);
 }
 

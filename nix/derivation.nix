@@ -2,7 +2,7 @@
   lib, php, stdenv, autoreconfHook, fetchurl, talloc, pcre, pcre2,
   valgrind, # dev/debug deps
   handlebarsc, php_psr, handlebars_spec, mustache_spec, # my special stuff
-  buildPecl ? import <nixpkgs/pkgs/build-support/build-pecl.nix> {
+  buildPecl ? if builtins.hasAttr "buildPecl" php then php.buildPecl else import <nixpkgs/pkgs/build-support/build-pecl.nix> {
     # re2c is required for nixpkgs master, must not be specified for <= 19.03
     inherit php stdenv autoreconfHook fetchurl;
   },
@@ -56,7 +56,7 @@ buildPecl rec {
   preBuild = lib.optionalString checkSupport ''
         HANDLEBARS_SPEC_DIR="${handlebars_spec}/share/handlebars-spec" \
             MUSTACHE_SPEC_DIR="${mustache_spec}/share/mustache-spec" \
-            php generate-tests.php
+            ${php}/bin/php generate-tests.php
     '';
 
   doCheck = checkSupport;

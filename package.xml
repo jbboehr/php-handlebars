@@ -10,10 +10,10 @@
   <email>jbboehr@php.net</email>
   <active>yes</active>
  </lead>
- <date>2020-04-18</date>
+ <date>2020-12-06</date>
  <version>
-  <release>0.9.1</release>
-  <api>0.9.1</api>
+  <release>0.9.2</release>
+  <api>0.9.2</api>
  </version>
  <stability>
   <release>stable</release>
@@ -21,9 +21,7 @@
  </stability>
  <license uri="https://opensource.org/licenses/BSD-2-Clause">BSD-2-Clause</license>
  <notes>
-- Fixed test failure on PHP 8 (@remicollet)
-- Fixed test failure on 32bit
-- The compiled template produced by `Handlebars\VM::compile()` should now be deterministic, if using handlebars.c >= 0.7.1.
+- Fixes for PHP 8
  </notes>
  <contents>
   <dir name="/">
@@ -31,6 +29,7 @@
    <file name="LICENSE.md" role="doc" />
    <file name="README.md" role="doc" />
    <file name="config.m4" role="src" />
+   <file name="php7to8.h" role="src" />
    <file name="php_handlebars.h" role="src" />
    <file name="src/compiler.c" role="src" />
    <file name="src/exceptions.c" role="src" />

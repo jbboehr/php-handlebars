@@ -1,12 +1,12 @@
 let
-    generateHandlebarsTestsForPlatform = { pkgs, path, phpAttr }:
+    generateHandlebarsTestsForPlatform = { pkgs, phpAttr }:
         pkgs.recurseIntoAttrs {
             # std
             std = let
                 php = pkgs.${phpAttr};
             in pkgs.callPackage ../default.nix {
                 inherit php;
-                buildPecl = pkgs.callPackage "${path}/pkgs/build-support/build-pecl.nix" { inherit php; };
+                inherit (php) buildPecl;
                 astSupport = false;
             };
             # i686
@@ -14,7 +14,7 @@ let
                 php = pkgs.pkgsi686Linux.${phpAttr};
             in pkgs.pkgsi686Linux.callPackage ../default.nix {
                 inherit php;
-                buildPecl = pkgs.pkgsi686Linux.callPackage "${path}/pkgs/build-support/build-pecl.nix" { inherit php; };
+                inherit (php) buildPecl;
                 astSupport = true;
             };
             # ast
@@ -22,7 +22,7 @@ let
                 php = pkgs.${phpAttr};
             in pkgs.callPackage ../default.nix {
                 inherit php;
-                buildPecl = pkgs.callPackage "${path}/pkgs/build-support/build-pecl.nix" { inherit php; };
+                inherit (php) buildPecl;
                 astSupport = true;
             };
             # clang
@@ -31,7 +31,7 @@ let
                 stdenv = pkgs.clangStdenv;
             in pkgs.callPackage ../default.nix {
                 inherit stdenv php;
-                buildPecl = pkgs.callPackage "${path}/pkgs/build-support/build-pecl.nix" { inherit php stdenv; };
+                inherit (php) buildPecl;
                 astSupport = true;
             };
         };
@@ -39,26 +39,32 @@ in
 builtins.mapAttrs (k: _v:
   let
     path = builtins.fetchTarball {
-       url = https://github.com/NixOS/nixpkgs-channels/archive/nixos-20.03.tar.gz;
-       name = "nixos-20.03";
+        url = https://github.com/NixOS/nixpkgs/archive/nixos-20.09.tar.gz;
+        name = "nixos-20.09";
     };
     pkgs = import (path) { system = k; };
   in
   pkgs.recurseIntoAttrs {
-    php72 = generateHandlebarsTestsForPlatform {
-        inherit pkgs path;
-        phpAttr = "php72";
-    };
-
     php73 = generateHandlebarsTestsForPlatform {
-        inherit pkgs path;
+        inherit pkgs;
         phpAttr = "php73";
     };
 
     php74 = generateHandlebarsTestsForPlatform {
-        inherit pkgs path;
+        inherit pkgs;
         phpAttr = "php74";
     };
+
+#    php80 = let
+#        path = builtins.fetchTarball {
+#            url = https://github.com/NixOS/nixpkgs/archive/nixos-unstable.tar.gz;
+#            name = "nixos-unstable";
+#        };
+#        pkgs = import (path) { system = k; };
+#    in generateHandlebarsTestsForPlatform {
+#        inherit pkgs;
+#        phpAttr = "php80";
+#    };
   }
 ) {
   x86_64-linux = {};

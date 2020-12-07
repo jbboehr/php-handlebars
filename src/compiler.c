@@ -33,6 +33,8 @@
 
 #include "php_handlebars.h"
 
+#include "php7to8.h"
+
 /* {{{ Variables & Prototypes */
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsCompiler_ce_ptr;
 
@@ -194,22 +196,22 @@ static void php_handlebars_program_to_zval(struct handlebars_program * program, 
 
 	// Set flags
     if( program->result_flags & handlebars_compiler_result_flag_use_depths ) {
-        zend_update_property_bool(Z_OBJCE_P(current), current, ZEND_STRL("useDepths"), 1);
+        zend_update_property_bool(Z_OBJCE_P(current), PHP7TO8_Z_OBJ_P(current), ZEND_STRL("useDepths"), 1);
     }
     if( program->result_flags & handlebars_compiler_result_flag_use_partial ) {
-        zend_update_property_bool(Z_OBJCE_P(current), current, ZEND_STRL("usePartial"), 1);
+        zend_update_property_bool(Z_OBJCE_P(current), PHP7TO8_Z_OBJ_P(current), ZEND_STRL("usePartial"), 1);
     }
 //    if( compiler->result_flags & handlebars_compiler_result_flag_is_simple ) {
 //    	zend_update_property_bool(Z_OBJCE_P(current), current, ZEND_STRL("isSimple"), 1);
 //    }
     if( program->result_flags & handlebars_compiler_result_flag_use_decorators ) {
-        zend_update_property_bool(Z_OBJCE_P(current), current, ZEND_STRL("useDecorators"), 1);
+        zend_update_property_bool(Z_OBJCE_P(current), PHP7TO8_Z_OBJ_P(current), ZEND_STRL("useDecorators"), 1);
     }
     if( program->flags & handlebars_compiler_flag_string_params ) {
-        zend_update_property_bool(Z_OBJCE_P(current), current, ZEND_STRL("stringParams"), 1);
+        zend_update_property_bool(Z_OBJCE_P(current), PHP7TO8_Z_OBJ_P(current), ZEND_STRL("stringParams"), 1);
     }
     if( program->flags & handlebars_compiler_flag_track_ids ) {
-        zend_update_property_bool(Z_OBJCE_P(current), current, ZEND_STRL("trackIds"), 1);
+        zend_update_property_bool(Z_OBJCE_P(current), PHP7TO8_Z_OBJ_P(current), ZEND_STRL("trackIds"), 1);
     }
 
 	// Decorators
@@ -217,7 +219,7 @@ static void php_handlebars_program_to_zval(struct handlebars_program * program, 
 	    zval decorators = {0};
 	    ZVAL_NULL(&decorators);
 		php_handlebars_programs_to_zval(program->decorators, program->decorators_length, &decorators);
-		zend_update_property(Z_OBJCE_P(current), current, ZEND_STRL("decorators"), &decorators);
+		zend_update_property(Z_OBJCE_P(current), PHP7TO8_Z_OBJ_P(current), ZEND_STRL("decorators"), &decorators);
 	    zval_ptr_dtor(&decorators);
 	}
 }
