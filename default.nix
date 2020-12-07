@@ -8,7 +8,7 @@
     inherit php;
   },
 
-  phpHandlebarsVersion ? "v0.9.1",
+  phpHandlebarsVersion ? "v0.9.2",
   phpHandlebarsSrc ? ./.,
   phpHandlebarsSha256 ? null,
   phpHandlebarsAllTheTests ? false,
