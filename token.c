@@ -11,6 +11,8 @@
 #include "handlebars_string.h"
 #include "handlebars_token.h"
 
+#include "php7to8.h"
+
 /* {{{ Variables & Prototypes */
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsToken_ce_ptr;
 static zend_string *INTERNED_NAME;
@@ -67,8 +69,8 @@ PHP_METHOD(HandlebarsToken, __construct)
         Z_PARAM_STR(text)
     ZEND_PARSE_PARAMETERS_END();
 
-    zend_update_property_str(Z_OBJCE_P(_this_zval), _this_zval, "name", sizeof("name")-1, name);
-    zend_update_property_str(Z_OBJCE_P(_this_zval), _this_zval, "text", sizeof("text")-1, text);
+    zend_update_property_str(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), "name", sizeof("name")-1, name);
+    zend_update_property_str(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), "text", sizeof("text")-1, text);
 }
 /* }}} Handlebars\Token::__construct */
 

@@ -1,5 +1,5 @@
 { lib, php, stdenv, autoreconfHook, fetchurl, handlebarsc, talloc, pcre, pcre2, mustache_spec, handlebars_spec, php_psr,
-  buildPecl ? import <nixpkgs/pkgs/build-support/build-pecl.nix> {
+  buildPecl ?  if builtins.hasAttr "buildPecl" php then php.buildPecl else import <nixpkgs/pkgs/build-support/build-pecl.nix> {
     # re2c is required for nixpkgs master, must not be specified for <= 19.03
     inherit php stdenv autoreconfHook fetchurl;
   },

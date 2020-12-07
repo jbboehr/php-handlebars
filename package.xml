@@ -37,6 +37,7 @@
    <file name="opcode.c" role="src" />
    <file name="options.c" role="src" />
    <file name="parser.c" role="src" />
+   <file name="php7to8.h" role="src" />
    <file name="php_handlebars.c" role="src" />
    <file name="php_handlebars.h" role="src" />
    <file name="program.c" role="src" />

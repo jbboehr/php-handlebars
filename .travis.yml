@@ -6,15 +6,7 @@ matrix:
   - php: 'master'
   - php: 'master'
     env:
-    - PHP_PSR_VERSION=v1.0.0
-  - language: nix
-    env:
-      - NIX_CHANNEL=unstable
-      - NIX_PHP_ATTR=php74
-  - language: nix
-    env:
-      - NIX_CHANNEL=unstable
-      - NIX_PHP_ATTR=php
+    - PHP_PSR_VERSION=v1.0.1
   include:
   - language: php
     php: '7.2'
@@ -27,39 +19,23 @@ matrix:
   - language: php
     php: '7.2'
     env:
-    - PHP_PSR_VERSION=v1.0.0
+    - PHP_PSR_VERSION=v1.0.1
   - language: php
     php: '7.3'
     env:
-    - PHP_PSR_VERSION=v1.0.0
+    - PHP_PSR_VERSION=v1.0.1
   - language: php
     php: '7.4'
     env:
-    - PHP_PSR_VERSION=v1.0.0
+    - PHP_PSR_VERSION=v1.0.1
   - language: php
     php: 'master'
     env:
-    - PHP_PSR_VERSION=v1.0.0
-  - language: nix
-    env:
-    - NIX_CHANNEL=18.09
-    - NIX_PHP_ATTR=php72
-  - language: nix
-    env:
-    - NIX_CHANNEL=19.03
-    - NIX_PHP_ATTR=php73
-  - language: nix
-    env:
-    - NIX_CHANNEL=20.03
-    - NIX_PHP_ATTR=php74
-#   - language: nix
-#     env:
-#     - NIX_CHANNEL=unstable
-#     - NIX_PHP_ATTR=php
+    - PHP_PSR_VERSION=v1.0.1
 
 env:
   global:
-  - LIBHANDLEBARS_VERSION=v0.7.1
+  - LIBHANDLEBARS_VERSION=v0.7.3
 
 cache: ccache
 
@@ -68,6 +44,7 @@ branches:
     - master
     - develop
     - travis
+    - dev-0.9.x
 
 addons:
   apt:

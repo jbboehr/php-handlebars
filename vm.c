@@ -31,6 +31,8 @@
 
 #include "php_handlebars.h"
 
+#include "php7to8.h"
+
 #define XXH_PRIVATE_API
 #define XXH_INLINE_ALL
 #include "xxhash.h"
@@ -86,7 +88,7 @@ static void php_handlebars_log(
         struct handlebars_options * options
 ) {
     zval * z_vm = (zval *) options->vm->log_ctx;
-    zval * logger = zend_read_property_ex(HandlebarsBaseImpl_ce_ptr, z_vm, HANDLEBARS_INTERNED_STR_LOGGER, 1, NULL);
+    zval * logger = zend_read_property_ex(HandlebarsBaseImpl_ce_ptr, PHP7TO8_Z_OBJ_P(z_vm), HANDLEBARS_INTERNED_STR_LOGGER, 1, NULL);
     char * message;
     size_t message_len;
     int i;
@@ -197,7 +199,7 @@ static void php_handlebars_vm_set_helpers(zval * _this_zval, zval * helpers)
         handlebars_value_dtor(intern->helpers);
     }
     intern->helpers = handlebars_value_from_zval(HBSCTX(context), helpers);
-    zend_update_property_ex(Z_OBJCE_P(_this_zval), _this_zval, HANDLEBARS_INTERNED_STR_HELPERS, helpers);
+    zend_update_property_ex(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), HANDLEBARS_INTERNED_STR_HELPERS, helpers);
 done:
     context->e->jmp = NULL;
 }
@@ -225,7 +227,7 @@ static void php_handlebars_vm_set_partials(zval * _this_zval, zval * partials)
         handlebars_value_dtor(intern->partials);
     }
     intern->partials = handlebars_value_from_zval(HBSCTX(context), partials);
-    zend_update_property_ex(Z_OBJCE_P(_this_zval), _this_zval, HANDLEBARS_INTERNED_STR_PARTIALS, partials);
+    zend_update_property_ex(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), HANDLEBARS_INTERNED_STR_PARTIALS, partials);
 done:
     context->e->jmp = NULL;
 }
@@ -267,11 +269,11 @@ PHP_METHOD(HandlebarsVM, __construct)
             php_handlebars_vm_set_partials(_this_zval, partials);
         }
         if( decorators ) {
-            zend_update_property_ex(Z_OBJCE_P(_this_zval), _this_zval, HANDLEBARS_INTERNED_STR_DECORATORS, decorators);
+            zend_update_property_ex(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), HANDLEBARS_INTERNED_STR_DECORATORS, decorators);
         }
         if( logger ) {
             // @todo check type
-            zend_update_property_ex(Z_OBJCE_P(_this_zval), _this_zval, HANDLEBARS_INTERNED_STR_LOGGER, logger);
+            zend_update_property_ex(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), HANDLEBARS_INTERNED_STR_LOGGER, logger);
         }
     }
 }

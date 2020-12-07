@@ -19,6 +19,8 @@
 
 #include "php_handlebars.h"
 
+#include "php7to8.h"
+
 /* {{{ Variables & Prototypes */
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsUtils_ce_ptr;
 static zend_string *INTERNED_CONTEXT_PATH;
@@ -48,7 +50,7 @@ PHP_METHOD(HandlebarsUtils, appendContextPath)
         	}
             break;
         case IS_OBJECT:
-            entry = zend_read_property_ex(Z_OBJCE_P(context_path), context_path, INTERNED_CONTEXT_PATH, 1, NULL);
+            entry = zend_read_property_ex(Z_OBJCE_P(context_path), PHP7TO8_Z_OBJ_P(context_path), INTERNED_CONTEXT_PATH, 1, NULL);
             if( entry && Z_TYPE_P(entry) == IS_STRING ) {
                 tmp = Z_STR_P(entry);
             }
@@ -163,7 +165,7 @@ static zend_always_inline void php_handlebars_name_lookup(zval * value, zval * f
                     RETVAL_ZVAL(&result, 0, 0);
                 }
             } else {
-                entry = zend_read_property_ex(Z_OBJCE_P(value), value, Z_STR_P(field), 1, NULL);
+                entry = zend_read_property_ex(Z_OBJCE_P(value), PHP7TO8_Z_OBJ_P(value), Z_STR_P(field), 1, NULL);
             }
             break;
     }
@@ -349,12 +351,12 @@ static zend_always_inline void php_handlebars_escape_expression(zval * val, zval
     zval rv;
 
     if( Z_TYPE_P(val) == IS_OBJECT && instanceof_function(Z_OBJCE_P(val), HandlebarsSafeString_ce_ptr) ) {
-        zval * value = zend_read_property_ex(Z_OBJCE_P(val), val, INTERNED_VALUE, 1, &rv);
+        zval * value = zend_read_property_ex(Z_OBJCE_P(val), PHP7TO8_Z_OBJ_P(val), INTERNED_VALUE, 1, &rv);
         RETURN_ZVAL(value, 1, 0);
     }
 
     convert_to_string(val);
-    replaced = php_escape_html_entities_ex((unsigned char *) Z_STRVAL_P(val), Z_STRLEN_P(val), 0, (int) ENT_QUOTES, "UTF-8", 1);
+    replaced = php7to8_escape_html_entities_ex((unsigned char *) Z_STRVAL_P(val), Z_STRLEN_P(val), 0, (int) ENT_QUOTES, "UTF-8", 1);
     RETURN_STR(replaced);
 }
 
@@ -443,7 +445,7 @@ static zend_always_inline void php_handlebars_escape_expression_compat(zval * va
 
     // @todo this should probably support inheritance
     if( Z_TYPE_P(val) == IS_OBJECT && instanceof_function(Z_OBJCE_P(val), HandlebarsSafeString_ce_ptr) ) {
-        zval * value = zend_read_property_ex(Z_OBJCE_P(val), val, INTERNED_VALUE, 1, &rv);
+        zval * value = zend_read_property_ex(Z_OBJCE_P(val), PHP7TO8_Z_OBJ_P(val), INTERNED_VALUE, 1, &rv);
         RETURN_ZVAL(value, 1, 0);
     }
 
@@ -452,7 +454,7 @@ static zend_always_inline void php_handlebars_escape_expression_compat(zval * va
         return;
     }
 
-    replaced = php_escape_html_entities_ex((unsigned char *) Z_STRVAL(tmp), Z_STRLEN(tmp), 0, (int) ENT_COMPAT, "UTF-8", 1);
+    replaced = php7to8_escape_html_entities_ex((unsigned char *) Z_STRVAL(tmp), Z_STRLEN(tmp), 0, (int) ENT_COMPAT, "UTF-8", 1);
     zval_dtor(&tmp);
 
     replaced2 = php_handlebars_escape_expression_replace_helper(replaced->val);

@@ -4,7 +4,7 @@
 {
   pkgs ? import <nixpkgs> {},
   php ? pkgs.php,
-  buildPecl ? pkgs.callPackage <nixpkgs/pkgs/build-support/build-pecl.nix> {
+  buildPecl ? if builtins.hasAttr "buildPecl" php then php.buildPecl else pkgs.callPackage <nixpkgs/pkgs/build-support/build-pecl.nix> {
     inherit php;
   },
 
@@ -24,13 +24,13 @@
   }))) {},
 
   handlebarsc ? pkgs.callPackage (import (fetchTarball {
-    url = https://github.com/jbboehr/handlebars.c/archive/v0.7.1.tar.gz;
-    sha256 = "0rmwgjy7v59a80csn5dwwzdhg00k8aghkbxyljmqkvx858zjq30x";
+    url = https://github.com/jbboehr/handlebars.c/archive/v0.7.3.tar.gz;
+    sha256 = "03c9j5p172n3vabpq3gm4wn8f6kx5r3cnm5k7ad0nmhy5cahwci7";
   })) { inherit mustache_spec handlebars_spec; },
 
   php_psr ? pkgs.callPackage (import (fetchTarball {
-    url = https://github.com/jbboehr/php-psr/archive/v1.0.0.tar.gz;
-    sha256 = "12237b392rz224r4d8p6pwnldpl2bfrvpcim5947avjd49sn8ss4";
+    url = https://github.com/jbboehr/php-psr/archive/bafe9804c621cccdfc5cce3151563dd09caf73f4.tar.gz;
+    sha256 = "1iarlg3qa4fk0s69wglahiazvi2kg58r5firngyxbcbsf5alk783";
   })) { inherit buildPecl; }
 }:
 

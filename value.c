@@ -21,6 +21,8 @@
 
 #include "php_handlebars.h"
 
+#include "php7to8.h"
+
 
 
 /* {{{ Variables & Prototypes */
@@ -35,8 +37,9 @@ static struct handlebars_value_handlers handlebars_value_std_zval_handlers;
 /* }}} Variables & Prototypes */
 
 /* {{{ Utils */
-static void handlebars_zval_intern_dtor(struct handlebars_zval * intern) {
+static int handlebars_zval_intern_dtor(struct handlebars_zval * intern) {
     zval_ptr_dtor(&intern->intern);
+    return 0;
 }
 static inline zval * get_intern_zval(struct handlebars_value * value) {
     //struct handlebars_zval * obj = talloc_get_type(value->v.usr, struct handlebars_zval);
@@ -152,7 +155,7 @@ static struct handlebars_value * handlebars_std_zval_map_find(struct handlebars_
                     return ret;
                 }
             } else {
-                entry = zend_read_property(Z_OBJCE_P(intern), intern, key->val, key->len, 1, NULL);
+                entry = zend_read_property(Z_OBJCE_P(intern), PHP7TO8_Z_OBJ_P(intern), key->val, key->len, 1, NULL);
             }
             if( !entry || Z_TYPE_P(entry) == IS_NULL ) {
                 char *error;
@@ -335,7 +338,7 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     // typed with Handlebars\Options
     ce = Z_OBJCE_P(intern);
     if (instanceof_function(ce, zend_ce_closure)) {
-        fptr = (zend_function *)zend_get_closure_method_def(intern);
+        fptr = (zend_function *)zend_get_closure_method_def(PHP7TO8_Z_OBJ_P(intern));
         send_options = 1;
     } else {
         fptr = zend_hash_find_ptr(&ce->function_table, ZSTR_KNOWN(ZEND_STR_MAGIC_INVOKE));
@@ -403,7 +406,9 @@ struct handlebars_value * handlebars_std_zval_call(struct handlebars_value * val
     fci.retval = &_z_ret;
     fci.params = z_args;
     fci.param_count = n_args;
+#if PHP_MAJOR_VERSION < 8
     fci.no_separation = 1;
+#endif
 
     ZVAL_STRING(&fci.function_name, "__invoke");
 

@@ -8,6 +8,8 @@
 
 #include "php_handlebars.h"
 
+#include "php7to8.h"
+
 /* {{{ Variables & Prototypes */
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsProgram_ce_ptr;
 /* }}} Variables & Prototypes */
@@ -34,9 +36,9 @@ PHP_METHOD(HandlebarsProgram, __construct)
 		Z_PARAM_LONG(blockParams);
     ZEND_PARSE_PARAMETERS_END();
 
-    zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("opcodes"), opcodes);
-    zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("children"), children);
-    zend_update_property_long(Z_OBJCE_P(_this_zval), _this_zval, ZEND_STRL("blockParams"), blockParams);
+    zend_update_property(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), ZEND_STRL("opcodes"), opcodes);
+    zend_update_property(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), ZEND_STRL("children"), children);
+    zend_update_property_long(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), ZEND_STRL("blockParams"), blockParams);
 }
 /* }}} Handlebars\Program::__construct */
 

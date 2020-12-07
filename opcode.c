@@ -8,6 +8,8 @@
 
 #include "php_handlebars.h"
 
+#include "php7to8.h"
+
 /* {{{ Variables & Prototypes */
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsOpcode_ce_ptr;
 static zend_string *INTERNED_OPCODE;
@@ -33,8 +35,8 @@ PHP_METHOD(HandlebarsOpcode, __construct)
 		Z_PARAM_ARRAY(args)
     ZEND_PARSE_PARAMETERS_END();
 
-    zend_update_property_str(Z_OBJCE_P(_this_zval), _this_zval, "opcode", sizeof("opcode")-1, opcode);
-    zend_update_property(Z_OBJCE_P(_this_zval), _this_zval, "args", sizeof("args")-1, args);
+    zend_update_property_str(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), "opcode", sizeof("opcode")-1, opcode);
+    zend_update_property(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), "args", sizeof("args")-1, args);
 }
 /* }}} Handlebars\Opcode::__construct */
 

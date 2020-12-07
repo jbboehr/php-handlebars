@@ -14,6 +14,8 @@
 
 #include "php_handlebars.h"
 
+#include "php7to8.h"
+
 /* {{{ Variables & Prototypes */
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsImpl_ce_ptr;
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsBaseImpl_ce_ptr;
@@ -40,7 +42,7 @@ static zend_class_entry *lookup_class(const char *name)
 static inline void php_handlebars_impl_getter(INTERNAL_FUNCTION_PARAMETERS, zend_string *str)
 {
     zval * _this_zval = getThis();
-    zval * val = zend_read_property_ex(Z_OBJCE_P(_this_zval), _this_zval, str, 1, NULL);
+    zval * val = zend_read_property_ex(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), str, 1, NULL);
     RETURN_ZVAL(val, 1, 0);
 }
 
@@ -74,7 +76,7 @@ PHP_METHOD(HandlebarsBaseImpl, setHelpers)
         Z_PARAM_OBJECT_OF_CLASS(helpers, HandlebarsRegistry_ce_ptr)
     ZEND_PARSE_PARAMETERS_END();
 
-    zend_update_property_ex(Z_OBJCE_P(_this_zval), _this_zval, HANDLEBARS_INTERNED_STR_HELPERS, helpers);
+    zend_update_property_ex(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), HANDLEBARS_INTERNED_STR_HELPERS, helpers);
 
     RETURN_ZVAL(_this_zval, 1, 0);
 }
@@ -90,7 +92,7 @@ PHP_METHOD(HandlebarsBaseImpl, setPartials)
         Z_PARAM_OBJECT_OF_CLASS(partials, HandlebarsRegistry_ce_ptr)
     ZEND_PARSE_PARAMETERS_END();
 
-    zend_update_property_ex(Z_OBJCE_P(_this_zval), _this_zval, HANDLEBARS_INTERNED_STR_PARTIALS, partials);
+    zend_update_property_ex(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), HANDLEBARS_INTERNED_STR_PARTIALS, partials);
 
     RETURN_ZVAL(_this_zval, 1, 0);
 }
@@ -106,7 +108,7 @@ PHP_METHOD(HandlebarsBaseImpl, setDecorators)
         Z_PARAM_OBJECT_OF_CLASS(decorators, HandlebarsRegistry_ce_ptr)
     ZEND_PARSE_PARAMETERS_END();
 
-    zend_update_property_ex(Z_OBJCE_P(_this_zval), _this_zval, HANDLEBARS_INTERNED_STR_DECORATORS, decorators);
+    zend_update_property_ex(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), HANDLEBARS_INTERNED_STR_DECORATORS, decorators);
 
     RETURN_ZVAL(_this_zval, 1, 0);
 }
@@ -123,7 +125,7 @@ PHP_METHOD(HandlebarsBaseImpl, setLogger)
         Z_PARAM_OBJECT_OF_CLASS(logger, PsrLogLoggerInterface_ce_ptr)
 	ZEND_PARSE_PARAMETERS_END();
 
-    zend_update_property_ex(Z_OBJCE_P(_this_zval), _this_zval, HANDLEBARS_INTERNED_STR_LOGGER, logger);
+    zend_update_property_ex(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), HANDLEBARS_INTERNED_STR_LOGGER, logger);
 
     RETURN_ZVAL(_this_zval, 1, 0);
 }

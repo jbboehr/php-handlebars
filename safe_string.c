@@ -8,6 +8,8 @@
 
 #include "php_handlebars.h"
 
+#include "php7to8.h"
+
 /* {{{ Variables & Prototypes */
 PHP_HANDLEBARS_API zend_class_entry * HandlebarsSafeString_ce_ptr;
 static zend_string *INTERNED_VALUE;
@@ -34,7 +36,7 @@ PHP_METHOD(HandlebarsSafeString, __construct)
     ZEND_PARSE_PARAMETERS_END();
 
 	ZVAL_STR(&tmp, value);
-    zend_update_property_ex(Z_OBJCE_P(_this_zval), _this_zval, INTERNED_VALUE, &tmp);
+    zend_update_property_ex(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), INTERNED_VALUE, &tmp);
 }
 /* }}} Handlebars\SafeString::__construct */
 
@@ -43,7 +45,7 @@ PHP_METHOD(HandlebarsSafeString, __toString)
 {
     zval * _this_zval = getThis();
     zval rv;
-    zval * value = zend_read_property_ex(Z_OBJCE_P(_this_zval), _this_zval, INTERNED_VALUE, 1, &rv);
+    zval * value = zend_read_property_ex(Z_OBJCE_P(_this_zval), PHP7TO8_Z_OBJ_P(_this_zval), INTERNED_VALUE, 1, &rv);
     RETURN_ZVAL(value, 1, 0);
 }
 /* }}} HandlebarsSafeString::__toString */
