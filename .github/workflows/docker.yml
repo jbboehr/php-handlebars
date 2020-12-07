@@ -21,7 +21,7 @@ jobs:
                     - "7.2"
                     - "7.3"
                     - "7.4"
-                    # - "8.0-rc"
+                    - "8.0"
         steps:
             - uses: actions/checkout@v2
             - name: I am tired of writing this shit in YAML and learning a new DSL for every CI service so I am putting everything in a FSCKING BASH SCRIPT
@@ -38,7 +38,7 @@ jobs:
                     - "7.2"
                     - "7.3"
                     - "7.4"
-                    # - "8.0-rc"
+                    - "8.0"
         steps:
             - uses: actions/checkout@v2
             - name: I am tired of writing this shit in YAML and learning a new DSL for every CI service so I am putting everything in a FSCKING BASH SCRIPT
