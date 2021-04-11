@@ -38,8 +38,8 @@
   },
 
   php_psr ? pkgs.callPackage (import (fetchTarball {
-    url = https://github.com/jbboehr/php-psr/archive/bafe9804c621cccdfc5cce3151563dd09caf73f4.tar.gz;
-    sha256 = "1iarlg3qa4fk0s69wglahiazvi2kg58r5firngyxbcbsf5alk783";
+    url = https://github.com/jbboehr/php-psr/archive/refs/tags/v1.1.0.tar.gz;
+    sha256 = "0ld31114j6p09lxiijfnsbiw2li0rm2x4dckid2n2qbw4xlggknn";
   })) { inherit buildPecl stdenv; },
 
   phpHandlebarsVersion ? "v0.9.2",
