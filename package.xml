@@ -73,14 +73,10 @@
    <file name="m4/ax_compiler_flags_ldflags.m4" role="src" />
    <file name="m4/ax_compiler_flags.m4" role="src" />
    <file name="m4/ax_require_defined.m4" role="src" />
-   <file name="tests/base-impl/decorators-php74.phpt" role="test" />
-   <file name="tests/base-impl/decorators.phpt" role="test" />
    <file name="tests/base-impl/fake-impl.php.inc" role="test" />
    <file name="tests/base-impl/getDecorators.phpt" role="test" />
    <file name="tests/base-impl/getHelpers.phpt" role="test" />
    <file name="tests/base-impl/getPartials.phpt" role="test" />
-   <file name="tests/base-impl/helpers-php74.phpt" role="test" />
-   <file name="tests/base-impl/helpers.phpt" role="test" />
    <file name="tests/base-impl/logger-php74.phpt" role="test" />
    <file name="tests/base-impl/logger.phpt" role="test" />
    <file name="tests/base-impl/partials-php74.phpt" role="test" />
@@ -183,21 +179,6 @@
    <file name="tests/handlebars/export/basic/086.phpt" role="test" />
    <file name="tests/handlebars/export/basic/087.phpt" role="test" />
    <file name="tests/handlebars/export/basic/088.phpt" role="test" />
-   <file name="tests/handlebars/export/bench/001.phpt" role="test" />
-   <file name="tests/handlebars/export/bench/002.phpt" role="test" />
-   <file name="tests/handlebars/export/bench/003.phpt" role="test" />
-   <file name="tests/handlebars/export/bench/004.phpt" role="test" />
-   <file name="tests/handlebars/export/bench/005.phpt" role="test" />
-   <file name="tests/handlebars/export/bench/006.phpt" role="test" />
-   <file name="tests/handlebars/export/bench/007.phpt" role="test" />
-   <file name="tests/handlebars/export/bench/008.phpt" role="test" />
-   <file name="tests/handlebars/export/bench/009.phpt" role="test" />
-   <file name="tests/handlebars/export/bench/010.phpt" role="test" />
-   <file name="tests/handlebars/export/bench/011.phpt" role="test" />
-   <file name="tests/handlebars/export/bench/012.phpt" role="test" />
-   <file name="tests/handlebars/export/bench/013.phpt" role="test" />
-   <file name="tests/handlebars/export/bench/014.phpt" role="test" />
-   <file name="tests/handlebars/export/bench/015.phpt" role="test" />
    <file name="tests/handlebars/export/blocks/001.phpt" role="test" />
    <file name="tests/handlebars/export/blocks/002.phpt" role="test" />
    <file name="tests/handlebars/export/blocks/003.phpt" role="test" />
@@ -791,21 +772,6 @@
    <file name="tests/handlebars/spec/basic/088.phpt" role="test" />
    <file name="tests/handlebars/spec/basic/089.phpt" role="test" />
    <file name="tests/handlebars/spec/basic/090.phpt" role="test" />
-   <file name="tests/handlebars/spec/bench/001.phpt" role="test" />
-   <file name="tests/handlebars/spec/bench/002.phpt" role="test" />
-   <file name="tests/handlebars/spec/bench/003.phpt" role="test" />
-   <file name="tests/handlebars/spec/bench/004.phpt" role="test" />
-   <file name="tests/handlebars/spec/bench/005.phpt" role="test" />
-   <file name="tests/handlebars/spec/bench/006.phpt" role="test" />
-   <file name="tests/handlebars/spec/bench/007.phpt" role="test" />
-   <file name="tests/handlebars/spec/bench/008.phpt" role="test" />
-   <file name="tests/handlebars/spec/bench/009.phpt" role="test" />
-   <file name="tests/handlebars/spec/bench/010.phpt" role="test" />
-   <file name="tests/handlebars/spec/bench/011.phpt" role="test" />
-   <file name="tests/handlebars/spec/bench/012.phpt" role="test" />
-   <file name="tests/handlebars/spec/bench/013.phpt" role="test" />
-   <file name="tests/handlebars/spec/bench/014.phpt" role="test" />
-   <file name="tests/handlebars/spec/bench/015.phpt" role="test" />
    <file name="tests/handlebars/spec/blocks/001.phpt" role="test" />
    <file name="tests/handlebars/spec/blocks/002.phpt" role="test" />
    <file name="tests/handlebars/spec/blocks/003.phpt" role="test" />
