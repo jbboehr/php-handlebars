@@ -1,9 +1,7 @@
 
 # php-handlebars
 
-[![GitHub Linux Build Status](https://github.com/jbboehr/php-handlebars/workflows/linux/badge.svg)](https://github.com/jbboehr/php-handlebars/actions?query=workflow%3Alinux)
-[![GitHub OSX Build Status](https://github.com/jbboehr/php-handlebars/workflows/osx/badge.svg)](https://github.com/jbboehr/php-handlebars/actions?query=workflow%3Aosx)
-[![GitHub Docker Build Status](https://github.com/jbboehr/php-handlebars/workflows/docker/badge.svg)](https://github.com/jbboehr/php-handlebars/actions?query=workflow%3Adocker)
+[![GitHub Build Status](https://github.com/jbboehr/php-handlebars/workflows/ci/badge.svg)](https://github.com/jbboehr/php-handlebars/actions?query=workflow%3Aci)
 [![Coverage Status](https://coveralls.io/repos/jbboehr/php-handlebars/badge.svg?branch=master&service=github)](https://coveralls.io/github/jbboehr/php-handlebars?branch=master)
 [![License](https://img.shields.io/badge/license-BSD-brightgreen.svg)](LICENSE.md)
 
