@@ -10,10 +10,10 @@
   <email>jbboehr@php.net</email>
   <active>yes</active>
  </lead>
- <date>2020-12-06</date>
+ <date>2022-11-27</date>
  <version>
-  <release>0.9.2</release>
-  <api>0.9.2</api>
+  <release>1.0.0</release>
+  <api>1.0.0</api>
  </version>
  <stability>
   <release>stable</release>
@@ -21,7 +21,11 @@
  </stability>
  <license uri="https://opensource.org/licenses/BSD-2-Clause">BSD-2-Clause</license>
  <notes>
-- Fixes for PHP 8
+- PHP 8.1 and 8.2 compat
+- Target handlebars.js v4.7.7
+- Target handlebars.c v1.0.0
+- Objects can now be iterated with `#each`
+- `known_helpers` is now passed properly to the compiler in `render`
  </notes>
  <contents>
   <dir name="/">
@@ -77,10 +81,6 @@
    <file name="tests/base-impl/getDecorators.phpt" role="test" />
    <file name="tests/base-impl/getHelpers.phpt" role="test" />
    <file name="tests/base-impl/getPartials.phpt" role="test" />
-   <file name="tests/base-impl/logger-php74.phpt" role="test" />
-   <file name="tests/base-impl/logger.phpt" role="test" />
-   <file name="tests/base-impl/partials-php74.phpt" role="test" />
-   <file name="tests/base-impl/partials.phpt" role="test" />
    <file name="tests/cache/mmap.phpt" role="test" />
    <file name="tests/cache/none.phpt" role="test" />
    <file name="tests/cache/nostat.phpt" role="test" />

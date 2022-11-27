@@ -18,7 +18,7 @@
 buildPecl rec {
   pname = "handlebars";
   name = "handlebars-${version}";
-  version = "v0.9.1";
+  version = "v1.0.0";
 
   src = lib.cleanSourceWith {
     filter = (path: type: (builtins.all (x: x != baseNameOf path)

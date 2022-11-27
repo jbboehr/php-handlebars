@@ -9,17 +9,17 @@ use ArrayObject;
 /**
  * extension version
  */
-const VERSION = "0.9.1";
+const VERSION = "1.0.0";
 
 /**
  * libhandlebars version
  */
-const LIBVERSION = "0.7.2";
+const LIBVERSION = "1.0.0";
 
 /**
  * libhandlebars version (at compile time)
  */
-const LIBVERSION2 = "0.7.2";
+const LIBVERSION2 = "1.0.0";
 
 /**
  * If PSR extension is available

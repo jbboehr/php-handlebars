@@ -48,7 +48,7 @@
             inherit php;
             inherit (php) buildPecl;
           };
-          php-handlebars-dist = pkgs.runCommand "psr-pecl.tgz" {
+          php-handlebars-dist = pkgs.runCommand "handlebars-pecl.tgz" {
             buildInputs = [php];
             src = php-handlebars.src;
           } ''
