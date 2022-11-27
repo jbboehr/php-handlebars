@@ -3,15 +3,28 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs";
-    flake-utils.url = "github:numtide/flake-utils";
-    mustache_spec.url = "github:jbboehr/mustache-spec";
-    handlebars_spec.url = "github:jbboehr/handlebars-spec";
+    flake-utils = {
+        url = "github:numtide/flake-utils";
+        inputs.nixpkgs.follows = "nixpkgs";
+    };
+    mustache_spec = {
+        url = "github:jbboehr/mustache-spec";
+        inputs.nixpkgs.follows = "nixpkgs";
+    };
+    handlebars_spec = {
+        url = "github:jbboehr/handlebars-spec";
+        inputs.nixpkgs.follows = "nixpkgs";
+    };
     handlebars-c = {
         url = "github:jbboehr/handlebars.c";
         inputs.mustache_spec.follows = "mustache_spec";
         inputs.handlebars_spec.follows = "handlebars_spec";
+        inputs.nixpkgs.follows = "nixpkgs";
     };
-    php-psr.url = "github:jbboehr/php-psr";
+    php-psr = {
+        url = "github:jbboehr/php-psr";
+        inputs.nixpkgs.follows = "nixpkgs";
+    };
     gitignore = {
         url = "github:hercules-ci/gitignore.nix";
         inputs.nixpkgs.follows = "nixpkgs";
