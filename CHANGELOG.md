@@ -7,7 +7,8 @@ Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) princip
 ## [Unreleased]
 
 ### Changed
-- Target handlebars.js v4.7.6
+- PHP 8.1 and 8.2 compat
+- Target handlebars.js v4.7.7
 
 ### Fixed
 - Objects can now be iterated with `#each`

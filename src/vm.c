@@ -704,7 +704,11 @@ static void render(INTERNAL_FUNCTION_PARAMETERS, enum input_type type)
         if( type == input_type_filename && HANDLEBARS_G(cache_stat) ) {
             zval zstat;
             ZVAL_LONG(&zstat, 0);
+#if PHP_VERSION_ID >= 80100
+            php_stat(zstr_input, FS_MTIME, &zstat);
+#else
             php_stat(ZSTR_VAL(zstr_input), ZSTR_LEN(zstr_input), FS_MTIME, &zstat);
+#endif
             if( Z_LVAL(zstat) > handlebars_module_get_ts(module) ) { // possibly not portable
                 handlebars_cache_release(cache, cache_id, module);
                 from_cache = false;

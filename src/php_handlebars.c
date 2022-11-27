@@ -7,6 +7,7 @@
 #include <setjmp.h>
 #include <talloc.h>
 #include <handlebars.h>
+#include <string.h>
 
 #include "Zend/zend_API.h"
 #include "Zend/zend_constants.h"

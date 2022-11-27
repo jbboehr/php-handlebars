@@ -4,7 +4,7 @@ helpers - block params - should take presednece over parent block params
 helpers - block params - should take presednece over parent block params
 --SKIPIF--
 <?php
-if( 1 ) die('skip libhandlebars currently does not expose options.blockParams');
+if( true ) die('skip libhandlebars currently does not expose options.blockParams');
 ?>
 --FILE--
 <?php

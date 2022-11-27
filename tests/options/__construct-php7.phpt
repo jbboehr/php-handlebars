@@ -3,7 +3,7 @@ Handlebars\Options::__construct()
 --SKIPIF--
 <?php
 if( !extension_loaded('handlebars') ) die('skip ');
-if( PHP_VERSION_ID < 80000 ) die('skip ');
+if( PHP_VERSION_ID < 70400 || PHP_VERSION_ID >= 80000 ) die('skip ');
 ?>
 --FILE--
 <?php
@@ -17,25 +17,7 @@ var_dump(get_class($options));
 var_dump($options);
 --EXPECT--
 string(18) "Handlebars\Options"
-object(Handlebars\Options)#1 (14) {
-  ["name"]=>
-  string(2) "if"
-  ["hash"]=>
-  array(1) {
-    ["a"]=>
-    string(1) "b"
-  }
-  ["fn"]=>
-  NULL
-  ["inverse"]=>
-  NULL
-  ["scope"]=>
-  array(1) {
-    ["c"]=>
-    string(1) "d"
-  }
-  ["data"]=>
-  NULL
+object(Handlebars\Options)#1 (13) {
   ["ids"]=>
   NULL
   ["hashIds"]=>
@@ -52,4 +34,20 @@ object(Handlebars\Options)#1 (14) {
   NULL
   ["partial"]=>
   NULL
+  ["fn"]=>
+  NULL
+  ["inverse"]=>
+  NULL
+  ["name"]=>
+  string(2) "if"
+  ["hash"]=>
+  array(1) {
+    ["a"]=>
+    string(1) "b"
+  }
+  ["scope"]=>
+  array(1) {
+    ["c"]=>
+    string(1) "d"
+  }
 }

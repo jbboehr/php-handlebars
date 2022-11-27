@@ -59,8 +59,9 @@ function install_php_psr() (
 
     local dir=third-party/php-psr
     rm -rf ${dir}
-    git clone -b ${PHP_PSR_VERSION} https://github.com/jbboehr/php-psr.git ${dir}
+    git clone https://github.com/jbboehr/php-psr.git ${dir}
     cd ${dir}
+    git checkout ${PHP_PSR_VERSION}
     phpize
     trap "cat config.log" ERR
     ./configure --prefix=${PREFIX} CFLAGS="${CFLAGS}"

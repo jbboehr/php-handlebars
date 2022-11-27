@@ -188,28 +188,23 @@ abstract class BaseImpl implements Impl
 {
 	/**
 	 * @var Registry
-     * This uses a typed property on >= PHP 7.4
 	 */
-    protected /*Registry*/ $helpers;
+    protected $helpers;
 
 	/**
 	 * @var Registry
-     * This uses a typed property on >= PHP 7.4
 	 */
-    protected /*Registry*/ $partials;
+    protected $partials;
 
 	/**
 	 * @var Registry
-     * This uses a typed property on >= PHP 7.4
 	 */
-    protected /*Registry*/ $decorators;
+    protected $decorators;
 
 	/**
 	 * @var LoggerInterface
-     * This uses a typed property on >= PHP 7.4
-     * This property will not be typed if the psr extension is not loaded
 	 */
-    protected /*LoggerInterface*/ $logger;
+    protected $logger;
 
     /**
      * @return Registry

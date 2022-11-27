@@ -285,8 +285,12 @@ EOF;
         }
 
         switch ($testName) {
+            case 'helpers - block helper should have context in this':
+                $skip = 'true';
+                $reason = 'problem with prop handlers';
+                break;
             case 'helpers - block params - should take presednece over parent block params';
-                $skip = true;
+                $skip = 'true';
                 $reason = 'libhandlebars currently does not expose options.blockParams';
                 break;
             case 'Regressions - should support multiple levels of inline partials':

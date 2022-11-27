@@ -85,11 +85,6 @@
    <file name="tests/base-impl/logger.phpt" role="test" />
    <file name="tests/base-impl/partials-php74.phpt" role="test" />
    <file name="tests/base-impl/partials.phpt" role="test" />
-   <file name="tests/base-impl/___reflection-php74.phpt" role="test" />
-   <file name="tests/base-impl/___reflection-php7.phpt" role="test" />
-   <file name="tests/base-impl/___reflection-php7-without-psr.phpt" role="test" />
-   <file name="tests/base-impl/___reflection.phpt" role="test" />
-   <file name="tests/base-impl/___reflection-without-psr.phpt" role="test" />
    <file name="tests/cache/mmap.phpt" role="test" />
    <file name="tests/cache/none.phpt" role="test" />
    <file name="tests/cache/nostat.phpt" role="test" />
@@ -1488,15 +1483,11 @@
    <file name="tests/opcode/__construct.phpt" role="test" />
    <file name="tests/opcode/opcode-php74.phpt" role="test" />
    <file name="tests/opcode/opcode.phpt" role="test" />
-   <file name="tests/opcode/___reflection-php7.phpt" role="test" />
-   <file name="tests/opcode/___reflection.phpt" role="test" />
    <file name="tests/options/__construct.phpt" role="test" />
    <file name="tests/options/fn.phpt" role="test" />
    <file name="tests/phpinfo-no-cache.phpt" role="test" />
    <file name="tests/phpinfo.phpt" role="test" />
    <file name="tests/safe-string/__construct.phpt" role="test" />
-   <file name="tests/safe-string/___reflection-php7.phpt" role="test" />
-   <file name="tests/safe-string/___reflection.phpt" role="test" />
    <file name="tests/safe-string/__toString.phpt" role="test" />
    <file name="tests/safe-string/value-php74.phpt" role="test" />
    <file name="tests/safe-string/value.phpt" role="test" />
@@ -1516,11 +1507,6 @@
    <file name="tests/vm/getDecorators.phpt" role="test" />
    <file name="tests/vm/getHelpers.phpt" role="test" />
    <file name="tests/vm/getPartials.phpt" role="test" />
-   <file name="tests/vm/___reflection-php74.phpt" role="test" />
-   <file name="tests/vm/___reflection-php7.phpt" role="test" />
-   <file name="tests/vm/___reflection-php7-without-psr.phpt" role="test" />
-   <file name="tests/vm/___reflection.phpt" role="test" />
-   <file name="tests/vm/___reflection-without-psr.phpt" role="test" />
    <file name="tests/vm/renderFile.phpt" role="test" />
    <file name="tests/vm/renderFromBinaryString.phpt" role="test" />
    <file name="tests/vm/renderFromBinaryString-with-cache.phpt" role="test" />

@@ -79,7 +79,29 @@ ZEND_BEGIN_ARG_INFO_EX(HandlebarsOptions_construct_args, ZEND_SEND_BY_VAL, ZEND_
     ZEND_ARG_ARRAY_INFO(0, props, 1)
 ZEND_END_ARG_INFO()
 
+#if PHP_VERSION_ID >= 80100
+ZEND_BEGIN_ARG_WITH_TENTATIVE_RETURN_TYPE_INFO_EX(HandlebarsOptions_offsetExists_args, 0, 1, _IS_BOOL, 0)
+	ZEND_ARG_TYPE_INFO(0, key, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_TENTATIVE_RETURN_TYPE_INFO_EX(HandlebarsOptions_offsetGet_args, 0, 1, IS_MIXED, 0)
+	ZEND_ARG_TYPE_INFO(0, key, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_TENTATIVE_RETURN_TYPE_INFO_EX(HandlebarsOptions_offsetSet_args, 0, 2, IS_VOID, 0)
+	ZEND_ARG_TYPE_INFO(0, key, IS_MIXED, 0)
+	ZEND_ARG_TYPE_INFO(0, value, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_TENTATIVE_RETURN_TYPE_INFO_EX(HandlebarsOptions_offsetUnset_args, 0, 1, IS_VOID, 0)
+	ZEND_ARG_TYPE_INFO(0, key, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+#else
 ZEND_BEGIN_ARG_INFO_EX(HandlebarsOptions_offsetExists_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_INFO(0, prop)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsOptions_offsetGet_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
     ZEND_ARG_INFO(0, prop)
 ZEND_END_ARG_INFO()
 
@@ -87,6 +109,11 @@ ZEND_BEGIN_ARG_INFO_EX(HandlebarsOptions_offsetSet_args, ZEND_SEND_BY_VAL, ZEND_
     ZEND_ARG_INFO(0, prop)
     ZEND_ARG_INFO(0, value)
 ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(HandlebarsOptions_offsetUnset_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 1)
+    ZEND_ARG_INFO(0, prop)
+ZEND_END_ARG_INFO()
+#endif
 
 ZEND_BEGIN_ARG_INFO_EX(HandlebarsOptions_fn_args, ZEND_SEND_BY_VAL, ZEND_RETURN_VALUE, 0)
 ZEND_END_ARG_INFO()
@@ -590,9 +617,9 @@ static zend_function_entry HandlebarsOptions_methods[] = {
     PHP_ME(HandlebarsOptions, fn, HandlebarsOptions_fn_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsOptions, inverse, HandlebarsOptions_fn_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsOptions, offsetExists, HandlebarsOptions_offsetExists_args, ZEND_ACC_PUBLIC)
-    PHP_ME(HandlebarsOptions, offsetGet, HandlebarsOptions_offsetExists_args, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsOptions, offsetGet, HandlebarsOptions_offsetGet_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsOptions, offsetSet, HandlebarsOptions_offsetSet_args, ZEND_ACC_PUBLIC)
-    PHP_ME(HandlebarsOptions, offsetUnset, HandlebarsOptions_offsetExists_args, ZEND_ACC_PUBLIC)
+    PHP_ME(HandlebarsOptions, offsetUnset, HandlebarsOptions_offsetUnset_args, ZEND_ACC_PUBLIC)
     PHP_ME(HandlebarsOptions, lookupProperty, HandlebarsOptions_lookupProperty_args, ZEND_ACC_PUBLIC)
     PHP_FE_END
 };
@@ -632,15 +659,15 @@ PHP_MINIT_FUNCTION(handlebars_options)
     register_prop_handler("hash", hbs_read_hash);
     register_prop_handler("data", hbs_read_data);
 
-    // Note: declaring these prevents dynamic initialization in PHP7
-    /*
+    // Note: declaring these may prevent dynamic initialization in PHP >= 7
+#if PHP_VERSION_ID >= 80000
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("name"), ZEND_ACC_PUBLIC);
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("hash"), ZEND_ACC_PUBLIC);
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("fn"), ZEND_ACC_PUBLIC);
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("inverse"), ZEND_ACC_PUBLIC);
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("scope"), ZEND_ACC_PUBLIC);
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("data"), ZEND_ACC_PUBLIC);
-    */
+#endif
 
     // Used by handlebars.php
     zend_declare_property_null(HandlebarsOptions_ce_ptr, ZEND_STRL("ids"), ZEND_ACC_PUBLIC);

@@ -18,6 +18,7 @@ configure
 configure.ac
 configure.in
 coverage.info
+*.dep
 .deps
 .dirstamp
 gmon*
@@ -57,3 +58,4 @@ tests/**/*.sh
 third-party
 tmp-php.ini
 vgcore.*
+/result*

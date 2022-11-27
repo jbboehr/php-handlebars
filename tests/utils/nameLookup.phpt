@@ -10,13 +10,17 @@ class HandlebarsLookupArrayAccessFixture implements ArrayAccess {
     public function __construct(array $array = array()) {
         $this->array = $array;
     }
+    #[\ReturnTypeWillChange]
     public function offsetGet($offset) {
         return $this->array[$offset];
     }
+    #[\ReturnTypeWillChange]
     public function offsetSet($offset, $value) {
     }
+    #[\ReturnTypeWillChange]
     public function offsetUnset($offset) {
     }
+    #[\ReturnTypeWillChange]
     public function offsetExists($offset) {
         return isset($this->array[$offset]);
     }
