@@ -45,7 +45,6 @@ jobs:
             fail-fast: false
             matrix:
                 PHP_VERSION:
-                    - "7.4"
                     - "8.0"
                     - "8.1"
         steps:
@@ -119,7 +118,7 @@ jobs:
               with:
                   nix_path: nixpkgs=channel:nixos-22.05
             - run: nix-build
-            # - run: nix-build nix/ci.nix
+            - run: nix-build nix/ci.nix
 
     nix-flake:
         runs-on: ubuntu-latest
