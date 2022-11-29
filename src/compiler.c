@@ -241,7 +241,7 @@ static void php_handlebars_compile(INTERNAL_FUNCTION_PARAMETERS, short print)
     jmp_buf buf;
     unsigned long flags;
 
-    ZEND_PARSE_PARAMETERS_START(1, 3)
+    ZEND_PARSE_PARAMETERS_START(1, 2)
 	    Z_PARAM_STR(tmpl)
         Z_PARAM_OPTIONAL
         Z_PARAM_ZVAL(options)
