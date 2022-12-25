@@ -44,6 +44,7 @@ nbproject
 *.o
 *.out
 .php-version
+.pre-commit-config.yaml
 .*project
 *.qcow2
 run-tests.php
