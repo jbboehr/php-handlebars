@@ -20,6 +20,7 @@ configure.in
 coverage.info
 *.dep
 .deps
+.direnv
 .dirstamp
 gmon*
 .idea
