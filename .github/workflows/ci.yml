@@ -21,9 +21,10 @@ jobs:
                     - "8.2"
                     - "8.3"
                     - "8.4"
+                    - "8.5"
                 COVERAGE: ["true", "false"]
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v6
               with:
                   submodules: recursive
             - name: I am tired of writing this shit in YAML and learning a new DSL for every CI service so I'm putting everything in a FSCKING BASH SCRIPT
@@ -66,9 +67,10 @@ jobs:
                     - "8.1"
                     - "8.2"
                     - "8.3"
-                    - "8.4.0RC1"
+                    - "8.4"
+                    - "8.5"
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v6
               with:
                   submodules: recursive
             - name: I am tired of writing this shit in YAML and learning a new DSL for every CI service so I am putting everything in a FSCKING BASH SCRIPT
@@ -86,9 +88,10 @@ jobs:
                     - "8.1"
                     - "8.2"
                     - "8.3"
-                    - "8.4.0RC1"
+                    - "8.4"
+                    - "8.5"
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v6
               with:
                   submodules: recursive
             - name: I am tired of writing this shit in YAML and learning a new DSL for every CI service so I am putting everything in a FSCKING BASH SCRIPT
@@ -100,7 +103,7 @@ jobs:
     docker-fedora:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v6
               with:
                   submodules: recursive
             - name: I am tired of writing this shit in YAML and learning a new DSL for every CI service so I am putting everything in a FSCKING BASH SCRIPT
@@ -114,7 +117,7 @@ jobs:
         outputs:
             matrix: ${{ steps.set-matrix.outputs.matrix }}
         steps:
-            -   uses: actions/checkout@v4
+            -   uses: actions/checkout@v6
             -   uses: cachix/install-nix-action@v26
             -   id: set-matrix
                 name: Generate Nix Matrix
@@ -130,7 +133,7 @@ jobs:
         strategy:
             matrix: ${{fromJSON(needs.nix-matrix.outputs.matrix)}}
         steps:
-            -   uses: actions/checkout@v4
+            -   uses: actions/checkout@v6
 
             -   name: Set Up Build Cache
                 uses: actions/cache@v4
