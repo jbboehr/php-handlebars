@@ -13,7 +13,6 @@
 #include "Zend/zend_types.h"
 
 #include "main/php.h"
-#include "ext/standard/basic_functions.h"
 #include "ext/standard/php_filestat.h"
 
 #define HANDLEBARS_HELPERS_PRIVATE
@@ -140,8 +139,8 @@ static struct handlebars_value * php_handlebars_log(HANDLEBARS_FUNCTION_ARGS) {
         zval_ptr_dtor(&z_ret);
 
         HANDLEBARS_VALUE_UNDECL(level);
-    } else {
-        _php_error_log_ex(4, message, message_len, NULL, NULL);
+    } else if( sapi_module.log_message ) {
+        sapi_module.log_message(message);
     }
 
     handlebars_talloc_free(message);
